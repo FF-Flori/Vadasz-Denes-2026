@@ -15,6 +15,8 @@ void Pathfinder::inputTransformation(std::vector<std::vector<char>> inputList){
 	int tablesize = inputList.size()* inputList.at(0).size();
 	//tudom hogy a sizeof char az csak simán 1 szóval nem számít, de azért bele szoktam tenni
 	table = (char*)malloc(sizeof(char)*(tablesize+1));
+	width = inputList.at(0).size();
+	height = inputList.size();
 
 	int counter = 0;
 	for(std::vector<char> line : inputList){
