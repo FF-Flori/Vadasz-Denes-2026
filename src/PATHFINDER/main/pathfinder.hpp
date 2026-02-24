@@ -4,6 +4,9 @@
 
 #include <cstdint>
 #include <array>
+#include <string>
+
+
 
 enum class tile_t : uint8_t {
     start,
@@ -20,16 +23,22 @@ class Pathfinder {
 		char* table;
 		int width;
 		int height;
+
+		const uint16_t timeLimit;
 		static constexpr uint16_t MAP_WIDTH = 50;
-		const std::array<tile_t, MAP_WIDTH*MAP_WIDTH> map;
+		std::array<tile_t, MAP_WIDTH*MAP_WIDTH> map;
+		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
+
 	public:
-		Pathfinder();
+		/**
+		 * Holy constructor sigma 67 gg
+		 * @param timeLimit Time limit in the simulation for the rover to complete the task
+		 * @param mapPath Absolute path to the file containing the map
+		 */
+		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
+
 		// Mivel gondolom hogy sorok listája lesz majd az input
 		void inputTransformation(std::vector<std::vector<char>> inputList);
-
-    public:
-
 };
-
 
 #endif // VD26_PATHFINDER_HPP

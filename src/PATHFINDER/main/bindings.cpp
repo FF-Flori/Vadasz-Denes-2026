@@ -4,6 +4,8 @@
 
 namespace py = pybind11;
 
+/* !!! nem akartam hozzányúlni, úgyhogy kikommenteztem, hogy tudjak buildelni
+
 PYBIND11_MODULE(pathfinder, m) {
     py::class_<Pathfinder>(m, "Pathfinder")
         .def(py::init<>())
@@ -11,3 +13,4 @@ PYBIND11_MODULE(pathfinder, m) {
             return self.inputTransformation(data);
         });
 }
+*/
