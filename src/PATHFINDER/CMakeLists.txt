@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
-project(MyBigProject CXX)
+project(Pathfinder CXX)
+
+set(PYBIND11_FINDPYTHON NEW)
+
 include(FetchContent)
 
 # fetch pybind11 from github
@@ -16,3 +19,7 @@ set(SOURCES
         main/bindings.cpp
 )
 pybind11_add_module(pathfinder ${SOURCES})
+
+set_target_properties(pathfinder PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/build"
+)
