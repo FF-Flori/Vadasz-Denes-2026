@@ -42,7 +42,7 @@ class Logexplorer:
         self.erroriconlb.pack(side=tk.LEFT, padx=5)
         self.errorlb.pack(side=tk.LEFT, padx=5)
 
-        self.donebtn = tk.Button(self.frame2, text="Kész", font=tkinter.font.Font(family="Couriel New", size=15), cursor="hand2", command=lambda: print(backend(logfile + "/" + str(self.listbox.selection_get())).gettime()))
+        self.donebtn = tk.Button(self.frame2, text="Kész", font=tkinter.font.Font(family="Couriel New", size=15), cursor="hand2", command=lambda: backend(logfile + "/" + str(self.listbox.selection_get())))
         self.donebtn.pack(side=BOTTOM)
 
         if len(os.listdir(logfile)) <= 0:
@@ -80,36 +80,52 @@ class Logexplorer:
             Logexplorer(self.main, self.logfile)
         
 logline:int = None
+time:list = []
+battery:list = []
+positionY:list = []
+positionX:list = []
+speed:list = []
+distance:list = []
+material:list = []
 
 class backend:
     def __init__(self, logfile):
-        global logline
+        if logfile != None and len(logfile) > 0:
+            global logline
+            global time
+            global battery
+            global positionY
+            global positionX
+            global speed
+            global distance
+            global material
 
-        self.logfile = logfile
-        self.time:list = []
-        self.refleshtime = 5
-        self.battery:list = []
+            self.logfile = logfile
+            self.refleshtime:int = 5
 
-        with open(logfile, "r") as fullog:
-            lines:int = 0
-            for i in fullog.readlines():
-                if logline == None or lines < logline:
-                    fullline:list = i.split(";")
-                    self.battery.append(fullline[1])
-                    if len(self.time) == 0:
-                        self.time.append(0)
-                    else:
-                        self.time.append(self.time[len(self.time)-1] + 30)
-                lines += 1
+            with open(logfile, "r") as fullog:
+                lines:int = 0
+                for i in fullog.readlines():
+                    if logline == None or lines > logline:
+                        fullline:list = i.split(";")
 
-            fullog.close()
-            logline = lines
+                        positionX.append(fullline[0].split(",")[0])
+                        positionY.append(fullline[0].split(",")[1])
+                        battery.append(fullline[1])
+                        speed.append(fullline[2])
+                        distance.append(fullline[3])
+                        material.append(fullline[4].replace("\n", ""))
+                        
+                        if len(time) == 0:
+                            time.append(0)
+                        else:
+                            time.append(time[len(time)-1] + 30)
+                    lines += 1
 
-    def getbattery(self):
-        return self.battery
-    
-    def gettime(self):
-        return self.time
+                fullog.close()
+                logline = lines
+        else:
+            print("Kötelező kijelölni 1 elemet!")
 
 
 main = tk.Tk()
