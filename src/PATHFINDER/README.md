@@ -23,4 +23,14 @@
 ### D) Genetic algorithm
 - generate start paths
 - powerful fitness function
-- mutation types
+  - implement multi-threading
+- mutations
+- provide some information about generations and their success rate
+
+### E) Provide calculated data
+- generation data
+  - best few paths per generation
+  - mutations used
+- calculated best path
+- time and resources used
+- free used memory space
