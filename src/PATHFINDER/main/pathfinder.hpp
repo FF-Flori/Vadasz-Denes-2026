@@ -19,10 +19,7 @@ enum class tile_t : uint8_t {
 
 class Pathfinder {
 	private:
-		int startPos[2] = {0,0};
-		char* table;
-		int width;
-		int height;
+		int startPos[2];
 
 		const uint16_t timeLimit;
 		static constexpr uint16_t MAP_WIDTH = 50;
@@ -36,9 +33,6 @@ class Pathfinder {
 		 * @param mapPath Absolute path to the file containing the map
 		 */
 		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
-
-		// Mivel gondolom hogy sorok listája lesz majd az input
-		void inputTransformation(std::vector<std::vector<char>> inputList);
 };
 
 #endif // VD26_PATHFINDER_HPP

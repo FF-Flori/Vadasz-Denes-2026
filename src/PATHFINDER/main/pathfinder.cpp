@@ -29,10 +29,12 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 				case 'B': type = tile_t::blue; break;
 				case 'G': type = tile_t::green; break;
 				case 'Y': type = tile_t::yellow; break;
-				case 'S': type = tile_t::start; break;
+				case 'S': type = tile_t::start;
+					startPos[0] = x; startPos[1] = y;
+					break;
 				default:
-					// !!! we can also throw runtime error here
-					type = tile_t::land;
+					std::cout << "Unknown character found while reading map file!\n";
+					type = tile_t::wall;
 					break;
 			}
 
