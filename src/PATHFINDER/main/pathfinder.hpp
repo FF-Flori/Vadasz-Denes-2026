@@ -17,6 +17,9 @@ enum class tile_t : uint8_t {
     green
 };
 
+/**
+ * Pathfinder calculate a route threw the map with a genetic algorithm to maximalize collected value on the run.
+ */
 class Pathfinder {
 	private:
 		int startPos[2];
