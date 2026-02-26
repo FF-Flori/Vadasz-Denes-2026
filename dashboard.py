@@ -2,6 +2,10 @@ import tkinter as tk
 import os
 from tkinter import *
 import tkinter.font
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import numpy as np
 
 def clearwidget(main):
     for widget in main.winfo_children():
@@ -88,58 +92,61 @@ class Logexplorer:
         else:
             print("Kötelező kijelölni 1 elemet!")
         
-logline:int = None
+logline:int = 0
+logsize:int = 0
 time:list = []
 battery:list = []
 positionY:list = []
 positionX:list = []
 speed:list = []
 distance:list = []
-material:list = []
+materialB:int = 0
+materialY:int = 0
+materialG:int = 0
 
-class backend:
-    def __init__(self, logfile):
-        if logfile != None and len(logfile) > 0:
-            global logline
-            global time
-            global battery
-            global positionY
-            global positionX
-            global speed
-            global distance
-            global material
+def backend(logfile):
+    global logsize
+    if logfile != None and len(logfile) > 0 and logsize < os.path.getsize(logfile):
+        global logline
+        global time
+        global battery
+        global positionY
+        global positionX
+        global speed
+        global distance
+        global materialB
+        global materialY
+        global materialG
 
-            self.logfile = logfile
-            self.refleshtime:int = 5
+        with open(logfile, "r") as fullog:
+            lines = fullog.readlines()
 
-            with open(logfile, "r") as fullog:
-                lines:int = 0
-                for i in fullog.readlines():
-                    if logline == None or lines > logline:
-                        fullline:list = i.split(";")
+            for i in range(logline, len(lines)):
+                fullline:list = lines[i].split(";")
 
-                        positionX.append(fullline[0].split(",")[0])
-                        positionY.append(fullline[0].split(",")[1])
-                        battery.append(fullline[1])
-                        speed.append(fullline[2])
-                        distance.append(fullline[3])
-                        material.append(fullline[4].replace("\n", ""))
+                positionX.append(int(fullline[0].split(",")[0]))
+                positionY.append(int(fullline[0].split(",")[1]))
+                battery.append(int(fullline[1]))
+                speed.append(int(fullline[2]))
+                distance.append(int(fullline[3]))
+                materialB += int(fullline[4].split(",")[0].replace("\n", ""))
+                materialY += int(fullline[4].split(",")[1].replace("\n", ""))
+                materialG += int(fullline[4].split(",")[2].replace("\n", ""))
                         
-                        if len(time) == 0:
-                            time.append(0)
-                        else:
-                            time.append(time[len(time)-1] + 30)
-                    lines += 1
+                if len(time) == 0:
+                    time.append(0)
+                else:
+                    time.append(time[len(time)-1] + 30)
 
-                fullog.close()
-                logline = lines
-        else:
-            print("Kötelező kijelölni 1 elemet!")
+            fullog.close()
+            logline = len(lines)
+            logsize = os.path.getsize(logfile)
 
 class DashboardUI:
     def __init__(self, main: Tk, selectedlogfile):
         self.main = main
         self.selectedlogfile = selectedlogfile
+        self.refleshing = False
 
         clearwidget(self.main)
 
@@ -158,7 +165,7 @@ class DashboardUI:
         self.header = tk.Frame(self.frame, bg=BG)
         self.header.pack(fill="x", padx=10, pady=10)
 
-        self.refbtn = tk.Button(self.header, text="🔄 Újratöltés", font=tkinter.font.Font(family="Courier New", size=16), cursor="hand2", bg="#5c5c5c", fg="white", relief="flat", padx=10, pady=5)
+        self.refbtn = tk.Button(self.header, text="🔄 Újratöltés", font=tkinter.font.Font(family="Courier New", size=16), cursor="hand2", bg="#5c5c5c", fg="white", relief="flat", padx=10, pady=5, command=lambda: self.refleshprg(False))
         
         self.refbtn.pack(side="right")
 
@@ -207,14 +214,15 @@ class DashboardUI:
                 text=title,
                 font=tkinter.font.Font(family="Courier New", size=14),
                 fg="white",
-                bg=BG
+                bg=BG,
+                highlightbackground="gray",
+                highlightthickness=1
             )
             title_label.grid(row=0, column=0, sticky="ew")
-
             
             graph_area = tk.Frame(
                 outer,
-                bg="white"
+                bg=BG
             )
             graph_area.grid(
                 row=1,
@@ -258,8 +266,83 @@ class DashboardUI:
             1, 1,
             colspan=2
         )
-        
 
+        #Battery diagram
+        self.batteryfg, self.batteryax=plt.subplots(figsize=(4,3), dpi=100)
+        self.batteryax.plot([], [], marker="o", color="lightgreen")
+        self.batteryax.set_ylim(0, 100)
+        self.batteryax.set_ylabel("Töltöttség (%)")
+        self.batteryax.set_xlabel("Idő (perc)")
+        self.batteryax.grid(True, linestyle="--", linewidth=0.5)
+        self.batterycanvas = FigureCanvasTkAgg(self.batteryfg, master=self.batteryframe)
+        self.batterycanvas.get_tk_widget().pack(fill="both", expand=True)
+        self.batteryfg.patch.set_facecolor(BG)
+        self.batteryax.set_facecolor(BG)
+        self.batteryax.tick_params(colors="white")
+        self.batteryax.xaxis.label.set_color("white")
+        self.batteryax.yaxis.label.set_color("white")
+        self.batteryax.spines["bottom"].set_color("white")
+        self.batteryax.spines["left"].set_color("white")
+        self.batteryax.spines["top"].set_color("white")
+        self.batteryax.spines["right"].set_color("white")
+
+        #Materials diagram
+
+        self.materialfg, self.materialax = plt.subplots(figsize=(1,1), dpi=100)
+        wedges, texts, autotexts = self.materialax.pie([], colors=["cyan", "yellow", "green"], autopct="%1.1f%%", startangle=90)
+        self.materialax.set_aspect("equal")
+        self.materialax.legend(wedges, ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"], title="Ásványok", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+        self.materialfg.patch.set_facecolor(BG)
+        self.materialax.set_facecolor(BG)
+        self.materialcanvas = FigureCanvasTkAgg(self.materialfg, master=self.materialframe)
+        self.materialcanvas.get_tk_widget().pack(fill="both", expand=True)
+
+        def on_close(self):
+            plt.close("all")
+            self.main.destroy()
+            self.main.quit()
+
+        self.main.protocol("WM_DELETE_WINDOW", lambda: on_close(self))
+
+        self.refleshprg(False)
+
+    def refleshprg(self, refles):
+        global logsize
+        refleshtime:int = 5
+        if logsize < os.path.getsize(self.selectedlogfile):
+            backend(self.selectedlogfile)
+            global battery, time, materialB, materialG, materialY
+            batteryax = self.batteryax
+
+            line = batteryax.lines[0]
+            ydata = line.get_ydata()
+            if type(ydata) != list:
+                ydata.tolist()
+
+            if len(battery) > len(ydata):
+                new_y = battery[len(ydata):]
+                new_x = time[len(ydata):]
+                line.set_ydata(list(ydata) + new_y)
+                line.set_xdata(list(line.get_xdata()) + new_x)
+                batteryax.set_xticks(time)
+                self.batterycanvas.draw()
+
+            self.materialax.clear()
+            wedges, texts, autotexts = self.materialax.pie([materialB, materialY, materialG], colors=["cyan", "yellow", "green"], autopct="%1.1f%%", startangle=90)
+            self.materialax.set_aspect("equal")
+            self.materialax.legend(wedges, ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"], title="Ásványok", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+            self.materialfg.patch.set_facecolor("#2e3237")
+            self.materialax.set_facecolor("#2e3237")
+
+            self.materialcanvas.draw()
+
+            if self.refleshing == False or refles == True:
+                self.main.after(refleshtime * 1000, lambda: self.refleshprg(True))
+                self.refleshing = True
+        else:
+            if self.refleshing == False or refles == True:
+                self.main.after(refleshtime * 1000, lambda: self.refleshprg(True))
+                self.refleshing = True
 
 main = tk.Tk()
 
