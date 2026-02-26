@@ -1,5 +1,4 @@
 #include "pathfinder.hpp"
-#include <cassert>
 #include <iostream>
 #include <fstream>
 #include <array>
@@ -14,12 +13,12 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 	}
 
 	std::string line;
-	uint16_t y = 0;
+	uint8_t y = 0;
 
 	// read lines
 	while (std::getline(file, line) && y < MAP_WIDTH) {
 		// read chars
-		for (uint16_t x = 0; x < MAP_WIDTH*2 && x < line.length(); x+=2) {
+		for (uint8_t x = 0; x < MAP_WIDTH*2 && x < line.length(); x+=2) {
 			char c = line[x];
 
 			tile_t type;
@@ -45,4 +44,14 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 	}
 
 	file.close();
+
+	groupOres();
+}
+
+Pathfinder::OreGroup::OreGroup(const tile_t ore) : ore(ore) {
+	tiles.reserve(60);
+}
+
+void Pathfinder::groupOres() {
+
 }
