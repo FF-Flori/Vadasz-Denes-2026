@@ -48,8 +48,12 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 	groupOres();
 }
 
-Pathfinder::OreGroup::OreGroup(const tile_t ore) : ore(ore) {
-	tiles.reserve(60);
+void Pathfinder::OreGroup::collect(coord_t start, std::vector<OreGroup>& groupContainer) {
+	// start collecting ores from the start pos, recursively create new ore groups and append them to the container when the current one hits the limit
+	// collection method idea:
+	// direction preferences (descending): UP-LEFT, UP, UP-RIGHT, LEFT, RIGHT, DOWN-LEFT, DOWN, DOWN-RIGHT
+	// begin collecting recursively from the start pos by calling this function when a new ungrouped tile is found
+	// if a tile is grouped, flag them as grouped by changing the value in the map array to it's grouped type
 }
 
 void Pathfinder::groupOres() {

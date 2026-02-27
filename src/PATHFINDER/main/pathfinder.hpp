@@ -22,12 +22,15 @@ class Pathfinder {
 		 * Map tile names
 		 */
 		enum class tile_t : uint8_t {
-			start,
+			start = 0,
 			land,
 			wall,
-			blue,
-			yellow,
-			green
+			blue = 128,
+			yellow = 129,
+			green = 130,
+			blue_grouped = 192,
+			yellow_grouped = 193,
+			green_grouped = 194
 		};
 
 		/**
@@ -37,16 +40,18 @@ class Pathfinder {
 
 	private:
 		// constants
-		static constexpr uint8_t MAP_WIDTH = 50;
-		static constexpr uint8_t GROUP_LIMIT = 9;
+		static constexpr uint8_t   MAP_WIDTH = 50; // width and height of the map is equal
+		static constexpr uint8_t GROUP_LIMIT = 9;  // the max number of ores stored in a group, 0 = no limit
 
 		// classes
 		class OreGroup {
 			public:
-				const tile_t ore;
-				std::vector<coord_t> tiles;
+				const tile_t oreType;
+				const uint16_t oreValue;
+				std::array<coord_t, GROUP_LIMIT> tiles{};
 
-				OreGroup(tile_t ore);
+				OreGroup(const tile_t oreType, const uint16_t oreValue) : oreType(oreType), oreValue(oreValue) {}
+				void collect(coord_t start, std::vector<OreGroup>& groupContainer);
 		};
 
 		// variables
