@@ -92,7 +92,7 @@ class Logexplorer:
         else:
             print("Kötelező kijelölni 1 elemet!")
         
-logline:int = 0
+logline:int = 1
 logsize:int = 0
 time:list = []
 battery:list = []
@@ -122,16 +122,21 @@ def backend(logfile):
             lines = fullog.readlines()
 
             for i in range(logline, len(lines)):
-                fullline:list = lines[i].split(";")
+                fullline:list = lines[i].strip().split(";")
 
                 positionX.append(int(fullline[0].split(",")[0]))
                 positionY.append(int(fullline[0].split(",")[1]))
                 battery.append(int(fullline[1]))
                 speed.append(int(fullline[2]))
-                distance.append(int(fullline[3]))
-                materialB += int(fullline[4].split(",")[0].replace("\n", ""))
-                materialY += int(fullline[4].split(",")[1].replace("\n", ""))
-                materialG += int(fullline[4].split(",")[2].replace("\n", ""))
+                distance.append(int(fullline[2]))
+
+                if len(fullline) >= 4:
+                    if fullline[3].lower() == "y":
+                        materialY += 1
+                    elif fullline[3].lower() == "b":
+                        materialB += 1
+                    elif fullline[3].lower() == "g":
+                        materialG += 1
                         
                 if len(time) == 0:
                     time.append(0)
@@ -146,7 +151,6 @@ class DashboardUI:
     def __init__(self, main: Tk, selectedlogfile):
         self.main = main
         self.selectedlogfile = selectedlogfile
-        self.refleshing = False
 
         clearwidget(self.main)
 
@@ -269,6 +273,7 @@ class DashboardUI:
 
         #Battery diagram
         self.batteryfg, self.batteryax=plt.subplots(figsize=(4,3), dpi=100)
+        self.batteryfg.subplots_adjust(left=0.125, right=0.9, bottom=0.2, top=0.9)
         self.batteryax.plot([], [], marker="o", color="lightgreen")
         self.batteryax.set_ylim(0, 100)
         self.batteryax.set_ylabel("Töltöttség (%)")
@@ -288,14 +293,11 @@ class DashboardUI:
 
         #Materials diagram
 
-        self.materialfg, self.materialax = plt.subplots(figsize=(1,1), dpi=100)
-        wedges, texts, autotexts = self.materialax.pie([], colors=["cyan", "yellow", "green"], autopct="%1.1f%%", startangle=90)
-        self.materialax.set_aspect("equal")
-        self.materialax.legend(wedges, ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"], title="Ásványok", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-        self.materialfg.patch.set_facecolor(BG)
-        self.materialax.set_facecolor(BG)
+        self.materialfg, self.materialax = plt.subplots(figsize=(4,3), dpi=100)
+        self.materialfg.subplots_adjust(left=0.1, right=0.6, bottom=0.2, top=0.9)
         self.materialcanvas = FigureCanvasTkAgg(self.materialfg, master=self.materialframe)
         self.materialcanvas.get_tk_widget().pack(fill="both", expand=True)
+        self.materialfg.patch.set_facecolor(BG)
 
         def on_close(self):
             plt.close("all")
@@ -328,19 +330,21 @@ class DashboardUI:
                 self.batterycanvas.draw()
 
             self.materialax.clear()
-            wedges, texts, autotexts = self.materialax.pie([materialB, materialY, materialG], colors=["cyan", "yellow", "green"], autopct="%1.1f%%", startangle=90)
+            wedges, texts, autotexts = self.materialax.pie([materialB, materialY, materialG], colors=["cyan", "yellow", "green"], shadow=True, autopct="%1.1f%%", startangle=90, radius=1.2)
+            for autotext in autotexts:
+                autotext.set_color('black')
+                autotext.set_fontweight('bold')
             self.materialax.set_aspect("equal")
-            self.materialax.legend(wedges, ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"], title="Ásványok", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-            self.materialfg.patch.set_facecolor("#2e3237")
+            self.materialax.legend(wedges, ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"], loc="center left", bbox_to_anchor=(1, 0, 0.5, 1), facecolor="#2e3237", labelcolor="white", fancybox=False, frameon=False, alignment="left", handlelength=1.5, handleheight=1.5)
             self.materialax.set_facecolor("#2e3237")
 
             self.materialcanvas.draw()
 
-            if self.refleshing == False or refles == True:
+            if refles == True:
                 self.main.after(refleshtime * 1000, lambda: self.refleshprg(True))
                 self.refleshing = True
         else:
-            if self.refleshing == False or refles == True:
+            if refles == True:
                 self.main.after(refleshtime * 1000, lambda: self.refleshprg(True))
                 self.refleshing = True
 
