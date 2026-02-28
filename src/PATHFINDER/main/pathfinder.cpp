@@ -48,7 +48,7 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 	groupOres();
 }
 
-Pathfinder::OreGroup::OreGroup(const tile_t ore) : ore(ore) {
+Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(ore), oreValue(oreValue) {
 	tiles.reserve(60);
 }
 

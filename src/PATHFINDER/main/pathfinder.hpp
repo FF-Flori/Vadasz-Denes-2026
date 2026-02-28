@@ -43,10 +43,11 @@ class Pathfinder {
 		// classes
 		class OreGroup {
 			public:
-				const tile_t ore;
+				const tile_t ore; // ore type
+				const uint8_t oreValue; // value per ore
 				std::vector<coord_t> tiles;
 
-				OreGroup(tile_t ore);
+				OreGroup(tile_t ore, uint8_t oreValue = 1);
 		};
 
 		// variables
