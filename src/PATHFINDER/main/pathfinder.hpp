@@ -62,10 +62,18 @@ class Pathfinder {
 
 		// functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
-		[[nodiscard]] static int getIndex(const coord_t& coords) {return coords.x * MAP_WIDTH + coords.y;}
+		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
 
 		void groupOres();
 		void createGroup(const uint8_t x, const uint8_t y);
+		/*
+		 * This function checks if the point at the supplied coordinates is the specified ore or not, and if it is, it adds it to the group and changes the value on the map to grouped
+		 * @param x The x coordinate of the checked point
+		 * @param y The y coordinete of the checked point
+		 * @param oreType The type of ore the checked point needs to be
+		 * @param group The group to append the ore to
+		 */
+		void checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group);
 };
 
 #endif // VD26_PATHFINDER_HPP
