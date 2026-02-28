@@ -17,15 +17,16 @@ def clearwidget(main):
 
 
 class Logexplorer:
-    def __init__(self, main, logfile: str):
+    def __init__(self, main:tk.CTk, logfile: str):
         self.main = main
         self.logfile = logfile
 
         self.main.title("Dashboard - Log kiválasztása")
         self.main.geometry("400x400")
-        self.main.resizable(False, False)
+        self.main.resizable(True, True)
+        self.main.iconbitmap("src/img/dashboardicon.ico")
 
-        self.frame = CTkFrame(self.main, corner_radius=10)
+        self.frame = CTkFrame(self.main, corner_radius=10, fg_color="transparent")
         self.frame.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
         self.header = CTkFrame(self.frame, fg_color="transparent")
@@ -60,10 +61,8 @@ class Logexplorer:
         self.frame2 = CTkFrame(self.frame, corner_radius=10)
         self.frame2.pack(fill=BOTH, expand=True)
 
-        self.listbox = CTkListbox(
-            self.frame2,
-            command=lambda: self.done(logfile + "/" + str(self.listbox.get()))
-        )
+        self.listbox = CTkListbox(self.frame2)
+
         self.listbox.pack(fill=BOTH, expand=True, padx=5, pady=5)
 
         self.errorframe = CTkFrame(self.frame2, fg_color="transparent")
@@ -88,7 +87,7 @@ class Logexplorer:
             text="Kész",
             font=CTkFont(family="Courier New", size=15),
             cursor="hand2",
-            command=lambda: self.done(logfile + "/" + str(self.listbox.get())),
+            command=lambda: self.done(logfile + "/" + str(self.listbox.get()) + ".log"),
             corner_radius=8
         )
         self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
@@ -104,7 +103,7 @@ class Logexplorer:
 
             self.listbox.delete(0, END)
             for file in os.listdir(logfile):
-                self.listbox.insert(END, file)
+                self.listbox.insert(END, file[:-4])
 
     def reflesh(self):
 
@@ -113,8 +112,13 @@ class Logexplorer:
             self.donebtn.pack_forget()
             self.errorframe.pack(expand=True)
         else:
-            clearwidget(self.main)
-            Logexplorer(self.main, self.logfile)
+            self.errorframe.pack_forget()
+            self.listbox.pack(fill=BOTH, expand=True, padx=5, pady=5)
+            self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
+
+            self.listbox.delete(0, END)
+            for file in os.listdir(self.logfile):
+                self.listbox.insert(END, file[:-4])
 
     def done(self, logfile):
         if logfile != None and len(logfile) > 0:
@@ -198,10 +202,10 @@ class DashboardUI:
 
         self.main.title("Dashboard")
         self.main.geometry("1200x800")
-        self.main.resizable(False, False)
+        self.main.resizable(True, True)
 
         BG = "#2e3237"
-        BORDER = "#848690"
+        BG2 = "#262626"
 
         self.frame = CTkFrame(self.main, fg_color=BG, corner_radius=0)
         self.frame.pack(fill="both", expand=True)
@@ -212,7 +216,7 @@ class DashboardUI:
         self.refbtn = CTkButton(
             self.header,
             text="🔄 Újratöltés",
-            font=CTkFont(family="Courier New", size=16),
+            font=CTkFont(family="Courier New", size=20),
             cursor="hand2",
             corner_radius=8,
             command=lambda: self.refleshprg(False)
@@ -247,8 +251,7 @@ class DashboardUI:
 
             outer = CTkFrame(
                 parent,
-                fg_color=BG,
-                border_color=BORDER,
+                fg_color=BG2,
                 border_width=2,
                 corner_radius=10
             )
@@ -271,7 +274,7 @@ class DashboardUI:
                 font=CTkFont(family="Courier New", size=14, weight="bold")
             )
 
-            title_label.grid(row=0, column=0, sticky="ew", pady=(5, 0))
+            title_label.grid(row=0, column=0, sticky="ew", pady=(5, 0), padx=(5,5))
 
             graph_area = CTkFrame(
                 outer,
@@ -345,8 +348,8 @@ class DashboardUI:
             expand=True
         )
 
-        self.batteryfg.patch.set_facecolor(BG)
-        self.batteryax.set_facecolor(BG)
+        self.batteryfg.patch.set_facecolor(BG2)
+        self.batteryax.set_facecolor(BG2)
 
         self.batteryax.tick_params(colors="white")
 
@@ -380,7 +383,7 @@ class DashboardUI:
             expand=True
         )
 
-        self.materialfg.patch.set_facecolor(BG)
+        self.materialfg.patch.set_facecolor(BG2)
 
         def on_close(self):
 
