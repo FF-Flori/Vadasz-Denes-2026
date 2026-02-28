@@ -83,7 +83,6 @@ void Pathfinder::groupOres() {
 			default:
 				std::cout<<"ERROR ";
 				continue;
-				break;
 		}
 		for(coord_t tile : group.tiles){
 			std::cout<<"{"<<static_cast<int>(tile.x)<<","<<static_cast<int>(tile.y)<<"},";
