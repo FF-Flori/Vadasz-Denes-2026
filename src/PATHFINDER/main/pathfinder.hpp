@@ -66,7 +66,7 @@ class Pathfinder {
 
 		void groupOres();
 		void createGroup(const uint8_t x, const uint8_t y);
-		/*
+		/**
 		 * This function checks if the point at the supplied coordinates is the specified ore or not, and if it is, it adds it to the group and changes the value on the map to grouped
 		 * @param x The x coordinate of the checked point
 		 * @param y The y coordinete of the checked point
