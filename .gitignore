@@ -1,4 +1,3 @@
 .idea/
 ./src/GUI/__pycache__/
 ./src/GAME/__pycache__/
-./src/PATHFINDER/build/
