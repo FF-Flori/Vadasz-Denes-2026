@@ -69,7 +69,7 @@ void Pathfinder::groupOres() {
 		}
 	}
 	oreGroups.shrink_to_fit();
-	for(OreGroup group : oreGroups){
+	for(const OreGroup& group : oreGroups){
 		switch (group.ore) {
 			case tile_t::yellow:
 				std::cout<<"YELLOW:\n";
@@ -83,10 +83,9 @@ void Pathfinder::groupOres() {
 			default:
 				std::cout<<"ERROR ";
 				continue;
-				break;
 		}
 		for(coord_t tile : group.tiles){
-			std::cout<<"{"<<(int)tile.x<<","<<(int)tile.y<<"},";
+			std::cout<<"{"<<static_cast<int>(tile.x)<<","<<static_cast<int>(tile.y)<<"},";
 		}
 		std::cout<<"\n";
 	}
@@ -96,6 +95,7 @@ void Pathfinder::groupOres() {
 void Pathfinder::checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group){
 	if(x < 0 || MAP_WIDTH <= x){return;}
 	if(y < 0 || MAP_WIDTH <= y){return;}
+	if(group.tiles.size()>=GROUP_LIMIT){return;}
 
 	if(map[getIndex(x,y)] == oreType) {
 		group.tiles.push_back({x,y});
