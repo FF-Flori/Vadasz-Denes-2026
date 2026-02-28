@@ -69,7 +69,7 @@ void Pathfinder::groupOres() {
 		}
 	}
 	oreGroups.shrink_to_fit();
-	for(OreGroup group : oreGroups){
+	for(const OreGroup& group : oreGroups){
 		switch (group.ore) {
 			case tile_t::yellow:
 				std::cout<<"YELLOW:\n";
@@ -86,7 +86,7 @@ void Pathfinder::groupOres() {
 				break;
 		}
 		for(coord_t tile : group.tiles){
-			std::cout<<"{"<<(int)tile.x<<","<<(int)tile.y<<"},";
+			std::cout<<"{"<<static_cast<int>(tile.x)<<","<<static_cast<int>(tile.y)<<"},";
 		}
 		std::cout<<"\n";
 	}
