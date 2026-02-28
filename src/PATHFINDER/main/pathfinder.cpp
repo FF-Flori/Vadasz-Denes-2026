@@ -95,6 +95,7 @@ void Pathfinder::groupOres() {
 void Pathfinder::checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group){
 	if(x < 0 || MAP_WIDTH <= x){return;}
 	if(y < 0 || MAP_WIDTH <= y){return;}
+	if(group.tiles.size()>=GROUP_LIMIT){return;}
 
 	if(map[getIndex(x,y)] == oreType) {
 		group.tiles.push_back({x,y});
