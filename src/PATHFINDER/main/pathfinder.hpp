@@ -7,7 +7,7 @@
 #include <string>
 
 /**
- * Pathfinder calculate a route threw the map with a genetic algorithm to maximalize collected value on the run.
+ * Pathfinder calculate a route through the map with a genetic algorithm to maximalize collected value on the run.
  */
 class Pathfinder {
 	public:
@@ -27,13 +27,17 @@ class Pathfinder {
 			wall,
 			blue,
 			yellow,
-			green
+			green,
+			grouped = 255
 		};
 
 		/**
 		 * coordinates type {x, y}
 		 */
-		using coord_t = std::array<uint8_t, 2>;
+		typedef struct{
+			uint8_t x;
+			uint8_t y;
+		}coord_t;
 
 	private:
 		// constants
@@ -58,9 +62,10 @@ class Pathfinder {
 
 		// functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
-		[[nodiscard]] static int getIndex(const coord_t& coords) {return coords[0] * MAP_WIDTH + coords[1];}
+		[[nodiscard]] static int getIndex(const coord_t& coords) {return coords.x * MAP_WIDTH + coords.y;}
 
 		void groupOres();
+		void createGroup(const uint8_t x, const uint8_t y);
 };
 
 #endif // VD26_PATHFINDER_HPP

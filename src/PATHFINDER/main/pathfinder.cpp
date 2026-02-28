@@ -29,7 +29,7 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 				case 'G': type = tile_t::green; break;
 				case 'Y': type = tile_t::yellow; break;
 				case 'S': type = tile_t::start;
-					startPos[0] = x; startPos[1] = y;
+					startPos.x = x; startPos.y = y;
 					break;
 				default:
 					std::cout << "Unknown character found while reading map file!\n";
@@ -54,4 +54,20 @@ Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(o
 
 void Pathfinder::groupOres() {
 
+}
+
+void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
+	OreGroup newGroup = OreGroup(map.at(x+y*MAP_WIDTH));
+	newGroup.tiles.push_back({x,y});
+
+	int counter = 0;
+	while(newGroup.tiles.size() > counter && newGroup.tiles.size() <=9){
+
+		coord_t tileposition = newGroup.tiles.at(counter);
+		//left
+		if(map.at(tileposition[0]-1+tileposition[1]*MAP_WIDTH) == newGroup.ore){}
+
+
+		counter++;
+	}
 }
