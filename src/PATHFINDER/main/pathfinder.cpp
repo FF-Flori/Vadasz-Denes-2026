@@ -1,10 +1,14 @@
 #include "pathfinder.hpp"
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <array>
 #include <string>
 #include <stdexcept>
+
+Pathfinder::~Pathfinder()
+{ if(!paths){free(paths);} }
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file
@@ -90,6 +94,25 @@ void Pathfinder::groupOres() {
 		std::cout<<"\n";
 	}
 	std::cout<<"There are "<<oreGroups.size()<<"groups\n";
+	/* A bit of explanation:
+	 * Let's say for example that oreGroups.size() = 4
+	 *    [0][1][2][3]
+	 * [0]    .  .  .
+	 * [1]       .  .
+	 * [2]          .
+	 * [3]
+	 * This is how a 2D lookup table will look with the unnescecary elements removed.
+	 * As you can see there are a lot of unused spaces. We will shrink this down into a 1D array, and not store the empty spaces
+	 * This will require a bit more math on the indexing size, but thats not that big of a deal
+	 * The amount of elements in this array, will be the sum of all integers from 1, up to oreGroups.size()-1
+	 * (because in the 2nd row there is 1 element, in the first there are 2 and so on)
+	 * We can get the sum of all integers from one up to a value (both ends included) with this formula:
+	 * S = (amount of elements to be summed)(startval+endval)/2
+	 * This can be simplified because we know the start val is always 1:
+	 * S = endval*(endval+1)/2        where endval is ofcourse oreGroups.size()
+	 */
+	pathsSize = ((oreGroups.size()-1)*oreGroups.size())>>1;
+	paths = (path_t*)malloc(sizeof(path_t)*pathsSize);
 }
 
 void Pathfinder::checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group){

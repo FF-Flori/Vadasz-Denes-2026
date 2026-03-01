@@ -1,6 +1,8 @@
 #ifndef VD26_PATHFINDER_HPP
 #define VD26_PATHFINDER_HPP
 
+#include <algorithm>
+#include <cassert>
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -17,6 +19,7 @@ class Pathfinder {
 		 * @param mapPath Absolute path to the file containing the map
 		 */
 		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
+		~Pathfinder();
 
 		/**
 		 * Map tile names
@@ -38,6 +41,14 @@ class Pathfinder {
 			uint8_t x;
 			uint8_t y;
 		}coord_t;
+		/*
+		 * This is only here, so when I write the paths array it doesnt throw an error. The implementation is still up for debate
+		 */
+		typedef struct{
+			//A rondom arbitrary value
+			//A one byte int can of course hold two moves (4bits/move) (i am aware it can be done in 3 bits but i dont want to bother with padding)
+			uint8_t move[50];
+		}path_t;
 
 	private:
 		// constants
@@ -59,10 +70,55 @@ class Pathfinder {
 		const uint16_t timeLimit;
 		std::array<tile_t, MAP_WIDTH*MAP_WIDTH> map{};
 		std::vector<OreGroup> oreGroups;
+		path_t *paths;	//A c style array that will be allocated once the size of the groups is known
+		int pathsSize = 0;
 
 		// functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
+
+		/* Explanation:
+		 *    [0][1][2][3]
+		 * [0]    .  .  .
+		 * [1]       .  .
+		 * [2]          .
+		 * [3]
+		 * The path1 and path2 arguments would be the indeces of this 2D lookup table, but half of the table is not in the flattened array, so we have to ensure that those wont be accessed that is why we create the x and y variables.
+		 * To get the index in the 1D array we need two things:
+		 *  - The index where the nth line starts in the 1D array
+		 *  - The offset from that line to the desired element (basically the x coordinate in the 2D array
+		 * We will have to add together these two values to get the index in the 1D array
+		 * The offset:
+		 * We can get the offset pretty easily. It is just x-y-1 because:
+		 *    [0][1][2]
+		 * [0]    .  .
+		 * [1]       .
+		 * [2]
+		 * In each row, the elements start at column y+1, so to get the offset we just need to subtract y+1 from x
+		 * x-(y+1) => x-y-1
+		 * This just ensures that x points to the nht column relative to the starting positions of the elements in that row
+		 *
+		 * The index of the row in the 1D array:
+		 * We know that from the back to the front, the amount of elements in a row will just be the natural numbers and 0: 0,1,2,3,4,5
+		 * (The nth row (from the back) will have n elements)
+		 * So the offset from the back to that row's first element is just the sum of all integers up to that point (inclusive)
+		 * Which we can get with this formula:
+		 * endpt*(endpt+1)/2
+		 * and to make it count from the start not the end, we just need to subtract it from the number of elemenrs in the list, which is already stored in  the pathsSize variable
+		 * (I added the bitshift for speed)
+		 */
+
+		int getPathIndex(const unsigned int path1, const unsigned int path2) {
+			assert(path1!=path2);
+			assert(oreGroups.size()>0);
+			assert(pathsSize>0);
+			assert(path1 < oreGroups.size() && path2 < oreGroups.size());
+			const int x = std::max(path1,path2);
+			const int y = std::min(path1,path2);
+
+			const int endval = oreGroups.size()-y-1;
+			return (x-y-1)+pathsSize-(((endval)*(endval+1))>>1);
+		}
 
 		void groupOres();
 		void createGroup(const uint8_t x, const uint8_t y);
