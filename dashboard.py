@@ -193,7 +193,7 @@ def backend(logfile):
 
 
 class DashboardUI:
-    def __init__(self, main, selectedlogfile):
+    def __init__(self, main:tk.CTk, selectedlogfile):
 
         self.main = main
         self.selectedlogfile = selectedlogfile
@@ -327,7 +327,7 @@ class DashboardUI:
         self.batteryfg.subplots_adjust(
             left=0.125,
             right=0.9,
-            bottom=0.2,
+            bottom=0.25,
             top=0.9
         )
 
@@ -398,13 +398,13 @@ class DashboardUI:
             lambda: on_close(self)
         )
 
-        self.refleshprg(False)
+        self.refleshprg(True)
 
     def refleshprg(self, refles):
 
         global logsize
 
-        refleshtime: int = 5
+        refleshtime:int = 5
 
         if logsize < os.path.getsize(self.selectedlogfile):
 
@@ -485,8 +485,6 @@ class DashboardUI:
                     lambda: self.refleshprg(True)
                 )
 
-                self.refleshing = True
-
         else:
 
             if refles == True:
@@ -495,8 +493,6 @@ class DashboardUI:
                     refleshtime * 1000,
                     lambda: self.refleshprg(True)
                 )
-
-                self.refleshing = True
 
 
 main = tk.CTk()
