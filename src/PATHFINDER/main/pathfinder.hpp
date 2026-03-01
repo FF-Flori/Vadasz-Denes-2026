@@ -41,14 +41,6 @@ class Pathfinder {
 			uint8_t x;
 			uint8_t y;
 		}coord_t;
-		/*
-		 * This is only here, so when I write the paths array it doesnt throw an error. The implementation is still up for debate
-		 */
-		typedef struct{
-			//A rondom arbitrary value
-			//A one byte int can of course hold two moves (4bits/move) (i am aware it can be done in 3 bits but i dont want to bother with padding)
-			uint8_t move[50];
-		}path_t;
 
 	private:
 		// constants
@@ -70,14 +62,14 @@ class Pathfinder {
 		const uint16_t timeLimit;
 		std::array<tile_t, MAP_WIDTH*MAP_WIDTH> map{};
 		std::vector<OreGroup> oreGroups;
-		path_t *paths;	//A c style array that will be allocated once the size of the groups is known
+		std::vector<Path> paths;
 		int pathsSize = 0;
 
 		// functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
 
-		/* Explanation:
+		/** Explanation:
 		 *    [0][1][2][3]
 		 * [0]    .  .  .
 		 * [1]       .  .

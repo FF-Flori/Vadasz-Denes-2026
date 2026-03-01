@@ -23,7 +23,7 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 
 	// read lines
 	while (std::getline(file, line) && y < MAP_WIDTH) {
-		std::cout<<"\n"<<(int)y<<": ";
+		std::cout<<"\n"<<static_cast<int>(y)<<": ";
 		// read chars
 		for (uint8_t x = 0; x < MAP_WIDTH && x < line.length(); x++) {
 			const char c = line[x*2];
