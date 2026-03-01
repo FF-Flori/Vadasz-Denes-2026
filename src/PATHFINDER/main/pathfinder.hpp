@@ -19,7 +19,6 @@ class Pathfinder {
 		 * @param mapPath Absolute path to the file containing the map
 		 */
 		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
-		~Pathfinder();
 
 		/**
 		 * Map tile names
@@ -41,14 +40,6 @@ class Pathfinder {
 			uint8_t x;
 			uint8_t y;
 		}coord_t;
-		/*
-		 * This is only here, so when I write the paths array it doesnt throw an error. The implementation is still up for debate
-		 */
-		typedef struct{
-			//A rondom arbitrary value
-			//A one byte int can of course hold two moves (4bits/move) (i am aware it can be done in 3 bits but i dont want to bother with padding)
-			uint8_t move[50];
-		}path_t;
 
 	private:
 		// constants
@@ -65,19 +56,27 @@ class Pathfinder {
 				explicit OreGroup(tile_t ore, uint8_t oreValue = 1);
 		};
 
+		class Path {
+			public:
+				const size_t a; // group A index
+				const size_t b; // group B index
+				std::vector<coord_t> path;
+
+				explicit Path(size_t a, size_t b);
+		};
+
 		// variables
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		std::array<tile_t, MAP_WIDTH*MAP_WIDTH> map{};
 		std::vector<OreGroup> oreGroups;
-		path_t *paths;	//A c style array that will be allocated once the size of the groups is known
-		int pathsSize = 0;
+		std::vector<Path> paths;
 
 		// functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
 
-		/* Explanation:
+		/** Explanation:
 		 *    [0][1][2][3]
 		 * [0]    .  .  .
 		 * [1]       .  .
@@ -106,18 +105,20 @@ class Pathfinder {
 		 * endpt*(endpt+1)/2
 		 * and to make it count from the start not the end, we just need to subtract it from the number of elemenrs in the list, which is already stored in  the pathsSize variable
 		 * (I added the bitshift for speed)
+		 *
+		 * https://www.desmos.com/calculator/ktpkbeylkv
 		 */
-
-		[[nodiscard]] int getPathIndex(const unsigned int path1, const unsigned int path2) const {
-			assert(path1!=path2);
-			assert(oreGroups.size()>0);
-			assert(pathsSize>0);
-			assert(path1 < oreGroups.size() && path2 < oreGroups.size());
-			const int x = std::max(path1,path2);
-			const int y = std::min(path1,path2);
-
-			const int endval = oreGroups.size()-y-1;
-			return (x-y-1)+pathsSize-(((endval)*(endval+1))>>1);
+		[[nodiscard]] static unsigned int max(const unsigned int a, const unsigned int b){return a > b ? a : b;}
+		[[nodiscard]] static unsigned int min(const unsigned int a, const unsigned int b){return a < b ? a : b;}
+		[[nodiscard]] size_t getPathIndex(const size_t a, const size_t b) const {
+			assert(a != b);
+			assert(oreGroups.size() > 0);
+			assert(paths.size() > 0);
+			assert(a < oreGroups.size() && b < oreGroups.size());
+			const size_t g1 = min(a, b);
+			const size_t g2 = max(a, b);
+			const size_t n = oreGroups.size() - g1;
+			return paths.size() - ((n*(n-1)) >> 1) + g2 - g1 - 1;
 		}
 
 		void groupOres();

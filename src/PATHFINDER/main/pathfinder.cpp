@@ -1,14 +1,10 @@
 #include "pathfinder.hpp"
 #include <cstdint>
-#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <array>
 #include <string>
 #include <stdexcept>
-
-Pathfinder::~Pathfinder()
-{ if(!paths){free(paths);} }
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file
@@ -23,7 +19,7 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 
 	// read lines
 	while (std::getline(file, line) && y < MAP_WIDTH) {
-		std::cout<<"\n"<<(int)y<<": ";
+		std::cout<<"\n"<<static_cast<int>(y)<<": ";
 		// read chars
 		for (uint8_t x = 0; x < MAP_WIDTH && x < line.length(); x++) {
 			const char c = line[x*2];
@@ -111,8 +107,6 @@ void Pathfinder::groupOres() {
 	 * This can be simplified because we know the start val is always 1:
 	 * S = endval*(endval+1)/2        where endval is ofcourse oreGroups.size()
 	 */
-	pathsSize = ((oreGroups.size()-1)*oreGroups.size())>>1;
-	paths = static_cast<path_t *>(malloc(sizeof(path_t) * pathsSize));
 }
 
 void Pathfinder::checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group){
