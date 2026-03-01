@@ -62,7 +62,7 @@ class Pathfinder {
 				const uint8_t oreValue; // value per ore
 				std::vector<coord_t> tiles;
 
-				OreGroup(tile_t ore, uint8_t oreValue = 1);
+				explicit OreGroup(tile_t ore, uint8_t oreValue = 1);
 		};
 
 		// variables
@@ -108,7 +108,7 @@ class Pathfinder {
 		 * (I added the bitshift for speed)
 		 */
 
-		int getPathIndex(const unsigned int path1, const unsigned int path2) {
+		[[nodiscard]] int getPathIndex(const unsigned int path1, const unsigned int path2) const {
 			assert(path1!=path2);
 			assert(oreGroups.size()>0);
 			assert(pathsSize>0);
@@ -121,7 +121,7 @@ class Pathfinder {
 		}
 
 		void groupOres();
-		void createGroup(const uint8_t x, const uint8_t y);
+		void createGroup(uint8_t x, uint8_t y);
 		/**
 		 * This function checks if the point at the supplied coordinates is the specified ore or not, and if it is, it adds it to the group and changes the value on the map to grouped
 		 * @param x The x coordinate of the checked point
@@ -129,7 +129,7 @@ class Pathfinder {
 		 * @param oreType The type of ore the checked point needs to be
 		 * @param group The group to append the ore to
 		 */
-		void checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group);
+		void checkCoord(uint8_t x, uint8_t y, tile_t oreType, OreGroup& group);
 };
 
 #endif // VD26_PATHFINDER_HPP
