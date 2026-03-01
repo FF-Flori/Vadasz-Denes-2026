@@ -57,13 +57,17 @@ class Pathfinder {
 				explicit OreGroup(tile_t ore, uint8_t oreValue = 1);
 		};
 
+		class Path {
+			public:
+				const uint16_t
+		};
+
 		// variables
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		std::array<tile_t, MAP_WIDTH*MAP_WIDTH> map{};
 		std::vector<OreGroup> oreGroups;
 		std::vector<Path> paths;
-		int pathsSize = 0;
 
 		// functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
@@ -99,7 +103,8 @@ class Pathfinder {
 		 * and to make it count from the start not the end, we just need to subtract it from the number of elemenrs in the list, which is already stored in  the pathsSize variable
 		 * (I added the bitshift for speed)
 		 */
-
+		[[nodiscard]] static unsigned int max(const unsigned int a, const unsigned int b){return a > b ? a : b;}
+		[[nodiscard]] static unsigned int min(const unsigned int a, const unsigned int b){return a < b ? a : b;}
 		[[nodiscard]] int getPathIndex(const unsigned int path1, const unsigned int path2) const {
 			assert(path1!=path2);
 			assert(oreGroups.size()>0);
