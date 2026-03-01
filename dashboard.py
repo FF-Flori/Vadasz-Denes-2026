@@ -201,7 +201,7 @@ class DashboardUI:
         clearwidget(self.main)
 
         self.main.title("Dashboard")
-        self.main.geometry("1200x800")
+        self.main.geometry("1390x800")
         self.main.resizable(True, True)
 
         BG = "#2e3237"
@@ -299,7 +299,7 @@ class DashboardUI:
 
         self.speedframe = create_panel(
             self.bodyframe,
-            "Sebesség (km/h)",
+            "Sebesség",
             0, 1
         )
 
@@ -361,6 +361,47 @@ class DashboardUI:
         self.batteryax.spines["top"].set_color("white")
         self.batteryax.spines["right"].set_color("white")
 
+
+        self.speedfg, self.speedax = plt.subplots(figsize=(4, 3), dpi=100)
+
+        self.speedfg.subplots_adjust(
+            left=0.2,
+            right=0.9,
+            bottom=0.25,
+            top=0.9
+        )
+
+        self.speedax.plot([], [], marker="o")
+
+        self.speedax.set_yticks([0, 1, 2, 3])
+        self.speedax.set_yticklabels(["Áll", "Lassú", "Normál", "Gyors"])
+        self.speedax.set_ylabel("Sebbesség")
+        self.speedax.set_xlabel("Idő (óra)")
+        self.speedax.grid(True, linestyle="--", linewidth=0.5)
+
+        self.speedcanvas = FigureCanvasTkAgg(
+            self.speedfg,
+            master=self.speedframe
+        )
+
+        self.speedcanvas.get_tk_widget().pack(
+            fill="both",
+            expand=True
+        )
+
+        self.speedfg.patch.set_facecolor(BG2)
+        self.speedax.set_facecolor(BG2)
+
+        self.speedax.tick_params(colors="white")
+
+        self.speedax.xaxis.label.set_color("white")
+        self.speedax.yaxis.label.set_color("white")
+
+        self.speedax.spines["bottom"].set_color("white")
+        self.speedax.spines["left"].set_color("white")
+        self.speedax.spines["top"].set_color("white")
+        self.speedax.spines["right"].set_color("white")
+
         self.materialfg, self.materialax = plt.subplots(
             figsize=(4, 3),
             dpi=100
@@ -415,40 +456,44 @@ class DashboardUI:
             global materialB
             global materialG
             global materialY
+            global speed
 
-            batteryax = self.batteryax
-
-            line = batteryax.lines[0]
-
-            xdata = list(line.get_xdata())
-            ydata = list(line.get_ydata())
             maxdata:int = 8
 
-            if type(ydata) != list:
-                ydata.tolist()
+            def linediagram(ax, datas, maxdata:int, canvas):
+                line = ax.lines[0]
 
-            if len(battery) > len(ydata):
+                xdata = list(line.get_xdata())
+                ydata = list(line.get_ydata())
 
-                new_y = battery[len(ydata):]
-                new_x = time[len(xdata):]
+                if type(ydata) != list:
+                    ydata.tolist()
 
-                xdata = (xdata + new_x)[-maxdata:]
-                ydata = (ydata + new_y)[-maxdata:]
+                if len(datas) > len(ydata):
 
-                line.set_data(xdata, ydata)
+                    new_y = datas[len(ydata):]
+                    new_x = time[len(xdata):]
 
-                self.batteryax.set_xticks(xdata)
+                    xdata = (xdata + new_x)[-maxdata:]
+                    ydata = (ydata + new_y)[-maxdata:]
 
-                labels = [
-                    f"{int(i)//60}:{int(i)%60:02d}"
-                    for i in xdata
-                ]
+                    line.set_data(xdata, ydata)
 
-                self.batteryax.set_xticklabels(labels)
-                
-                self.batteryax.relim()
-                self.batteryax.autoscale_view()
-                self.batterycanvas.draw_idle()
+                    ax.set_xticks(xdata)
+
+                    labels = [
+                        f"{int(i)//60}:{int(i)%60:02d}"
+                        for i in xdata
+                    ]
+
+                    ax.set_xticklabels(labels)
+
+                    ax.relim()
+                    ax.autoscale_view()
+                    canvas.draw_idle()
+
+            linediagram(self.batteryax, battery, maxdata, self.batterycanvas)
+            linediagram(self.speedax, speed, maxdata, self.speedcanvas)
 
             self.materialax.clear()
 
