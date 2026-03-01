@@ -11,7 +11,8 @@ class GamePanel:
         self.texture.fill((235,131,52))
         self.logicModule:GameLogic = GameLogic()
     def updatePanel(self, deltaTime:float)->None:
-        self.logicModule.Update()
+        self.texture.fill((235,131,52))
+        self.logicModule.Update(deltaTime,self.texture)
     def showPanel(self, screen:pygame.Surface)->None:
         screenwidth:int = screen.get_width()
         newwidth:int = screenwidth-2*self.margin
