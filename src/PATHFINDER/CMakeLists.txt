@@ -21,5 +21,6 @@ set(SOURCES
 pybind11_add_module(pathfinder ${SOURCES})
 
 set_target_properties(pathfinder PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/build"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"
 )
