@@ -1,14 +1,10 @@
 #include "pathfinder.hpp"
 #include <cstdint>
-#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <array>
 #include <string>
 #include <stdexcept>
-
-Pathfinder::~Pathfinder()
-{ if(!paths){free(paths);} }
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file

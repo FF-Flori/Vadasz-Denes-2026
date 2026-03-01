@@ -19,7 +19,6 @@ class Pathfinder {
 		 * @param mapPath Absolute path to the file containing the map
 		 */
 		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
-		~Pathfinder();
 
 		/**
 		 * Map tile names
@@ -59,7 +58,11 @@ class Pathfinder {
 
 		class Path {
 			public:
-				const uint16_t
+				const size_t a; // group A index
+				const size_t b; // group B index
+				std::vector<coord_t> path;
+
+				explicit Path(size_t a, size_t b);
 		};
 
 		// variables
@@ -102,19 +105,20 @@ class Pathfinder {
 		 * endpt*(endpt+1)/2
 		 * and to make it count from the start not the end, we just need to subtract it from the number of elemenrs in the list, which is already stored in  the pathsSize variable
 		 * (I added the bitshift for speed)
+		 *
+		 * https://www.desmos.com/calculator/ktpkbeylkv
 		 */
 		[[nodiscard]] static unsigned int max(const unsigned int a, const unsigned int b){return a > b ? a : b;}
 		[[nodiscard]] static unsigned int min(const unsigned int a, const unsigned int b){return a < b ? a : b;}
-		[[nodiscard]] int getPathIndex(const unsigned int path1, const unsigned int path2) const {
-			assert(path1!=path2);
-			assert(oreGroups.size()>0);
-			assert(pathsSize>0);
-			assert(path1 < oreGroups.size() && path2 < oreGroups.size());
-			const int x = std::max(path1,path2);
-			const int y = std::min(path1,path2);
-
-			const int endval = oreGroups.size()-y-1;
-			return (x-y-1)+pathsSize-(((endval)*(endval+1))>>1);
+		[[nodiscard]] size_t getPathIndex(const size_t a, const size_t b) const {
+			assert(a != b);
+			assert(oreGroups.size() > 0);
+			assert(paths.size() > 0);
+			assert(a < oreGroups.size() && b < oreGroups.size());
+			const size_t g1 = min(a, b);
+			const size_t g2 = max(a, b);
+			const size_t n = oreGroups.size() - g1;
+			return paths.size() - ((n*(n-1)) >> 1) + g2 - g1 - 1;
 		}
 
 		void groupOres();
