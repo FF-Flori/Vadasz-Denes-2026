@@ -11,18 +11,22 @@ class MainWindow:
         self.clock = pygame.time.Clock()
         self.running = True
         self.game:GameWindow = GameWindow(width,height)
+        self.lastTime = pygame.time.get_ticks()
+        self.deltaTime = 0.16666
     def mainloop(self)->None:
         while self.running:
+            self.deltaTime = pygame.time.get_ticks()-self.lastTime
+            self.lastTime = pygame.time.get_ticks()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
 
             self.screen.fill("black")
 
-            self.game.showScreen(self.screen)
+            self.game.showScreen(self.screen,self.deltaTime)
             pygame.display.flip()
-
             self.clock.tick(60)
+
         return
     def quit(self)->None:
         pygame.quit()

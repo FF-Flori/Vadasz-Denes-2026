@@ -112,7 +112,7 @@ void Pathfinder::groupOres() {
 	 * S = endval*(endval+1)/2        where endval is ofcourse oreGroups.size()
 	 */
 	pathsSize = ((oreGroups.size()-1)*oreGroups.size())>>1;
-	paths = (path_t*)malloc(sizeof(path_t)*pathsSize);
+	paths = static_cast<path_t *>(malloc(sizeof(path_t) * pathsSize));
 }
 
 void Pathfinder::checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group){

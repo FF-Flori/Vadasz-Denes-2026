@@ -20,6 +20,10 @@ set(SOURCES
 )
 pybind11_add_module(pathfinder ${SOURCES})
 
+if(MINGW)
+    target_link_options(pathfinder PRIVATE "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive")
+endif()
+
 set_target_properties(pathfinder PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"

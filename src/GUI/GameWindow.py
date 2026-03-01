@@ -8,11 +8,11 @@ class GameWindow:
         self.height:int = height
         self.aspectRatio:float = width/height
         self.gameHandler:Game = Game()
-    def showScreen(self,screen:pygame.Surface)->None:
+    def showScreen(self,screen:pygame.Surface,deltaTime:float)->None:
         screenwidth:int = screen.get_width()
         screenheight:int = screen.get_height()
 
-        self.gameHandler.drawGame(self.texture)
+        self.gameHandler.drawGame(self.texture,deltaTime)
 
         # The width is bigger than normal relative to the height
         if self.aspectRatio > screenwidth/screenheight:
