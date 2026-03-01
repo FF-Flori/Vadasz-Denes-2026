@@ -335,7 +335,7 @@ class DashboardUI:
 
         self.batteryax.set_ylim(0, 100)
         self.batteryax.set_ylabel("Töltöttség (%)")
-        self.batteryax.set_xlabel("Idő (perc)")
+        self.batteryax.set_xlabel("Idő (óra)")
         self.batteryax.grid(True, linestyle="--", linewidth=0.5)
 
         self.batterycanvas = FigureCanvasTkAgg(
@@ -420,7 +420,9 @@ class DashboardUI:
 
             line = batteryax.lines[0]
 
-            ydata = line.get_ydata()
+            xdata = list(line.get_xdata())
+            ydata = list(line.get_ydata())
+            maxdata:int = 8
 
             if type(ydata) != list:
                 ydata.tolist()
@@ -428,19 +430,25 @@ class DashboardUI:
             if len(battery) > len(ydata):
 
                 new_y = battery[len(ydata):]
-                new_x = time[len(ydata):]
+                new_x = time[len(xdata):]
 
-                line.set_ydata(
-                    list(ydata) + new_y
-                )
+                xdata = (xdata + new_x)[-maxdata:]
+                ydata = (ydata + new_y)[-maxdata:]
 
-                line.set_xdata(
-                    list(line.get_xdata()) + new_x
-                )
+                line.set_data(xdata, ydata)
 
-                batteryax.set_xticks(time)
+                self.batteryax.set_xticks(xdata)
 
-                self.batterycanvas.draw()
+                labels = [
+                    f"{int(i)//60}:{int(i)%60:02d}"
+                    for i in xdata
+                ]
+
+                self.batteryax.set_xticklabels(labels)
+                
+                self.batteryax.relim()
+                self.batteryax.autoscale_view()
+                self.batterycanvas.draw_idle()
 
             self.materialax.clear()
 
