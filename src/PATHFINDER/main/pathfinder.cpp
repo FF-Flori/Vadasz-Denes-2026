@@ -57,6 +57,15 @@ Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(o
 	tiles.reserve(GROUP_LIMIT);
 }
 
+Pathfinder::Path::Path(const size_t a, const size_t b, Pathfinder& pathfinder) : a(a), b(b) {
+
+	astar(pathfinder.map);
+}
+
+void Pathfinder::Path::astar(map_t& map) {
+
+}
+
 void Pathfinder::groupOres() {
 	oreGroups.reserve(20);
 	std::cout<<"Called groupOres\n";

@@ -13,6 +13,10 @@
  */
 class Pathfinder {
 	public:
+		// constants
+		static constexpr uint8_t MAP_WIDTH = 50;
+		static constexpr uint8_t GROUP_LIMIT = 9;
+
 		/**
 		 * Holy constructor sigma 67 gg
 		 * @param timeLimit Time limit in the simulation for the rover to complete the task
@@ -34,6 +38,11 @@ class Pathfinder {
 		};
 
 		/**
+		 * map type
+		 */
+		using map_t = std::array<tile_t, MAP_WIDTH * MAP_WIDTH>;
+
+		/**
 		 * coordinates type {x, y}
 		 */
 		typedef struct{
@@ -42,10 +51,6 @@ class Pathfinder {
 		}coord_t;
 
 	private:
-		// constants
-		static constexpr uint8_t MAP_WIDTH = 50;
-		static constexpr uint8_t GROUP_LIMIT = 9;
-
 		// classes
 		class OreGroup {
 			public:
@@ -62,13 +67,19 @@ class Pathfinder {
 				const size_t b; // group B index
 				std::vector<coord_t> path;
 
-				explicit Path(size_t a, size_t b);
+				explicit Path(size_t a, size_t b, Pathfinder& pathfinder);
+			private:
+				[[nodiscard]] static uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
+					return max(std::abs(coordA.x - coordB.x), std::abs(coordA.y - coordB.y));
+				}
+				
+				void astar(map_t& map);
 		};
 
 		// variables
 		coord_t startPos{};
 		const uint16_t timeLimit;
-		std::array<tile_t, MAP_WIDTH*MAP_WIDTH> map{};
+		map_t map{};
 		std::vector<OreGroup> oreGroups;
 		std::vector<Path> paths;
 
