@@ -23,8 +23,8 @@ class Pathfinder {
 		 * @param mapPath Absolute path to the file containing the map
 		 */
 		static void create(const uint16_t timeLimit, const std::string& mapPath) {
-			if (instance == nullptr) {
-				instance = new Pathfinder(timeLimit, mapPath);
+			if (pathfinder == nullptr) {
+				pathfinder = new Pathfinder(timeLimit, mapPath);
 			}
 		}
 
@@ -32,9 +32,9 @@ class Pathfinder {
 		 * Deletes the instance
 		 */
 		static void destroy() {
-			if (instance != nullptr) {
-				delete instance;
-				instance = nullptr;
+			if (pathfinder != nullptr) {
+				delete pathfinder;
+				pathfinder = nullptr;
 			}
 		}
 
@@ -44,7 +44,7 @@ class Pathfinder {
 		 * @return nullptr
 		 */
 		static Pathfinder& getInstance() {
-			return *instance;
+			return *pathfinder;
 		}
 
 		/**
@@ -99,21 +99,23 @@ class Pathfinder {
 
 		class Path {
 			public:
-				const size_t a; // group A index
-				const size_t b; // group B index
+				const size_t groupA; // group A index
+				const size_t groupB; // group B index
+				coord_t startPos{};
+				coord_t endPos{};
 				std::vector<coord_t> path;
 
-				explicit Path(size_t a, size_t b, Pathfinder& pathfinder);
+				explicit Path(size_t a, size_t b);
 			private:
 				[[nodiscard]] static uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
 					return max(std::abs(coordA.x - coordB.x), std::abs(coordA.y - coordB.y));
 				}
-
-				void aStar(map_t& map);
+				void getClosestTiles();
+				void aStar();
 		};
 
 		// variables
-		static Pathfinder* instance;
+		static Pathfinder* pathfinder;
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		map_t map{};
@@ -181,6 +183,6 @@ class Pathfinder {
 		void checkCoord(uint8_t x, uint8_t y, tile_t oreType, OreGroup& group);
 };
 
-Pathfinder* Pathfinder::instance = nullptr;
+Pathfinder* Pathfinder::pathfinder = nullptr;
 
 #endif // VD26_PATHFINDER_HPP

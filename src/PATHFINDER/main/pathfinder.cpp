@@ -57,13 +57,30 @@ Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(o
 	tiles.reserve(GROUP_LIMIT);
 }
 
-Pathfinder::Path::Path(const size_t a, const size_t b, Pathfinder& pathfinder) : a(a), b(b) {
-
-	aStar(pathfinder.map);
+Pathfinder::Path::Path(const size_t a, const size_t b) : groupA(a), groupB(b) {
+	if (pathfinder == nullptr) [[unlikely]] {
+		throw std::runtime_error("Pathfinder instance is null! WTF?!");
+	}
+	getClosestTiles();
+	aStar();
 }
 
-void Pathfinder::Path::aStar(map_t& map) {
-	tile_t a = map[21];
+void Pathfinder::Path::getClosestTiles() {
+	uint8_t minDistance = -1;
+	// ReSharper disable once CppDFANullDereference
+	for (const coord_t a : pathfinder->oreGroups[groupA].tiles) {
+		for (const coord_t b : pathfinder->oreGroups[groupB].tiles) {
+			if (const uint8_t distance = getChebyshev(a, b); distance < minDistance) {
+				minDistance = distance;
+				startPos = a;
+				endPos = b;
+			}
+		}
+	}
+}
+
+void Pathfinder::Path::aStar() {
+
 }
 
 void Pathfinder::groupOres() {
