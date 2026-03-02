@@ -9,7 +9,7 @@
 #include <string>
 
 /**
- * Pathfinder calculate a route through the map with a genetic algorithm to maximalize collected value on the run.
+ * Pathfinder calculates a route through a map with a genetic algorithm to maximalize collected value on the run.
  */
 class Pathfinder {
 	public:
@@ -18,11 +18,34 @@ class Pathfinder {
 		static constexpr uint8_t GROUP_LIMIT = 9;
 
 		/**
-		 * Holy constructor sigma 67 gg
+		 * This method creates the singleton instance for Pathfinder
 		 * @param timeLimit Time limit in the simulation for the rover to complete the task
 		 * @param mapPath Absolute path to the file containing the map
 		 */
-		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
+		static void create(const uint16_t timeLimit, const std::string& mapPath) {
+			if (instance == nullptr) {
+				instance = new Pathfinder(timeLimit, mapPath);
+			}
+		}
+
+		/**
+		 * Deletes the instance
+		 */
+		static void destroy() {
+			if (instance != nullptr) {
+				delete instance;
+				instance = nullptr;
+			}
+		}
+
+		/**
+		 * Returns the singleton instance of Pathfinder
+		 * @return Instance of Pathfinder
+		 * @return nullptr
+		 */
+		static Pathfinder& getInstance() {
+			return *instance;
+		}
 
 		/**
 		 * Map tile names
@@ -50,7 +73,20 @@ class Pathfinder {
 			uint8_t y;
 		}coord_t;
 
+		// ban copying
+		Pathfinder(const Pathfinder&) = delete;
+		Pathfinder& operator=(const Pathfinder&) = delete;
+		Pathfinder(Pathfinder&&) = delete;
+		Pathfinder& operator=(Pathfinder&&) = delete;
+
 	private:
+		/**
+		 * Holy constructor sigma 67 gg
+		 * @param timeLimit Time limit in the simulation for the rover to complete the task
+		 * @param mapPath Absolute path to the file containing the map
+		 */
+		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
+
 		// classes
 		class OreGroup {
 			public:
@@ -72,11 +108,12 @@ class Pathfinder {
 				[[nodiscard]] static uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
 					return max(std::abs(coordA.x - coordB.x), std::abs(coordA.y - coordB.y));
 				}
-				
-				void astar(map_t& map);
+
+				void aStar(map_t& map);
 		};
 
 		// variables
+		static Pathfinder* instance;
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		map_t map{};
@@ -143,5 +180,7 @@ class Pathfinder {
 		 */
 		void checkCoord(uint8_t x, uint8_t y, tile_t oreType, OreGroup& group);
 };
+
+Pathfinder* Pathfinder::instance = nullptr;
 
 #endif // VD26_PATHFINDER_HPP

@@ -59,11 +59,11 @@ Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(o
 
 Pathfinder::Path::Path(const size_t a, const size_t b, Pathfinder& pathfinder) : a(a), b(b) {
 
-	astar(pathfinder.map);
+	aStar(pathfinder.map);
 }
 
-void Pathfinder::Path::astar(map_t& map) {
-
+void Pathfinder::Path::aStar(map_t& map) {
+	tile_t a = map[21];
 }
 
 void Pathfinder::groupOres() {
