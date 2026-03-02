@@ -115,7 +115,7 @@ class Pathfinder {
 		};
 
 		// variables
-		static Pathfinder* pathfinder;
+		static inline Pathfinder* pathfinder = nullptr;
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		map_t map{};
@@ -176,13 +176,11 @@ class Pathfinder {
 		/**
 		 * This function checks if the point at the supplied coordinates is the specified ore or not, and if it is, it adds it to the group and changes the value on the map to grouped
 		 * @param x The x coordinate of the checked point
-		 * @param y The y coordinete of the checked point
+		 * @param y The y coordinate of the checked point
 		 * @param oreType The type of ore the checked point needs to be
 		 * @param group The group to append the ore to
 		 */
 		void checkCoord(uint8_t x, uint8_t y, tile_t oreType, OreGroup& group);
 };
-
-Pathfinder* Pathfinder::pathfinder = nullptr;
 
 #endif // VD26_PATHFINDER_HPP
