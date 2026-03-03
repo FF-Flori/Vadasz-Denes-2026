@@ -3,8 +3,11 @@
 #include <iostream>
 #include <fstream>
 #include <array>
+#include <bitset>
+#include <queue>
 #include <string>
 #include <stdexcept>
+#include <unordered_map>
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file
@@ -56,13 +59,14 @@ void Pathfinder::calculate() {
 }
 
 Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(ore), oreValue(oreValue) {
-	tiles.reserve(GROUP_LIMIT);
+	tiles.reserve(MAP_WIDTH);
 }
 
 Pathfinder::Path::Path(const size_t a, const size_t b) : groupA(a), groupB(b) {
 	if (pathfinder == nullptr) [[unlikely]] {
 		throw std::runtime_error("Pathfinder instance is null! WTF?!");
 	}
+	path.reserve(MAP_WIDTH);
 	getClosestTiles();
 	aStar();
 }
@@ -82,9 +86,53 @@ void Pathfinder::Path::getClosestTiles() {
 }
 
 void Pathfinder::Path::aStar() {
-	std::vector<Node> g_score;
-	g_score.reserve(MAP_WIDTH);
-	g_score.push_back({startPos, 0, getChebyshev(startPos, endPos)});
+	std::vector<Node> openSetContainer;
+	openSetContainer.reserve(2*MAP_WIDTH);
+	std::priority_queue<Node, std::vector<Node>, std::greater<>> openSet;
+	std::unordered_map<coord_t, direction_t, CoordHash> tracesToStart;
+	tracesToStart.reserve(3*MAP_WIDTH);
+
+	openSet.emplace(startPos, 0, endPos);
+	tracesToStart[startPos] = Directions::NODIRECTION;
+
+	bool searching = true;
+	while (searching) {
+		// get the max f cost node
+		const Node node = openSet.top();
+		openSet.pop();
+
+		for (direction_t direction : Directions::ALL) {
+			// if it's their parent node
+			if (direction == node.parent) {
+				continue;
+			}
+
+			// if out of map
+			if (node.coords < direction) [[unlikely]] {
+				continue;
+			}
+
+			const coord_t neighbor = node.coords + direction;
+			// if the next node is the finish
+			if (neighbor == endPos) [[unlikely]] {
+				tracesToStart[endPos] = -direction;
+				searching = false;
+				break;
+			}
+			// if wall or already mapped coords
+			// ReSharper disable once CppDFANullDereference
+			if (pathfinder->map[getIndex(neighbor)] == tile_t::wall || tracesToStart.count(neighbor)) {
+				continue;
+			}
+			openSet.emplace(neighbor, node.g + 1, endPos, -direction);
+			tracesToStart[neighbor] = -direction; // flipped direction vector with operator sigma
+		}
+	}
+	path.push_back(endPos);
+	while (path.back() != startPos) {
+		path.push_back(path.back() + tracesToStart[path.back()]);
+	}
+	path.shrink_to_fit();
 }
 
 void Pathfinder::groupOres() {

@@ -48,6 +48,9 @@ class Pathfinder {
 			return *pathfinder;
 		}
 
+		/**
+		 * Calculates an optimal path for the rover
+		 */
 		void calculate();
 
 		/**
@@ -63,20 +66,35 @@ class Pathfinder {
 			grouped = 255
 		};
 
-		typedef struct {
+		/**
+		 * Direction type
+		 */
+		struct direction_t{
 			int8_t x;
 			int8_t y;
-		} direction_t;
 
+			[[nodiscard]] direction_t operator-() const {
+				return { static_cast<int8_t>(-x), static_cast<int8_t>(-y) };
+			}
+
+			[[nodiscard]] bool operator==(const direction_t other) const {
+				return x == other.x && y == other.y;
+			}
+		};
+
+		/**
+		 * Direction names
+		 */
 		struct Directions {
-			static constexpr direction_t UP_LEFT    {-1, -1};
-			static constexpr direction_t UP         {0 , -1};
-			static constexpr direction_t UP_RIGHT   {1 , -1};
-			static constexpr direction_t RIGHT      {1 ,  0};
-			static constexpr direction_t DOWN_RIGHT {1 ,  1};
-			static constexpr direction_t DOWN       {0 ,  1};
-			static constexpr direction_t DOWN_LEFT  {-1,  1};
-			static constexpr direction_t LEFT       {-1,  0};
+			static constexpr direction_t UP_LEFT     {-1, -1};
+			static constexpr direction_t UP          { 0, -1};
+			static constexpr direction_t UP_RIGHT    { 1, -1};
+			static constexpr direction_t RIGHT       { 1,  0};
+			static constexpr direction_t DOWN_RIGHT  { 1,  1};
+			static constexpr direction_t DOWN        { 0,  1};
+			static constexpr direction_t DOWN_LEFT   {-1,  1};
+			static constexpr direction_t LEFT        {-1,  0};
+			static constexpr direction_t NODIRECTION { 0,  0};
 
 			static constexpr std::array<direction_t, 8> ALL = {
 				UP_LEFT, UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT
@@ -84,17 +102,43 @@ class Pathfinder {
 		};
 
 		/**
-		 * map type
+		 * Map type
 		 */
 		using map_t = std::array<tile_t, MAP_WIDTH * MAP_WIDTH>;
 
 		/**
-		 * coordinates type {x, y}
+		 * Coordinates type {x, y}
 		 */
-		typedef struct{
+		struct coord_t {
 			uint8_t x;
 			uint8_t y;
-		}coord_t;
+
+			[[nodiscard]] bool operator==(const coord_t& other) const {
+				return x == other.x && y == other.y;
+			}
+
+			[[nodiscard]] bool operator!=(const coord_t& other) const {
+				return x != other.x || y != other.y;
+			}
+
+			[[nodiscard]] coord_t operator+(const direction_t & direction) const {
+				return {static_cast<uint8_t>(x + direction.x), static_cast<uint8_t>(y + direction.y)};
+			}
+
+			/**
+			 * Checks if the direction points out of the map
+			 * @param direction The direction to compare to
+			 * @return If the coordinate will be in the map if the direction is added
+			 */
+			[[nodiscard]] bool operator<(const direction_t & direction) const {
+				const int newX = x + direction.x;
+				const int newY = y + direction.y;
+				if (newX < 0 || newX >= MAP_WIDTH || newY < 0 || newY >= MAP_WIDTH) {
+					return true;
+				}
+				return false;
+			}
+		};
 
 		// ban copying
 		Pathfinder(const Pathfinder&) = delete;
@@ -137,12 +181,27 @@ class Pathfinder {
 				void aStar();
 
 				struct Node {
-					coord_t coords;
+					coord_t coords{};
 					uint16_t g; // Cost from start
 					uint16_t f; // Estimated whole cost
+					direction_t parent{}; // direction to parent node
 
-					bool operator>(const Node& n) const {
+					Node(const coord_t coords, const uint16_t g, const coord_t endPos,
+					const direction_t parent = Directions::NODIRECTION) {
+						this->coords = coords;
+						this->g = g;
+						this->parent = parent;
+						f = getChebyshev(coords, endPos) + g;
+					}
+
+					[[nodiscard]] bool operator>(const Node& n) const {
 						return f > n.f;
+					}
+				};
+
+				struct CoordHash {
+					std::size_t operator()(const coord_t& c) const {
+						return static_cast<std::size_t>(c.x<<8 | c.y);
 					}
 				};
 		};
