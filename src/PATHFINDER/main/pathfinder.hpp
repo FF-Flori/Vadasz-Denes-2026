@@ -47,6 +47,8 @@ class Pathfinder {
 			return *pathfinder;
 		}
 
+		void calculate();
+
 		/**
 		 * Map tile names
 		 */

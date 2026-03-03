@@ -49,7 +49,9 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 	std::cout<<"\nDone opening file\n";
 
 	file.close();
+}
 
+void Pathfinder::calculate() {
 	groupOres();
 }
 

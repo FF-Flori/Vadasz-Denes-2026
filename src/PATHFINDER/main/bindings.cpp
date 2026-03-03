@@ -16,5 +16,8 @@ PYBIND11_MODULE(pathfinder, m) {
 			"Returns instance")
 
 		.def_static("destroy", &Pathfinder::destroy,
-			"Destroys singleton class instance");
+			"Destroys singleton class instance")
+
+		.def("calculate", &Pathfinder::calculate,
+			"Calculates an optimal path for the rover");
 }
