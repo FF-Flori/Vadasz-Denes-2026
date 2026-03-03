@@ -16,6 +16,7 @@ class Pathfinder {
 		// constants
 		static constexpr uint8_t MAP_WIDTH = 50;
 		static constexpr uint8_t GROUP_LIMIT = 9;
+		static constexpr int8_t directions[8][2] = {{}};
 
 		/**
 		 * This method creates the singleton instance for Pathfinder
@@ -53,13 +54,33 @@ class Pathfinder {
 		 * Map tile names
 		 */
 		enum class tile_t : uint8_t {
+			wall = 0,
 			start,
 			land,
-			wall,
 			blue,
 			yellow,
 			green,
 			grouped = 255
+		};
+
+		typedef struct {
+			int8_t x;
+			int8_t y;
+		} direction_t;
+
+		struct Directions {
+			static constexpr direction_t UP_LEFT    {-1, -1};
+			static constexpr direction_t UP         {0 , -1};
+			static constexpr direction_t UP_RIGHT   {1 , -1};
+			static constexpr direction_t RIGHT      {1 ,  0};
+			static constexpr direction_t DOWN_RIGHT {1 ,  1};
+			static constexpr direction_t DOWN       {0 ,  1};
+			static constexpr direction_t DOWN_LEFT  {-1,  1};
+			static constexpr direction_t LEFT       {-1,  0};
+
+			static constexpr std::array<direction_t, 8> ALL = {
+				UP_LEFT, UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT
+			};
 		};
 
 		/**

@@ -82,7 +82,7 @@ void Pathfinder::Path::getClosestTiles() {
 }
 
 void Pathfinder::Path::aStar() {
-
+	
 }
 
 void Pathfinder::groupOres() {
