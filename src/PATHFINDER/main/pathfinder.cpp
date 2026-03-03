@@ -82,7 +82,9 @@ void Pathfinder::Path::getClosestTiles() {
 }
 
 void Pathfinder::Path::aStar() {
-	
+	std::vector<Node> g_score;
+	g_score.reserve(MAP_WIDTH);
+	g_score.push_back({startPos, 0, getChebyshev(startPos, endPos)});
 }
 
 void Pathfinder::groupOres() {

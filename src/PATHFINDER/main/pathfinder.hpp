@@ -135,6 +135,16 @@ class Pathfinder {
 				}
 				void getClosestTiles();
 				void aStar();
+
+				struct Node {
+					coord_t coords;
+					uint16_t g; // Cost from start
+					uint16_t f; // Estimated whole cost
+
+					bool operator>(const Node& n) const {
+						return f > n.f;
+					}
+				};
 		};
 
 		// variables
