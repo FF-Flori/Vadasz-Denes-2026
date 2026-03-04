@@ -187,7 +187,7 @@ void Pathfinder::groupOres() {
 	 * [3]
 	 * This is how a 2D lookup table will look with the unnescecary elements removed.
 	 * As you can see there are a lot of unused spaces. We will shrink this down into a 1D array, and not store the empty spaces
-	 * This will require a bit more math on the indexing size, but thats not that big of a deal
+	 * This will require a bit more math on the indexing size, but that's not that big of a deal
 	 * The amount of elements in this array, will be the sum of all integers from 1, up to oreGroups.size()-1
 	 * (because in the 2nd row there is 1 element, in the first there are 2 and so on)
 	 * We can get the sum of all integers from one up to a value (both ends included) with this formula:
