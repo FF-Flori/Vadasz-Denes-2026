@@ -174,7 +174,7 @@ class Pathfinder {
 				const size_t groupB; // group B index
 				coord_t startPos{};
 				coord_t endPos{};
-				std::vector<coord_t> path;
+				std::vector<coord_t> path; // stays empty after constructor if no path found
 
 				explicit Path(size_t a, size_t b);
 			private:

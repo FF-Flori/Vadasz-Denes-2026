@@ -116,6 +116,10 @@ void Pathfinder::Path::aStar() {
 
 	bool searching = true;
 	while (searching) {
+		// no path found :(
+		if (openSet.empty()) [[unlikely]] {
+			return;
+		}
 		// get the max f cost node
 		const Node node = openSet.top();
 		openSet.pop();
@@ -145,7 +149,7 @@ void Pathfinder::Path::aStar() {
 			// if already mapped
 			if (const auto neighborData = tracesToStart.find(neighbor); neighborData != tracesToStart.end()) {
 				// if deprecated
-				if (neighborData->second.parent != node.parent) {
+				if (tracesToStart[node.coords].parent != node.parent) {
 					continue;
 				}
 				// if better path found
