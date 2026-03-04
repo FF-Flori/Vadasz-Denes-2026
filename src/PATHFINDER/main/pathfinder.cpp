@@ -73,9 +73,6 @@ Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(o
 }
 
 Pathfinder::Path::Path(const size_t a, const size_t b) : groupA(a), groupB(b) {
-	if (pathfinder == nullptr) [[unlikely]] {
-		throw std::runtime_error("Pathfinder instance is null! WTF?!");
-	}
 	path.reserve(MAP_WIDTH);
 	getClosestTiles();
 	aStar();
@@ -83,11 +80,20 @@ Pathfinder::Path::Path(const size_t a, const size_t b) : groupA(a), groupB(b) {
 
 void Pathfinder::Path::getClosestTiles() {
 	uint8_t minDistance = -1;
+	uint16_t minDiagonal = -1;
 	// ReSharper disable once CppDFANullDereference
 	for (const coord_t a : pathfinder->oreGroups[groupA].tiles) {
 		for (const coord_t b : pathfinder->oreGroups[groupB].tiles) {
-			if (const uint8_t distance = getChebyshev(a, b); distance < minDistance) {
+			if (const uint8_t distance = getChebyshev(a, b); distance == minDistance) {
+				if (const uint16_t diagonal = getSquaredDiagonal(a, b); diagonal < minDiagonal) {
+					minDistance = distance;
+					minDiagonal = diagonal;
+					startPos = a;
+					endPos = b;
+				}
+			} else if (distance < minDistance) {
 				minDistance = distance;
+				minDiagonal = getSquaredDiagonal(a, b);
 				startPos = a;
 				endPos = b;
 			}
@@ -96,14 +102,17 @@ void Pathfinder::Path::getClosestTiles() {
 }
 
 void Pathfinder::Path::aStar() {
-	std::vector<Node> openSetContainer;
-	openSetContainer.reserve(2*MAP_WIDTH);
+	struct TraceData {
+		direction_t parent;
+		uint16_t g;
+	};
+
 	std::priority_queue<Node, std::vector<Node>, std::greater<>> openSet;
-	std::unordered_map<coord_t, direction_t, CoordHash> tracesToStart;
+	std::unordered_map<coord_t, TraceData, CoordHash> tracesToStart;
 	tracesToStart.reserve(3*MAP_WIDTH);
 
 	openSet.emplace(startPos, 0, endPos);
-	tracesToStart[startPos] = Directions::NODIRECTION;
+	tracesToStart[startPos] = {Directions::NODIRECTION, 0};
 
 	bool searching = true;
 	while (searching) {
@@ -116,31 +125,44 @@ void Pathfinder::Path::aStar() {
 			if (direction == node.parent) {
 				continue;
 			}
-
 			// if out of map
 			if (node.coords < direction) [[unlikely]] {
 				continue;
 			}
-
 			const coord_t neighbor = node.coords + direction;
 			// if the next node is the finish
 			if (neighbor == endPos) [[unlikely]] {
-				tracesToStart[endPos] = -direction;
+				tracesToStart[endPos] = {-direction, 67};
 				searching = false;
 				break;
 			}
-			// if wall or already mapped coords
+			// if wall
 			// ReSharper disable once CppDFANullDereference
-			if (pathfinder->map[getIndex(neighbor)] == tile_t::wall || tracesToStart.count(neighbor)) {
+			if (pathfinder->map[getIndex(neighbor)] == tile_t::wall) {
 				continue;
 			}
-			openSet.emplace(neighbor, node.g + 1, endPos, -direction);
-			tracesToStart[neighbor] = -direction; // flipped direction vector with operator sigma
+			uint16_t newG = node.g + 1;
+			// if already mapped
+			if (const auto neighborData = tracesToStart.find(neighbor); neighborData != tracesToStart.end()) {
+				// if deprecated
+				if (neighborData->second.parent != node.parent) {
+					continue;
+				}
+				// if better path found
+				if (neighborData->second.g > newG) {
+					neighborData->second.g = newG;
+					neighborData->second.parent = -direction;
+					openSet.emplace(neighbor, newG, endPos, -direction);
+				}
+				continue;
+			}
+			openSet.emplace(neighbor, newG, endPos, -direction);
+			tracesToStart[neighbor] = {-direction, newG}; // flipped direction vector with operator sigma
 		}
 	}
 	path.push_back(endPos);
 	while (path.back() != startPos) {
-		path.push_back(path.back() + tracesToStart[path.back()]);
+		path.push_back(path.back() + tracesToStart[path.back()].parent);
 	}
 	path.shrink_to_fit();
 }

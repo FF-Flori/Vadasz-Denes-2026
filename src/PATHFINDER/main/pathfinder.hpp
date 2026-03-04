@@ -80,6 +80,10 @@ class Pathfinder {
 			[[nodiscard]] bool operator==(const direction_t other) const {
 				return x == other.x && y == other.y;
 			}
+
+			[[nodiscard]] bool operator!=(const direction_t other) const {
+				return x != other.x || y != other.y;
+			}
 		};
 
 		/**
@@ -176,6 +180,11 @@ class Pathfinder {
 			private:
 				[[nodiscard]] static uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
 					return max(std::abs(coordA.x - coordB.x), std::abs(coordA.y - coordB.y));
+				}
+				[[nodiscard]] static uint16_t getSquaredDiagonal(const coord_t coordA, const coord_t coordB) {
+					const uint8_t x = std::abs(coordA.x - coordB.x);
+					const uint8_t y = std::abs(coordA.y - coordB.y);
+					return x * x + y * y;
 				}
 				void getClosestTiles();
 				void aStar();
