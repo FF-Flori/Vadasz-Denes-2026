@@ -247,7 +247,7 @@ class DashboardUI:
         for i in range(2):
             self.bodyframe.rowconfigure(i, weight=1)
 
-        def create_panel(parent, title, row, col, colspan=1):
+        def create_panel(parent, title, row, col, colspan=1, rfbtn=False):
 
             outer = CTkFrame(
                 parent,
@@ -271,10 +271,21 @@ class DashboardUI:
             title_label = CTkLabel(
                 outer,
                 text=title,
-                font=CTkFont(family="Courier New", size=14, weight="bold")
+                font=CTkFont(family="Courier New", size=18, weight="bold")
             )
 
             title_label.grid(row=0, column=0, sticky="ew", pady=(5, 0), padx=(5,5))
+
+            if rfbtn:
+                see_btn = CTkButton(
+                    outer,
+                    text="Teljese nézet",
+                    font=CTkFont(family="Courier New", size=14, weight="bold"),
+                    cursor="hand2",
+                    corner_radius=8
+                )
+
+                see_btn.grid(row=0, column=1, pady=(5, 0), padx=(5,5))
 
             graph_area = CTkFrame(
                 outer,
@@ -284,23 +295,26 @@ class DashboardUI:
             graph_area.grid(
                 row=1,
                 column=0,
+                columnspan=2,
                 sticky="nsew",
                 padx=5,
                 pady=5
             )
 
             return graph_area
-
+        
         self.batteryframe = create_panel(
             self.bodyframe,
             "Akkumulátor Töltöttség (%)",
-            0, 0
+            0, 0,
+            rfbtn=True
         )
 
         self.speedframe = create_panel(
             self.bodyframe,
             "Sebesség",
-            0, 1
+            0, 1,
+            rfbtn=True
         )
 
         self.distanceframe = create_panel(
@@ -436,7 +450,7 @@ class DashboardUI:
         self.batteryfg, self.batteryax, self.batterycanvas = createbardiagram("Töltöttség (%)", "Idő (óra)", self.batteryframe)
         self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
         self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
-        
+          
         def on_close(self):
 
             plt.close("all")
@@ -559,8 +573,8 @@ class DashboardUI:
 
             bardiagram(self.batteryax, battery, maxdata, self.batterycanvas)
             linediagram(self.speedax, speed, maxdata, self.speedcanvas)
-            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])
-
+            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
+            
             if refles == True:
 
                 self.main.after(
