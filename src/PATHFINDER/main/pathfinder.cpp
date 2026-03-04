@@ -56,6 +56,16 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 
 void Pathfinder::calculate() {
 	groupOres();
+
+	// testing A*
+	const auto testPath = Path(2, 27);
+	std::cout << std::endl;
+	std::cout << "start: " << static_cast<int>(testPath.startPos.x) << "; " << static_cast<int>(testPath.startPos.y) << std::endl;
+	std::cout << "end: " << static_cast<int>(testPath.endPos.x) << "; " << static_cast<int>(testPath.endPos.y) << std::endl;
+	std::cout << "coords:" << std::endl;
+	for (const coord_t step : testPath.path)
+		std::cout << static_cast<int>(step.x) << "; " << static_cast<int>(step.y) << std::endl;
+	// end testing A*
 }
 
 Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(ore), oreValue(oreValue) {
