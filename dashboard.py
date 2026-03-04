@@ -322,110 +322,121 @@ class DashboardUI:
             colspan=2
         )
 
-        self.batteryfg, self.batteryax = plt.subplots(figsize=(4, 3), dpi=100)
+        def createbardiagram(ylabel:str, xlabel:str, frame:CTkFrame):
+            fg, ax = plt.subplots(figsize=(4, 3), dpi=100)
 
-        self.batteryfg.subplots_adjust(
-            left=0.125,
-            right=0.9,
-            bottom=0.25,
-            top=0.9
-        )
+            fg.subplots_adjust(
+                left=0.125,
+                right=0.9,
+                bottom=0.25,
+                top=0.9
+            )
 
-        self.batteryax.plot([], [], marker="o", color="lightgreen")
+            ax.bar([], [], width=20, linewidth=1, color="lightgreen")
 
-        self.batteryax.set_ylim(0, 100)
-        self.batteryax.set_ylabel("Töltöttség (%)")
-        self.batteryax.set_xlabel("Idő (óra)")
-        self.batteryax.grid(True, linestyle="--", linewidth=0.5)
+            ax.set_ylim(0, 100)
+            ax.set_ylabel(ylabel)
+            ax.set_xlabel(xlabel)
+            ax.grid(True, linestyle="--", linewidth=0.5)
 
-        self.batterycanvas = FigureCanvasTkAgg(
-            self.batteryfg,
-            master=self.batteryframe
-        )
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
 
-        self.batterycanvas.get_tk_widget().pack(
-            fill="both",
-            expand=True
-        )
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
 
-        self.batteryfg.patch.set_facecolor(BG2)
-        self.batteryax.set_facecolor(BG2)
+            fg.patch.set_facecolor(BG2)
+            ax.set_facecolor(BG2)
 
-        self.batteryax.tick_params(colors="white")
+            ax.tick_params(colors="white")
 
-        self.batteryax.xaxis.label.set_color("white")
-        self.batteryax.yaxis.label.set_color("white")
+            ax.xaxis.label.set_color("white")
+            ax.yaxis.label.set_color("white")
+            ax.spines["bottom"].set_color("white")
+            ax.spines["left"].set_color("white")
+            ax.spines["top"].set_color("white")
+            ax.spines["right"].set_color("white")
+            
+            return fg, ax, canvas
 
-        self.batteryax.spines["bottom"].set_color("white")
-        self.batteryax.spines["left"].set_color("white")
-        self.batteryax.spines["top"].set_color("white")
-        self.batteryax.spines["right"].set_color("white")
+        def createlinediagram(ylabel:str, xlabel:str, yticklables:list, yticks:list, frame:CTkFrame):
+            fg, ax = plt.subplots(figsize=(4, 3), dpi=100)
 
+            fg.subplots_adjust(
+                left=0.2,
+                right=0.9,
+                bottom=0.25,
+                top=0.9
+            )
 
-        self.speedfg, self.speedax = plt.subplots(figsize=(4, 3), dpi=100)
+            ax.plot([], [], marker="o")
 
-        self.speedfg.subplots_adjust(
-            left=0.2,
-            right=0.9,
-            bottom=0.25,
-            top=0.9
-        )
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(yticklables)
+            ax.set_ylabel(ylabel)
+            ax.set_xlabel(xlabel)
+            ax.grid(True, linestyle="--", linewidth=0.5)
 
-        self.speedax.plot([], [], marker="o")
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
 
-        self.speedax.set_yticks([0, 1, 2, 3])
-        self.speedax.set_yticklabels(["Áll", "Lassú", "Normál", "Gyors"])
-        self.speedax.set_ylabel("Sebbesség")
-        self.speedax.set_xlabel("Idő (óra)")
-        self.speedax.grid(True, linestyle="--", linewidth=0.5)
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
 
-        self.speedcanvas = FigureCanvasTkAgg(
-            self.speedfg,
-            master=self.speedframe
-        )
+            fg.patch.set_facecolor(BG2)
+            ax.set_facecolor(BG2)
 
-        self.speedcanvas.get_tk_widget().pack(
-            fill="both",
-            expand=True
-        )
+            ax.tick_params(colors="white")
 
-        self.speedfg.patch.set_facecolor(BG2)
-        self.speedax.set_facecolor(BG2)
+            ax.xaxis.label.set_color("white")
+            ax.yaxis.label.set_color("white")
 
-        self.speedax.tick_params(colors="white")
+            ax.spines["bottom"].set_color("white")
+            ax.spines["left"].set_color("white")
+            ax.spines["top"].set_color("white")
+            ax.spines["right"].set_color("white")
 
-        self.speedax.xaxis.label.set_color("white")
-        self.speedax.yaxis.label.set_color("white")
+            return fg, ax, canvas
+        
+        def createpiediagram(frame:CTkFrame):
+            fg, ax = plt.subplots(
+                    figsize=(4, 3),
+                    dpi=100
+                    )
 
-        self.speedax.spines["bottom"].set_color("white")
-        self.speedax.spines["left"].set_color("white")
-        self.speedax.spines["top"].set_color("white")
-        self.speedax.spines["right"].set_color("white")
+            fg.subplots_adjust(
+                left=0.1,
+                right=0.6,
+                bottom=0.2,
+                top=0.9
+            )
 
-        self.materialfg, self.materialax = plt.subplots(
-            figsize=(4, 3),
-            dpi=100
-        )
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
 
-        self.materialfg.subplots_adjust(
-            left=0.1,
-            right=0.6,
-            bottom=0.2,
-            top=0.9
-        )
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
 
-        self.materialcanvas = FigureCanvasTkAgg(
-            self.materialfg,
-            master=self.materialframe
-        )
+            fg.patch.set_facecolor(BG2)
 
-        self.materialcanvas.get_tk_widget().pack(
-            fill="both",
-            expand=True
-        )
+            return fg, ax, canvas
 
-        self.materialfg.patch.set_facecolor(BG2)
-
+        self.batteryfg, self.batteryax, self.batterycanvas = createbardiagram("Töltöttség (%)", "Idő (óra)", self.batteryframe)
+        self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
+        self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
+        
         def on_close(self):
 
             plt.close("all")
@@ -458,7 +469,7 @@ class DashboardUI:
             global materialY
             global speed
 
-            maxdata:int = 8
+            maxdata:int = 10
 
             def linediagram(ax, datas, maxdata:int, canvas):
                 line = ax.lines[0]
@@ -491,45 +502,64 @@ class DashboardUI:
                     ax.relim()
                     ax.autoscale_view()
                     canvas.draw_idle()
+            
+            def bardiagram(ax, datas, maxdata, canvas):
+                xdata = time[-maxdata:]
+                ydata = datas[-maxdata:]
 
-            linediagram(self.batteryax, battery, maxdata, self.batterycanvas)
+                ax.bar(xdata, ydata, width=20, linewidth=1, color="lightgreen")
+
+                labels = [
+                    f"{int(i)//60}:{int(i)%60:02d}"
+                    for i in xdata
+                ]
+
+                ax.set_xticks(xdata)
+                ax.set_xticklabels(labels)
+
+                ax.relim()
+                ax.autoscale_view()
+                canvas.draw_idle()
+            
+            def piediagram(ax, canvas, datas:list, datascolor:list, legendtitles:list):
+                ax.clear()
+
+                wedges, texts, autotexts = ax.pie(
+                    datas,
+                    colors=datascolor,
+                    shadow=True,
+                    autopct="%1.1f%%",
+                    startangle=90,
+                    radius=1.2
+                )
+
+                for autotext in autotexts:
+
+                    autotext.set_color('black')
+                    autotext.set_fontweight('bold')
+
+                ax.set_aspect("equal")
+
+                ax.legend(
+                    wedges,
+                    legendtitles,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0, 0.5, 1),
+                    facecolor="#2e3237",
+                    labelcolor="white",
+                    fancybox=False,
+                    frameon=False,
+                    alignment="left",
+                    handlelength=1.5,
+                    handleheight=1.5
+                )
+
+                ax.set_facecolor("#2e3237")
+                canvas.draw()
+
+            bardiagram(self.batteryax, battery, maxdata, self.batterycanvas)
             linediagram(self.speedax, speed, maxdata, self.speedcanvas)
-
-            self.materialax.clear()
-
-            wedges, texts, autotexts = self.materialax.pie(
-                [materialB, materialY, materialG],
-                colors=["cyan", "yellow", "green"],
-                shadow=True,
-                autopct="%1.1f%%",
-                startangle=90,
-                radius=1.2
-            )
-
-            for autotext in autotexts:
-
-                autotext.set_color('black')
-                autotext.set_fontweight('bold')
-
-            self.materialax.set_aspect("equal")
-
-            self.materialax.legend(
-                wedges,
-                ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"],
-                loc="center left",
-                bbox_to_anchor=(1, 0, 0.5, 1),
-                facecolor="#2e3237",
-                labelcolor="white",
-                fancybox=False,
-                frameon=False,
-                alignment="left",
-                handlelength=1.5,
-                handleheight=1.5
-            )
-
-            self.materialax.set_facecolor("#2e3237")
-
-            self.materialcanvas.draw()
+            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])
 
             if refles == True:
 
