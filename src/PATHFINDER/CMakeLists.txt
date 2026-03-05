@@ -21,7 +21,7 @@ set(SOURCES
 pybind11_add_module(pathfinder ${SOURCES})
 
 if(MINGW)
-    target_link_options(pathfinder PRIVATE "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive")
+    target_link_options(pathfinder PRIVATE "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive" "-fsanitize=address")
 endif()
 
 set_target_properties(pathfinder PROPERTIES

@@ -1,5 +1,6 @@
 #ifndef VD26_PATHFINDER_HPP
 #define VD26_PATHFINDER_HPP
+#define ITERCOUNT 1
 
 #include <algorithm>
 #include <cassert>
@@ -17,6 +18,9 @@ class Pathfinder {
 		static constexpr uint8_t MAP_WIDTH = 50;
 		static constexpr uint8_t GROUP_LIMIT = 9;
 		static constexpr int8_t directions[8][2] = {{}};
+		static constexpr uint8_t startTime = 0; //How many half hours after 0:00
+		static constexpr uint16_t genomeNum = 20;
+		static constexpr uint8_t passthroughrate = 10;
 
 		/**
 		 * This method creates the singleton instance for Pathfinder
@@ -224,8 +228,15 @@ class Pathfinder {
 		std::vector<Path> paths;
 
 		// functions
+		//ONLY VOID TEMPORERALY
+		void GeneticAlgorithm(const uint64_t duration);
+		void generatePath(uint16_t*path); //You need to put the generated path into the specified address
+		uint32_t fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount);
+		void simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
+
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
+
 
 		/** Explanation:
 		 *    [0][1][2][3]

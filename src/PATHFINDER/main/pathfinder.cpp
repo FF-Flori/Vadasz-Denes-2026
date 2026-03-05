@@ -1,4 +1,5 @@
 #include "pathfinder.hpp"
+#include <cstdlib>
 #include <cstdint>
 #include <iostream>
 #include <fstream>
@@ -55,17 +56,23 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 }
 
 void Pathfinder::calculate() {
+	std::cout<<"Starting calc\n";
 	groupOres();
+	std::cout<<"Grouped\n";
 
 	// testing A*
 	const auto testPath = Path(2, 27);
-	std::cout << std::endl;
-	std::cout << "start: " << static_cast<int>(testPath.startPos.x) << "; " << static_cast<int>(testPath.startPos.y) << std::endl;
-	std::cout << "end: " << static_cast<int>(testPath.endPos.x) << "; " << static_cast<int>(testPath.endPos.y) << std::endl;
-	std::cout << "coords:" << std::endl;
+	std::cout << "\n";
+	std::cout << "start: " << static_cast<int>(testPath.startPos.x) << "; " << static_cast<int>(testPath.startPos.y) << "\n";
+	std::cout << "end: " << static_cast<int>(testPath.endPos.x) << "; " << static_cast<int>(testPath.endPos.y) << "\n";
+	std::cout << "coords:" << "\n";
 	for (const coord_t step : testPath.path)
 		std::cout << static_cast<int>(step.x) << "; " << static_cast<int>(step.y) << std::endl;
 	// end testing A*
+	// start Genetic
+	// 100 is temporary
+	std::cout<<"Genetic\n";
+	GeneticAlgorithm(100);
 }
 
 Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(ore), oreValue(oreValue) {
@@ -172,8 +179,8 @@ void Pathfinder::Path::aStar() {
 }
 
 void Pathfinder::groupOres() {
-	oreGroups.reserve(20);
 	std::cout<<"Called groupOres\n";
+	oreGroups.reserve(20);
 	for(uint8_t y = 0; y < MAP_WIDTH; y++){
 		for(uint8_t x = 0; x < MAP_WIDTH; x++){
 			tile_t value = map[getIndex({x,y})];
@@ -262,3 +269,47 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 	newGroup.tiles.shrink_to_fit();
 	oreGroups.push_back(newGroup);
 }
+
+void Pathfinder::GeneticAlgorithm(const uint64_t duration){
+	std::cout<<"Called GeneticAlgorithm\n";
+	//I decided to go with normal c style arrays cuz st::array didint work with variable length input
+	uint16_t* genomes = (uint16_t*)malloc(sizeof(uint16_t)*oreGroups.size()*genomeNum);
+	std::cout<<"Generating paths...\n";
+	for(int i = 0; i < genomeNum; ++i){
+		generatePath(genomes+i*oreGroups.size());
+		std::cout<<i<<": ";
+		for(int j = 0; j < oreGroups.size()/3;j++){
+			std::cout<<j;
+		}
+		std::cout<<"...\n";
+	}
+	std::cout<<"Paths generated\n";
+
+	std::vector<uint32_t> fitnessScores(genomeNum); // Will store the fitness score of genomes+i*oreGroups.size() at fitnessScores[i]
+
+	std::cout<<"Starting generations\n";
+	for(int i = 0; i < ITERCOUNT; ++i){
+		for(int j = 0; j < genomeNum; j++){
+			std::cout<<"-----------------\nGenome number: "<<j<<"\n";
+			uint64_t usedTime = j;
+			uint32_t gatheredOreValue = 0;
+			uint16_t groupCount = 0; // stores the amount of groups the rover had time to go to
+			simulate(genomes+j*oreGroups.size(),duration,&usedTime,&gatheredOreValue,&groupCount);
+			std::cout<<"Simulatedvals:\n"<<"usedTime: "<<usedTime<<"\ngatheredOreValue: "<<gatheredOreValue<<"\ngroupCount: "<<groupCount<<"\n";
+			fitnessScores.at(j) = fitnessFunction(usedTime,gatheredOreValue,groupCount);
+			std::cout<<"Fitnessscore: "<<fitnessScores.at(j)<<"\n";
+		}
+		std::cout<<"Fitnessscores:\n{";
+		for(auto score : fitnessScores){
+			std::cout<<score<<", ";
+		}
+		std::cout<<"}\n";
+		//std::sort
+	}
+
+	free(genomes);
+	return;
+}
+void Pathfinder::simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){}
+void Pathfinder::generatePath(uint16_t*path){for(uint16_t i = 0; i < oreGroups.size();i++){*(path+i)=i;}}
+uint32_t Pathfinder::fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}
