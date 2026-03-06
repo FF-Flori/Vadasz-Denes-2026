@@ -1,10 +1,9 @@
 #include "pathfinder.hpp"
 #include <cstdlib>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <fstream>
-#include <array>
-#include <bitset>
 #include <queue>
 #include <string>
 #include <stdexcept>
@@ -285,10 +284,13 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 	}
 	std::cout<<"Paths generated\n";
 
-	std::vector<uint32_t> fitnessScores(genomeNum); // Will store the fitness score of genomes+i*oreGroups.size() at fitnessScores[i]
+	fitness_t fitnessScores[genomeNum];
 
 	std::cout<<"Starting generations\n";
 	for(int i = 0; i < ITERCOUNT; ++i){
+		if(i>0) [[likely]]{
+			//Generate new paths
+		}
 		for(int j = 0; j < genomeNum; j++){
 			std::cout<<"-----------------\nGenome number: "<<j<<"\n";
 			uint64_t usedTime = j;
@@ -296,20 +298,34 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 			uint16_t groupCount = 0; // stores the amount of groups the rover had time to go to
 			simulate(genomes+j*oreGroups.size(),duration,&usedTime,&gatheredOreValue,&groupCount);
 			std::cout<<"Simulatedvals:\n"<<"usedTime: "<<usedTime<<"\ngatheredOreValue: "<<gatheredOreValue<<"\ngroupCount: "<<groupCount<<"\n";
-			fitnessScores.at(j) = fitnessFunction(usedTime,gatheredOreValue,groupCount);
-			std::cout<<"Fitnessscore: "<<fitnessScores.at(j)<<"\n";
+			fitnessScores[j].index = j;
+			fitnessScores[j].score = fitnessFunction(usedTime,gatheredOreValue,groupCount);
+			std::cout<<"Fitnessscore: "<<fitnessScores[j].score<<"\n";
 		}
 		std::cout<<"Fitnessscores:\n{";
-		for(auto score : fitnessScores){
-			std::cout<<score<<", ";
+		for(auto score : fitnessScores)
+		{ std::cout<<score.score<<", "; }
+		std::cout<<"}\n";
+		//Sorting
+		std::sort(fitnessScores,fitnessScores+genomeNum,[](const fitness_t a, const fitness_t b){return a.score < b.score;});
+		std::cout<<"Fitnessscores:\n{";
+
+		for(int j = 0; j < genomeNum; j++){
+			fitness_t fitness = fitnessScores[j];
+			std::cout<<"("<<fitness.score<<","<<fitness.index<<")";
+			if(j==fitness.index) [[unlikely]] {
+				continue;
+			}
+			memcpy(genomes+j*oreGroups.size(), genomes+fitness.index*oreGroups.size(),oreGroups.size()*sizeof(uint16_t));
 		}
 		std::cout<<"}\n";
-		//std::sort
 	}
 
 	free(genomes);
 	return;
 }
-void Pathfinder::simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){}
+void Pathfinder::simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
+
+}
 void Pathfinder::generatePath(uint16_t*path){for(uint16_t i = 0; i < oreGroups.size();i++){*(path+i)=i;}}
 uint32_t Pathfinder::fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}

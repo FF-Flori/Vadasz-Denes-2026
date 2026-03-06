@@ -218,6 +218,10 @@ class Pathfinder {
 					}
 				};
 		};
+		struct fitness_t {
+			uint32_t score;
+			uint16_t index; // The index of the element in the genomes list
+		};
 
 		// variables
 		static inline Pathfinder* pathfinder = nullptr;
