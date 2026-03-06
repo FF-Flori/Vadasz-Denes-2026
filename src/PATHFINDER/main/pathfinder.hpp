@@ -217,9 +217,9 @@ class Pathfinder {
 					}
 				};
 		};
-		struct fitness_t {
-			uint32_t score;
-			uint16_t index; // The index of the element in the genomes list
+		struct genome_t {
+			std::vector<uint16_t> generated;
+			uint16_t score;
 		};
 
 		// variables
@@ -229,14 +229,13 @@ class Pathfinder {
 		map_t map{};
 		std::vector<OreGroup> oreGroups;
 		std::vector<Path> paths;
-		std::vector<Path> fromStart; // fromStart.at(i) = path from Start to i
 
 		// functions
 		//ONLY VOID TEMPORERALY
 		void GeneticAlgorithm(const uint64_t duration);
-		void generatePath(uint16_t*path); //You need to put the generated path into the specified address
+		void generatePath(std::vector<uint16_t> path);
 		uint32_t fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount);
-		void simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
+		void simulate(std::vector<uint16_t> path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}

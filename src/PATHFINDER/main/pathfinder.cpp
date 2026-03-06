@@ -95,9 +95,6 @@ void Pathfinder::calculate() {
 		{ paths.push_back(Path(a,b)); }
 	}
 	paths.shrink_to_fit();
-	std::cout<<"Calculating paths from start...\n";
-	fromStart.reserve(oreGroups.size());
-	//This is where that would go
 	std::cout<<"Starting genetic algorithm...\n";
 	// start Genetic
 	// 100 is temporary
@@ -209,7 +206,7 @@ void Pathfinder::Path::aStar() {
 
 void Pathfinder::groupOres() {
 	std::cout<<"Called groupOres\n";
-	oreGroups.reserve(20);
+	oreGroups.reserve(65);
 	for(uint8_t y = 0; y < MAP_WIDTH; y++){
 		for(uint8_t x = 0; x < MAP_WIDTH; x++){
 			tile_t value = map[getIndex({x,y})];
@@ -218,6 +215,7 @@ void Pathfinder::groupOres() {
 			}
 		}
 	}
+	createGroup(startPos.x, startPos.y);
 	oreGroups.shrink_to_fit();
 	for(const OreGroup& group : oreGroups){
 		switch (group.ore) {
@@ -231,7 +229,7 @@ void Pathfinder::groupOres() {
 				std::cout<<"BLUE:\n";
 				break;
 			default:
-				std::cout<<"ERROR ";
+				std::cout<<"ERROR\n";
 				continue;
 		}
 		for(coord_t tile : group.tiles){
@@ -283,20 +281,21 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 }
 
 void Pathfinder::GeneticAlgorithm(const uint64_t duration){
-	//I decided to go with normal c style arrays cuz st::array didint work with variable length input
-	uint16_t* genomes = (uint16_t*)malloc(sizeof(uint16_t)*oreGroups.size()*genomeNum);
+	uint16_t pathsSize = oreGroups.size()-1;
+	std::array<genome_t,genomeNum> genomes;
 	std::cout<<"Generating paths...\n";
 	for(int i = 0; i < genomeNum; ++i){
-		generatePath(genomes+i*oreGroups.size());
+		std::cout<<i<<" ";
+		genomes.at(i).generated.reserve(pathsSize);
+		genomes.at(i).score = 0;
+		generatePath(genomes.at(i).generated);
 		std::cout<<i<<": ";
-		for(int j = 0; j < oreGroups.size()/3;j++){
+		for(int j = 0; j < pathsSize/3;j++){
 			std::cout<<j;
 		}
 		std::cout<<"...\n";
 	}
 	std::cout<<"Paths generated\n";
-
-	fitness_t fitnessScores[genomeNum];
 
 	std::cout<<"Starting generations\n";
 	for(int i = 0; i < ITERCOUNT; ++i){
@@ -308,38 +307,26 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 			uint64_t usedTime = j;
 			uint32_t gatheredOreValue = 0;
 			uint16_t groupCount = 0; // stores the amount of groups the rover had time to go to
-			simulate(genomes+j*oreGroups.size(),duration,&usedTime,&gatheredOreValue,&groupCount);
+			simulate(genomes.at(j).generated,duration,&usedTime,&gatheredOreValue,&groupCount);
 			std::cout<<"Simulatedvals:\n"<<"usedTime: "<<usedTime<<"\ngatheredOreValue: "<<gatheredOreValue<<"\ngroupCount: "<<groupCount<<"\n";
-			fitnessScores[j].index = j;
-			fitnessScores[j].score = fitnessFunction(usedTime,gatheredOreValue,groupCount);
-			std::cout<<"Fitnessscore: "<<fitnessScores[j].score<<"\n";
+			genomes.at(j).score = fitnessFunction(usedTime,gatheredOreValue,groupCount);
+			std::cout<<"Fitnessscore: "<<genomes.at(j).score<<"\n";
 		}
 		std::cout<<"Fitnessscores:\n{";
-		for(auto score : fitnessScores)
-		{ std::cout<<score.score<<", "; }
+		for(auto gnome : genomes)
+		{ std::cout<<gnome.score<<", "; }
 		std::cout<<"}\n";
 		//Sorting
-		std::sort(fitnessScores,fitnessScores+genomeNum,[](const fitness_t a, const fitness_t b){return a.score < b.score;});
+		std::sort(genomes.begin(),genomes.end(),[](const genome_t a, const genome_t b){return a.score < b.score;});
 		std::cout<<"Fitnessscores:\n{";
-
-		for(int j = 0; j < genomeNum; j++){
-			fitness_t fitness = fitnessScores[j];
-			std::cout<<"("<<fitness.score<<","<<fitness.index<<")";
-			if(j==fitness.index) [[unlikely]] {
-				continue;
-			}
-			memcpy(genomes+j*oreGroups.size(), genomes+fitness.index*oreGroups.size(),oreGroups.size()*sizeof(uint16_t));
-		}
-		std::cout<<"}\n";
 	}
-
-	free(genomes);
 	return;
 }
-void Pathfinder::simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
+void Pathfinder::simulate(std::vector<uint16_t> path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
 	uint16_t posinpath = 0; // A bit of bad naming, but this isnt the position in the path variable, its a position in the path between two nodes
 	uint16_t visitingIndex = 0; // This is the position in the path var
 	Path *currpath = nullptr; // The index of the path currently traversing
+	coord_t currpos = {0,0};
 	// oreGroups.size is ofcourse the length of the path var
 	while(visitingIndex < oreGroups.size()){
 		posinpath++;
@@ -349,5 +336,5 @@ void Pathfinder::simulate(uint16_t*path, const uint64_t duration,uint64_t *usedT
 		}
 	}
 }
-void Pathfinder::generatePath(uint16_t*path){for(uint16_t i = 0; i < oreGroups.size();i++){*(path+i)=i;}}
+void Pathfinder::generatePath(std::vector<uint16_t> path){for(uint16_t i = 0; i < oreGroups.size();i++){path.push_back(i);}}
 uint32_t Pathfinder::fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}
