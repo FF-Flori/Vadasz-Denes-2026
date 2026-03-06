@@ -68,9 +68,38 @@ void Pathfinder::calculate() {
 	for (const coord_t step : testPath.path)
 		std::cout << static_cast<int>(step.x) << "; " << static_cast<int>(step.y) << std::endl;
 	// end testing A*
+
+	//fill up the lookup table
+	/* A bit of explanation:
+	 * Let's say for example that oreGroups.size() = 4
+	 *    [0][1][2][3]
+	 * [0]    .  .  .
+	 * [1]       .  .
+	 * [2]          .
+	 * [3]
+	 * This is how a 2D lookup table will look with the unnescecary elements removed.
+	 * As you can see there are a lot of unused spaces. We will shrink this down into a 1D array, and not store the empty spaces
+	 * This will require a bit more math on the indexing size, but that's not that big of a deal
+	 * The amount of elements in this array, will be the sum of all integers from 1, up to oreGroups.size()-1
+	 * (because in the 2nd row there is 1 element, in the first there are 2 and so on)
+	 * We can get the sum of all integers from one up to a value (both ends included) with this formula:
+	 * S = (amount of elements to be summed)(startval+endval)/2
+	 * This can be simplified because we know the start val is always 1:
+	 * S = endval*(endval+1)/2        where endval is ofcourse oreGroups.size()
+	 */
+	std::cout<<"Calculating paths..\n";
+	paths.reserve(oreGroups.size()*(oreGroups.size()+1)/2);
+	for(uint16_t a = 0; a < oreGroups.size(); a++){
+		for(uint16_t b = a+1; b < oreGroups.size();b++)
+		{ paths.push_back(Path(a,b)); }
+	}
+	paths.shrink_to_fit();
+	std::cout<<"Calculating paths from start...\n";
+	fromStart.reserve(oreGroups.size());
+	//This is where that would go
+	std::cout<<"Starting genetic algorithm...\n";
 	// start Genetic
 	// 100 is temporary
-	std::cout<<"Genetic\n";
 	GeneticAlgorithm(100);
 }
 
@@ -210,23 +239,6 @@ void Pathfinder::groupOres() {
 		std::cout<<"\n";
 	}
 	std::cout<<"There are "<<oreGroups.size()<<"groups\n";
-	/* A bit of explanation:
-	 * Let's say for example that oreGroups.size() = 4
-	 *    [0][1][2][3]
-	 * [0]    .  .  .
-	 * [1]       .  .
-	 * [2]          .
-	 * [3]
-	 * This is how a 2D lookup table will look with the unnescecary elements removed.
-	 * As you can see there are a lot of unused spaces. We will shrink this down into a 1D array, and not store the empty spaces
-	 * This will require a bit more math on the indexing size, but that's not that big of a deal
-	 * The amount of elements in this array, will be the sum of all integers from 1, up to oreGroups.size()-1
-	 * (because in the 2nd row there is 1 element, in the first there are 2 and so on)
-	 * We can get the sum of all integers from one up to a value (both ends included) with this formula:
-	 * S = (amount of elements to be summed)(startval+endval)/2
-	 * This can be simplified because we know the start val is always 1:
-	 * S = endval*(endval+1)/2        where endval is ofcourse oreGroups.size()
-	 */
 }
 
 void Pathfinder::checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group){
@@ -270,7 +282,6 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 }
 
 void Pathfinder::GeneticAlgorithm(const uint64_t duration){
-	std::cout<<"Called GeneticAlgorithm\n";
 	//I decided to go with normal c style arrays cuz st::array didint work with variable length input
 	uint16_t* genomes = (uint16_t*)malloc(sizeof(uint16_t)*oreGroups.size()*genomeNum);
 	std::cout<<"Generating paths...\n";
@@ -325,7 +336,9 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 	return;
 }
 void Pathfinder::simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
-
+	std::cout<<"Starting simulation\n";
+	uint16_t posinpath = 0;
+	uint16_t visitingIndex = 0;
 }
 void Pathfinder::generatePath(uint16_t*path){for(uint16_t i = 0; i < oreGroups.size();i++){*(path+i)=i;}}
 uint32_t Pathfinder::fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}

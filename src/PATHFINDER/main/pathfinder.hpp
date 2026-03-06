@@ -230,6 +230,7 @@ class Pathfinder {
 		map_t map{};
 		std::vector<OreGroup> oreGroups;
 		std::vector<Path> paths;
+		std::vector<Path> fromStart; // fromStart.at(i) = path from Start to i
 
 		// functions
 		//ONLY VOID TEMPORERALY
@@ -274,16 +275,16 @@ class Pathfinder {
 		 *
 		 * https://www.desmos.com/calculator/ktpkbeylkv
 		 */
-		[[nodiscard]] static unsigned int max(const unsigned int a, const unsigned int b){return a > b ? a : b;}
-		[[nodiscard]] static unsigned int min(const unsigned int a, const unsigned int b){return a < b ? a : b;}
-		[[nodiscard]] size_t getPathIndex(const size_t a, const size_t b) const {
+		[[nodiscard]] static uint32_t max(const uint32_t a, const uint32_t b){return a > b ? a : b;}
+		[[nodiscard]] static uint32_t min(const uint32_t a, const uint32_t b){return a < b ? a : b;}
+		[[nodiscard]] uint32_t getPathIndex(const uint32_t a, const uint32_t b) const {
 			assert(a != b);
 			assert(oreGroups.size() > 0);
 			assert(paths.size() > 0);
 			assert(a < oreGroups.size() && b < oreGroups.size());
-			const size_t g1 = min(a, b);
-			const size_t g2 = max(a, b);
-			const size_t n = oreGroups.size() - g1;
+			const uint32_t g1 = min(a, b);
+			const uint32_t g2 = max(a, b);
+			const uint32_t n = oreGroups.size() - g1;
 			return paths.size() - ((n*(n-1)) >> 1) + g2 - g1 - 1;
 		}
 
