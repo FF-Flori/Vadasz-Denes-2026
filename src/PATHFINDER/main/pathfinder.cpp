@@ -322,18 +322,27 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 	}
 	return;
 }
-void Pathfinder::simulate(std::vector<uint16_t> path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
-	uint16_t posinpath = 0; // A bit of bad naming, but this isnt the position in the path variable, its a position in the path between two nodes
-	uint16_t visitingIndex = 0; // This is the position in the path var
-	Path *currpath = nullptr; // The index of the path currently traversing
-	coord_t currpos = {0,0};
+void Pathfinder::simulate(const std::vector<uint16_t> path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
+	Path *currpath = &paths.at(getPathIndex(oreGroups.size()-1,path.at(0)));
+	coord_t currpos = startPos;
+	uint64_t timeused = 0;
+	uint16_t posinpath = 0;
+	uint16_t visitingIndex = 0;
+	uint8_t battery = 100;
+	std::vector<simState> states;
+	states.reserve(oreGroups.size()-1);
+	states.push_back({
+			.currpath = currpath,
+			.currpos = currpos,
+			.timeused = timeused,
+			.posinpath = posinpath,
+			.visitingIndex = visitingIndex,
+			.battery = battery
+			});
 	// oreGroups.size is ofcourse the length of the path var
-	while(visitingIndex < oreGroups.size()){
-		posinpath++;
-		if(posinpath > 25){
-			visitingIndex++;
-			posinpath = 0;
-		}
+	while(true){
+		if(timeused >= duration){break;}
+		if(visitingIndex >= path.size()){break;}
 	}
 }
 void Pathfinder::generatePath(std::vector<uint16_t> path){for(uint16_t i = 0; i < oreGroups.size();i++){path.push_back(i);}}
