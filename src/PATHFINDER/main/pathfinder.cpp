@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <algorithm>
 #include <fstream>
 #include <queue>
 #include <string>
@@ -336,9 +337,17 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 	return;
 }
 void Pathfinder::simulate(uint16_t*path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
-	std::cout<<"Starting simulation\n";
-	uint16_t posinpath = 0;
-	uint16_t visitingIndex = 0;
+	uint16_t posinpath = 0; // A bit of bad naming, but this isnt the position in the path variable, its a position in the path between two nodes
+	uint16_t visitingIndex = 0; // This is the position in the path var
+	Path *currpath = nullptr; // The index of the path currently traversing
+	// oreGroups.size is ofcourse the length of the path var
+	while(visitingIndex < oreGroups.size()){
+		posinpath++;
+		if(posinpath > 25){
+			visitingIndex++;
+			posinpath = 0;
+		}
+	}
 }
 void Pathfinder::generatePath(uint16_t*path){for(uint16_t i = 0; i < oreGroups.size();i++){*(path+i)=i;}}
 uint32_t Pathfinder::fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}

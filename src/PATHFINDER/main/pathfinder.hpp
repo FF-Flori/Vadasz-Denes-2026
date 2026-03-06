@@ -2,7 +2,6 @@
 #define VD26_PATHFINDER_HPP
 #define ITERCOUNT 1
 
-#include <algorithm>
 #include <cassert>
 #include <vector>
 #include <cstdint>
