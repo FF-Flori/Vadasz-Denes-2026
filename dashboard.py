@@ -61,7 +61,7 @@ class Logexplorer:
         self.frame2 = CTkFrame(self.frame, corner_radius=10)
         self.frame2.pack(fill=BOTH, expand=True)
 
-        self.listbox = CTkListbox(self.frame2)
+        self.listbox = CTkListbox(self.frame2, multiple_selection=False)
 
         self.listbox.pack(fill=BOTH, expand=True, padx=5, pady=5)
 
@@ -139,6 +139,7 @@ distance: list = []
 materialB: int = 0
 materialY: int = 0
 materialG: int = 0
+events: list = []
 
 
 def backend(logfile):
@@ -159,6 +160,8 @@ def backend(logfile):
         with open(logfile, "r") as fullog:
 
             lines = fullog.readlines()
+            materialch = ""
+            speedch = ""
 
             for i in range(logline, len(lines)):
 
@@ -174,17 +177,33 @@ def backend(logfile):
 
                     if fullline[3].lower() == "y":
                         materialY += 1
+                        materialch = "| ⛏ Sárga ásvány"
 
                     elif fullline[3].lower() == "b":
                         materialB += 1
+                        materialch = "| ⛏ Kék ásvány"
 
                     elif fullline[3].lower() == "g":
                         materialG += 1
+                        materialch = "| ⛏ Zöld ásvány"
 
                 if len(time) == 0:
                     time.append(0)
                 else:
                     time.append(time[len(time) - 1] + 30)
+
+                if int(fullline[2]) == 3:
+                    speedch = "Gyors"
+                elif int(fullline[2]) == 2:
+                    speedch = "Normál"
+                elif int(fullline[2]) == 1:
+                    speedch = "Lassú"
+                elif int(fullline[2]) == 0:
+                    speedch = "Áll"
+
+                events.append(
+                    f"[{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}] ⚡{battery[len(battery)-1]}% | 🚀 {speedch} {materialch}"
+                )
 
             fullog.close()
 
@@ -332,9 +351,30 @@ class DashboardUI:
         self.positionframe = create_panel(
             self.bodyframe,
             "Rover Pozíciója",
-            1, 1,
-            colspan=2
+            1, 1
         )
+
+        self.logframe = create_panel(
+            self.bodyframe,
+            "Eseménynapló",
+            1, 2
+        )
+
+        self.materialheaderframe = CTkFrame(
+            self.materialframe,
+            fg_color="transparent"
+        )
+
+        self.materialheaderframe.pack(expand=True)
+       
+        self.materialosslb = CTkLabel(
+            self.materialheaderframe,
+            text="Összes ásvány: 0 db",
+            font=CTkFont(family="Courier New", size=18, weight="bold"),
+            text_color="gray"
+        )
+        
+        self.materialosslb.pack()
 
         def createbardiagram(ylabel:str, xlabel:str, frame:CTkFrame):
             fg, ax = plt.subplots(figsize=(4, 3), dpi=100)
@@ -469,11 +509,80 @@ class DashboardUI:
             fg.patch.set_facecolor(BG2)
 
             return fg, ax, canvas
+        
+        def createcoordinatesdiagram(frame:CTkFrame):
+            fg, ax = plt.subplots(
+                figsize=(4, 3),
+                dpi=100
+            )
+
+            fg.subplots_adjust(
+                left=0.1,
+                right=0.6,
+                bottom=0.2,
+                top=0.9
+            )
+
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
+
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
+
+            fg.patch.set_facecolor(BG2)
+
+            x = [5,-3,-6,0,0,4]
+            y = [3,1,-4,-3,0,-5]
+
+            n=['A','B','C','D','E','F']
+
+            ax.scatter(x, y)
+
+            for i, txt in enumerate(n):
+                ax.annotate(txt, (x[i], y[i]))
+
+            ax.grid(True, linestyle="--", linewidth=0.5)
+
+            ax.set_facecolor(BG2)
+
+            ax.tick_params(colors="white")
+
+            ax.xaxis.label.set_color("white")
+            ax.yaxis.label.set_color("white")
+
+            ax.spines["bottom"].set_color("white")
+            ax.spines["left"].set_color("white")
+            ax.spines["top"].set_color("white")
+            ax.spines["right"].set_color("white")
+
+            return fg, ax, canvas
 
         self.batteryfg, self.batteryax, self.batterycanvas, self.batterybar = createbardiagram("Töltöttség (%)", "Idő (óra:perc)", self.batteryframe)
         self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra:perc)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
         self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
-          
+        self.positionfg, self.positionax, self.positioncanvas = createcoordinatesdiagram(self.positionframe)
+        
+        self.logframe2 = CTkFrame(
+            self.logframe,
+            fg_color="transparent"
+        )
+
+        self.logframe2.pack(fill="both", expand=True, pady=5, padx=5)
+
+        self.loglsbx = CTkListbox(
+                self.logframe2,
+                font=CTkFont(family="Courier New", size=15),
+                multiple_selection=False,
+                hover=False,
+                fg_color="#171717"
+            )
+
+        self.loglsbx.pack(fill=BOTH, expand=True)
+
         def on_close(self):
 
             plt.close("all")
@@ -505,8 +614,15 @@ class DashboardUI:
             global materialG
             global materialY
             global speed
+            global events
 
             maxdata:int = 7
+
+            for i in range(len(events)):
+
+                if i >= self.loglsbx.size():
+                    self.loglsbx.insert(END, events[i])
+
 
             def linediagram(ax, datas, maxdata:int, canvas):
                 line = ax.lines[0]
@@ -597,6 +713,7 @@ class DashboardUI:
                 ax.set_facecolor("#2e3237")
                 canvas.draw()
 
+            self.materialosslb.configure(text="Összes ásvány: " + str(materialB + materialY + materialG) + " db")
             self.batterybar = bardiagram(self.batteryax, battery, maxdata, self.batterycanvas, self.batterybar)
             linediagram(self.speedax, speed, maxdata, self.speedcanvas)
             piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
