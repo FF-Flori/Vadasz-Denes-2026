@@ -303,24 +303,24 @@ class DashboardUI:
 
             return graph_area
         
+        self.timeframe = create_panel(
+            self.bodyframe,
+            "Szimulációs Idő",
+            0, 0
+        )
+
         self.batteryframe = create_panel(
             self.bodyframe,
             "Akkumulátor Töltöttség (%)",
-            0, 0,
+            0, 1,
             rfbtn=True
         )
 
         self.speedframe = create_panel(
             self.bodyframe,
             "Sebesség",
-            0, 1,
+            0, 2,
             rfbtn=True
-        )
-
-        self.distanceframe = create_panel(
-            self.bodyframe,
-            "Megtett Távolság",
-            0, 2
         )
 
         self.materialframe = create_panel(
@@ -346,7 +346,7 @@ class DashboardUI:
                 top=0.9
             )
 
-            ax.bar([], [], width=20, linewidth=1, color="lightgreen")
+            bar = ax.bar([], [], width=20, linewidth=1, color="lightgreen")
 
             ax.set_ylim(0, 100)
             ax.set_ylabel(ylabel)
@@ -375,7 +375,30 @@ class DashboardUI:
             ax.spines["top"].set_color("white")
             ax.spines["right"].set_color("white")
             
-            return fg, ax, canvas
+            return fg, ax, canvas, bar
+
+        self.timetframe = CTkFrame(
+            self.timeframe,
+            fg_color="transparent"
+        )
+
+        self.timetframe.pack(expand=True)
+
+        self.timelb = CTkLabel(
+            self.timetframe,
+            text="0:00",
+            font=CTkFont(family="Courier New", size=50, weight="bold")
+            )
+        
+        self.timelb.pack()
+        
+        self.timesublb = CTkLabel(
+            self.timetframe,
+            text="Nappal",
+            font=CTkFont(family="Courier New", size=40, weight="bold")
+        )
+
+        self.timesublb.pack()
 
         def createlinediagram(ylabel:str, xlabel:str, yticklables:list, yticks:list, frame:CTkFrame):
             fg, ax = plt.subplots(figsize=(4, 3), dpi=100)
@@ -447,8 +470,8 @@ class DashboardUI:
 
             return fg, ax, canvas
 
-        self.batteryfg, self.batteryax, self.batterycanvas = createbardiagram("Töltöttség (%)", "Idő (óra)", self.batteryframe)
-        self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
+        self.batteryfg, self.batteryax, self.batterycanvas, self.batterybar = createbardiagram("Töltöttség (%)", "Idő (óra:perc)", self.batteryframe)
+        self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra:perc)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
         self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
           
         def on_close(self):
@@ -483,7 +506,7 @@ class DashboardUI:
             global materialY
             global speed
 
-            maxdata:int = 10
+            maxdata:int = 7
 
             def linediagram(ax, datas, maxdata:int, canvas):
                 line = ax.lines[0]
@@ -517,11 +540,12 @@ class DashboardUI:
                     ax.autoscale_view()
                     canvas.draw_idle()
             
-            def bardiagram(ax, datas, maxdata, canvas):
+            def bardiagram(ax, datas, maxdata, canvas, bar):
                 xdata = time[-maxdata:]
                 ydata = datas[-maxdata:]
-
-                ax.bar(xdata, ydata, width=20, linewidth=1, color="lightgreen")
+                for i in bar:
+                    i.remove()
+                bar = ax.bar(xdata, ydata, width=20, linewidth=1, color="lightgreen")
 
                 labels = [
                     f"{int(i)//60}:{int(i)%60:02d}"
@@ -534,6 +558,8 @@ class DashboardUI:
                 ax.relim()
                 ax.autoscale_view()
                 canvas.draw_idle()
+
+                return bar
             
             def piediagram(ax, canvas, datas:list, datascolor:list, legendtitles:list):
                 ax.clear()
@@ -571,10 +597,15 @@ class DashboardUI:
                 ax.set_facecolor("#2e3237")
                 canvas.draw()
 
-            bardiagram(self.batteryax, battery, maxdata, self.batterycanvas)
+            self.batterybar = bardiagram(self.batteryax, battery, maxdata, self.batterycanvas, self.batterybar)
             linediagram(self.speedax, speed, maxdata, self.speedcanvas)
             piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
-            
+            self.timelb.configure(text=str(int(time[len(time)-1])//60) + ":" + str(int(time[len(time)-1]%60)))
+
+            if (int(time[-1]) % 1440) < 960:
+                self.timesublb.configure(text="nappal")
+            else:
+                self.timesublb.configure(text="éjszaka")
             if refles == True:
 
                 self.main.after(
