@@ -9,7 +9,7 @@ class GamePanel:
         self.aspectRatio = self.width/self.height
         self.texture:pygame.Surface = pygame.Surface((self.width,self.height))
         self.texture.fill((235,131,52))
-        self.logicModule:GameLogic = GameLogic()
+        self.logicModule:GameLogic = GameLogic(self.width,self.height)
     def updatePanel(self, deltaTime:float)->None:
         self.texture.fill((235,131,52))
         self.logicModule.Update(deltaTime,self.texture)

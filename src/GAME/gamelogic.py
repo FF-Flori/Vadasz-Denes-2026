@@ -1,45 +1,62 @@
 import pygame
+import math
+
 class GameLogic:
-    def __init__(self) -> None:
+    def __init__(self, scrwidth, scrheight) -> None:
         # This is the equivalent of the Start function from unity
-        self.viewedWidth:int = 25
-        self.viewed:list[int] = [0,0]
+        self.width = scrwidth
+        self.height = scrheight
+        self.speed:float = 20
+        self.viewed:list[float] = [0,0]
+        self.oreImgs:pygame.Surface = pygame.image.load("./src/img/ores.png").convert_alpha()
+        #self.oreImgs = pygame.transform.scale(self.oreImgs,(self.oreImgs.get_width()//2,self.oreImgs.get_height()//2))
+        self.orewidth:int = 40
         with open("./src/PATHFINDER/mars_map_50x50.csv") as file:
             self.map = file.readlines()
-        for line in self.map:
-            line = line[:-1].split(',')
+        for i in range(len(self.map)):
+            self.map[i] = self.map[i].strip().split(',')
+        self.viewedWidth:int = self.width//self.orewidth
+    # Posx and Posy store where the ore is in the map
+    def drawOre(self, oreType:str, posx:float, posy:float, width:int, height:int, screen:pygame.Surface):
+        oreRect = pygame.Rect(0,0,self.orewidth,self.orewidth)
+        if oreType == 'Y':
+            oreRect.x = self.orewidth*2
+            screen.blit(self.oreImgs,(posx,posy), oreRect)
+        if oreType == 'G':
+            oreRect.x = self.orewidth*3
+            screen.blit(self.oreImgs,(posx,posy), oreRect)
+        if oreType == 'B':
+            oreRect.x = self.orewidth
+            screen.blit(self.oreImgs,(posx,posy), oreRect)
+        if oreType == '#':
+            oreRect.x = 0
+            screen.blit(self.oreImgs,(posx,posy), oreRect)
+        if oreType == 'S':
+            pygame.draw.rect(screen,"purple",(posx,posy,width,height))
+    def moveCamera(self,dispX:float,dispY:float)->None:
+        self.viewed[0] += dispX
+        self.viewed[1] += dispY
+        if dispX != 0:
+            if self.viewed[0] < 0:
+                self.viewed[0] = 0
+            elif self.viewed[0] > len(self.map[0])-self.viewedWidth:
+                self.viewed[0] = len(self.map[0])-self.viewedWidth
+        if dispY != 0:
+            if self.viewed[1] < 0:
+                self.viewed[1] = 0
+            elif self.viewed[1] > len(self.map)-self.viewedWidth:
+                self.viewed[1] = len(self.map)-self.viewedWidth
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
-            self.viewed[0] -=1
-            if self.viewed[0] < 0:
-                self.viewed[0] = 0
+            self.moveCamera(-self.speed/1000*deltaTime,0)
         if keys[pygame.K_w]:
-            self.viewed[1] -=1
-            if self.viewed[1] < 0:
-                self.viewed[1] = 0
+            self.moveCamera(0,-self.speed/1000*deltaTime)
         if keys[pygame.K_s]:
-            self.viewed[1] +=1
-            if self.viewed[1] > len(self.map)-self.viewedWidth:
-                self.viewed[1] = len(self.map)-self.viewedWidth
+            self.moveCamera(0,self.speed/1000*deltaTime)
         if keys[pygame.K_d]:
-            self.viewed[0] +=1
-            if self.viewed[0] > len(self.map[0])-self.viewedWidth:
-                self.viewed[0] = len(self.map[0])-self.viewedWidth
-        blockwidth = screen.get_width()/self.viewedWidth
-        for y in range(self.viewed[1],self.viewed[1]+self.viewedWidth):
-            for x in range(self.viewed[0],self.viewed[0]+self.viewedWidth):
-                if self.map[y][x] == 'Y':
-                    pygame.draw.rect(screen,"yellow",((x-self.viewed[0])*blockwidth,(y-self.viewed[1])*blockwidth,blockwidth-1,blockwidth-1))
-                if self.map[y][x] == 'G':
-                    pygame.draw.rect(screen,"green",((x-self.viewed[0])*blockwidth,(y-self.viewed[1])*blockwidth,blockwidth-1,blockwidth-1))
-                if self.map[y][x] == 'B':
-                    pygame.draw.rect(screen,"blue",((x-self.viewed[0])*blockwidth,(y-self.viewed[1])*blockwidth,blockwidth-1,blockwidth-1))
-                if self.map[y][x] == '#':
-                    pygame.draw.rect(screen,"brown",((x-self.viewed[0])*blockwidth,(y-self.viewed[1])*blockwidth,blockwidth-1,blockwidth-1))
-                if self.map[y][x] == 'S':
-                    pygame.draw.rect(screen,"purple",((x-self.viewed[0])*blockwidth,(y-self.viewed[1])*blockwidth,blockwidth-1,blockwidth-1))
-
-
-
+            self.moveCamera(self.speed/1000*deltaTime,0)
+        for y in range(int(self.viewed[1]),math.ceil(self.viewed[1]+self.viewedWidth)):
+            for x in range(int(self.viewed[0]),math.ceil(self.viewed[0]+self.viewedWidth)):
+                self.drawOre(self.map[y][x],(x-self.viewed[0])*self.orewidth,(y-self.viewed[1])*self.orewidth,self.orewidth,self.orewidth,screen)
