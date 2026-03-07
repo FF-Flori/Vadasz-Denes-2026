@@ -188,6 +188,7 @@ def backend(logfile):
                 events.append(
                     f"[{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}] ⚡{battery[len(battery)-1]}% | 🚀 {speedch} {materialch}"
                 )
+                materialch = ""
 
             fullog.close()
 
@@ -244,10 +245,10 @@ class DashboardUI:
             if i < 2:
                 self.bodyframe.rowconfigure(i, weight=1)
 
-        def create_panel(parent, title, row, col, colspan=1, rfbtn=False):
+        def create_panel(parent, title, row, col, colspan=1, rfbtn=False, BG=BG2):
             outer = CTkFrame(
                 parent,
-                fg_color=BG2,
+                fg_color=BG,
                 border_width=2,
                 corner_radius=10
             )
@@ -296,42 +297,48 @@ class DashboardUI:
 
             return graph_area
         
-        self.timeframe = create_panel(
+        self.dataframe = create_panel(
             self.bodyframe,
-            "Szimulációs Idő",
-            0, 0
+            "Egyéb Adatok",
+            0, 0,
+            BG=BG2
         )
 
         self.batteryframe = create_panel(
             self.bodyframe,
             "Akkumulátor Töltöttség (%)",
             0, 1,
-            rfbtn=True
+            rfbtn=True,
+            BG=BG2
         )
 
         self.speedframe = create_panel(
             self.bodyframe,
             "Sebesség",
             0, 2,
-            rfbtn=True
+            rfbtn=True,
+            BG=BG2
         )
 
         self.materialframe = create_panel(
             self.bodyframe,
             "Gyűjtött Ásványok",
-            1, 0
+            1, 0,
+            BG=BG2
         )
 
         self.positionframe = create_panel(
             self.bodyframe,
             "Rover Pozíciója",
-            1, 1
+            1, 1,
+            BG=BG2
         )
 
         self.logframe = create_panel(
             self.bodyframe,
             "Eseménynapló",
-            1, 2
+            1, 2,
+            BG=BG2
         )
 
         self.materialheaderframe = CTkFrame(
@@ -346,7 +353,115 @@ class DashboardUI:
             self.materialheaderframe,
             textvariable=self.allmaterial,
             font=CTkFont(family="Courier New", size=18, weight="bold"),
-            text_color="gray"
+            text_color="white"
+        ).pack()
+
+        self.positionheaderframe = CTkFrame(
+            self.positionframe,
+            fg_color="transparent"
+        )
+
+        self.positionheaderframe.pack(expand=True)
+        self.distancestartvar = tk.StringVar(value="Távolság a kiinduló ponttól: 0 blokk")
+
+        CTkLabel(
+            self.positionheaderframe,
+            textvariable=self.distancestartvar,
+            font=CTkFont(family="Courier New", size=15, weight="bold"),
+            text_color="white"
+        ).pack()
+
+        for i in range(2):
+            self.dataframe.columnconfigure(i, weight=1)
+            if i < 1:
+                self.dataframe.rowconfigure(i, weight=1)
+    
+        self.timeframe = create_panel(
+            self.dataframe,
+            "Szimulációs Idő",
+            0, 0,
+            BG="#171717"
+        )
+
+        self.timevar = tk.StringVar(value="0:00")
+        self.subtimevar = tk.StringVar(value="Nappal")
+        
+        CTkLabel(
+            self.timeframe,
+            textvariable=self.timevar,
+            font=CTkFont(family="Courier New", size=25, weight="bold")
+            ).pack()
+        
+        CTkLabel(
+            self.timeframe,
+            textvariable=self.subtimevar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        self.datadistanceframe = create_panel(
+            self.dataframe,
+            "Megtett távolság",
+            0, 1,
+            BG="#171717"
+        )
+
+        self.distancevar = tk.StringVar(value="0 blokk")
+
+        CTkLabel(
+            self.datadistanceframe,
+            textvariable=self.distancevar,
+            font=CTkFont(family="Courier New", size=25, weight="bold")
+        ).pack()
+
+        self.databatteryframe = create_panel(
+            self.dataframe,
+            "Energia Fogyasztás",
+            1, 0,
+            BG="#171717"
+        )
+
+        self.datamindtvar = tk.StringVar(value="Minimum: 0%")
+        self.dataatlagdtvar = tk.StringVar(value="Átlag: 0%")
+        self.datamaxdtvar = tk.StringVar(value="Maximum: 0%")
+
+        CTkLabel(
+            self.databatteryframe,
+            textvariable=self.datamindtvar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.databatteryframe,
+            textvariable=self.dataatlagdtvar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.databatteryframe,
+            textvariable=self.datamaxdtvar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        self.dataaiframe = create_panel(
+            self.dataframe,
+            "AI Hatékonyság",
+            1, 1,
+            BG="#171717"
+        )
+
+        self.dataaiblokkvar = tk.StringVar(value="Ásvány / blokk: 0")
+        self.dataaienergiavar = tk.StringVar(value="Ásvány / energia: 0")
+
+        CTkLabel(
+            self.dataaiframe,
+            textvariable=self.dataaiblokkvar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.dataaiframe,
+            textvariable=self.dataaienergiavar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
         ).pack()
 
         def createbardiagram(ylabel:str, xlabel:str, frame:CTkFrame):
@@ -389,28 +504,6 @@ class DashboardUI:
             ax.spines["right"].set_color("white")
             
             return fg, ax, canvas, bar
-
-        self.timetframe = CTkFrame(
-            self.timeframe,
-            fg_color="transparent"
-        )
-
-        self.timetframe.pack(expand=True)
-
-        self.timevar = tk.StringVar(value="0:00")
-        self.subtimevar = tk.StringVar(value="Nappal")
-        
-        CTkLabel(
-            self.timetframe,
-            textvariable=self.timevar,
-            font=CTkFont(family="Courier New", size=50, weight="bold")
-            ).pack()
-        
-        CTkLabel(
-            self.timetframe,
-            textvariable=self.subtimevar,
-            font=CTkFont(family="Courier New", size=40, weight="bold")
-        ).pack()
 
         def createlinediagram(ylabel:str, xlabel:str, yticklables:list, yticks:list, frame:CTkFrame):
             fg, ax = plt.subplots(figsize=(4, 3), dpi=100)
@@ -673,15 +766,50 @@ class DashboardUI:
                 canvas.draw()
 
             self.allmaterial.set(value="Összes ásvány: " + str(materialB + materialY + materialG) + " db")
+            self.distancestartvar.set(value="Távolság a kiinduló ponttól: " + str("ERROR") + " blokk")
             self.batterybar = bardiagram(self.batteryax, battery, maxdata, self.batterycanvas, self.batterybar)
             linediagram(self.speedax, speed, maxdata, self.speedcanvas)
             piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
-            self.timevar.set(value=str(int(time[len(time)-1])//60) + ":" + str(int(time[len(time)-1]%60)))
+            self.timevar.set(value=f"{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}")
 
             if (int(time[-1]) % 1440) < 960:
                 self.subtimevar.set(value="Nappal")
             else:
-                self.subtimevar.set(text="Éjszaka")
+                self.subtimevar.set(value="Éjszaka")
+            
+            distance = 0
+            for i in speed:
+                distance += int(i)
+
+            self.distancevar.set(value=str(distance) + " blokk")
+
+            minbt = int(battery[0])
+            maxbt = int(battery[0])
+            atlagbt = 0
+            buffer = 0
+
+            for i in battery:
+                if int(i) < minbt:
+                    minbt = int(i)
+                elif int(i) > maxbt:
+                    maxbt = int(i)
+                
+                buffer += int(i)
+
+            atlagbt = round(buffer/len(battery))
+            buffer = 0
+            usedallbattery = 0
+
+            for i in range(1, len(battery)):
+                buffer = battery[i-1] - battery[i]
+                if buffer > 0:
+                    usedallbattery += buffer
+
+            self.datamindtvar.set(value="Minimum: " + str(minbt) + "%")
+            self.dataatlagdtvar.set(value="Átlag: " + str(atlagbt) + "%")
+            self.datamaxdtvar.set(value="Maximum: " + str(maxbt) + "%")
+            self.dataaiblokkvar.set(value="Ásvány / blokk: " + str(round((materialB + materialY + materialG)/distance, 2)))
+            self.dataaienergiavar.set(value="Ásvány / energia: " + str(usedallbattery))
             
             if refles == True:
                 self.main.after(
