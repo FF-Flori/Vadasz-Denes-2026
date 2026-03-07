@@ -1,6 +1,5 @@
 #ifndef VD26_PATHFINDER_HPP
 #define VD26_PATHFINDER_HPP
-#define ITERCOUNT 1
 
 #include <cassert>
 #include <vector>
@@ -16,10 +15,10 @@ class Pathfinder {
 		// constants
 		static constexpr uint8_t MAP_WIDTH = 50;
 		static constexpr uint8_t GROUP_LIMIT = 9;
-		static constexpr int8_t directions[8][2] = {{}};
-		static constexpr uint8_t startTime = 0; //How many half hours after 0:00
-		static constexpr uint16_t genomeNum = 20;
-		static constexpr uint8_t passthroughrate = 10;
+		static constexpr uint8_t START_TIME = 0; //How many half hours after 0:00
+		static constexpr uint16_t GENOME_NUM = 20;
+		static constexpr uint8_t PASSTHROUGH_RATE = 10;
+		static constexpr uint16_t ITER_COUNT = 1;
 
 		/**
 		 * This method creates the singleton instance for Pathfinder
@@ -219,7 +218,7 @@ class Pathfinder {
 		};
 		struct genome_t {
 			std::vector<uint16_t> generated;
-			uint16_t score;
+			uint32_t score;
 		};
 		struct simState {
 			Path *currpath; // The index of the path currently traversing
@@ -239,14 +238,13 @@ class Pathfinder {
 		std::vector<Path> paths;
 
 		// functions
-		void GeneticAlgorithm(const uint64_t duration);
-		void generatePath(std::vector<uint16_t> path);
-		uint32_t fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount);
-		void simulate(const std::vector<uint16_t> path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
+		void GeneticAlgorithm();
+		void generatePath(std::vector<uint16_t>& path);
+		uint32_t fitness(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount);
+		void simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
-
 
 		/** Explanation:
 		 *    [0][1][2][3]

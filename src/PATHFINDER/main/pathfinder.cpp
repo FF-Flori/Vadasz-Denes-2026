@@ -60,45 +60,17 @@ void Pathfinder::calculate() {
 	groupOres();
 	std::cout<<"Grouped\n";
 
-	// testing A*
-	const auto testPath = Path(2, 27);
-	std::cout << "\n";
-	std::cout << "start: " << static_cast<int>(testPath.startPos.x) << "; " << static_cast<int>(testPath.startPos.y) << "\n";
-	std::cout << "end: " << static_cast<int>(testPath.endPos.x) << "; " << static_cast<int>(testPath.endPos.y) << "\n";
-	std::cout << "coords:" << "\n";
-	for (const coord_t step : testPath.path)
-		std::cout << static_cast<int>(step.x) << "; " << static_cast<int>(step.y) << std::endl;
-	// end testing A*
-
-	//fill up the lookup table
-	/* A bit of explanation:
-	 * Let's say for example that oreGroups.size() = 4
-	 *    [0][1][2][3]
-	 * [0]    .  .  .
-	 * [1]       .  .
-	 * [2]          .
-	 * [3]
-	 * This is how a 2D lookup table will look with the unnescecary elements removed.
-	 * As you can see there are a lot of unused spaces. We will shrink this down into a 1D array, and not store the empty spaces
-	 * This will require a bit more math on the indexing size, but that's not that big of a deal
-	 * The amount of elements in this array, will be the sum of all integers from 1, up to oreGroups.size()-1
-	 * (because in the 2nd row there is 1 element, in the first there are 2 and so on)
-	 * We can get the sum of all integers from one up to a value (both ends included) with this formula:
-	 * S = (amount of elements to be summed)(startval+endval)/2
-	 * This can be simplified because we know the start val is always 1:
-	 * S = endval*(endval+1)/2        where endval is ofcourse oreGroups.size()
-	 */
 	std::cout<<"Calculating paths..\n";
 	paths.reserve(oreGroups.size()*(oreGroups.size()+1)/2);
 	for(uint16_t a = 0; a < oreGroups.size(); a++){
-		for(uint16_t b = a+1; b < oreGroups.size();b++)
-		{ paths.push_back(Path(a,b)); }
+		for(uint16_t b = a+1; b < oreGroups.size();b++) {
+			paths.emplace_back(a,b);
+		}
 	}
 	paths.shrink_to_fit();
 	std::cout<<"Starting genetic algorithm...\n";
 	// start Genetic
-	// 100 is temporary
-	GeneticAlgorithm(100);
+	GeneticAlgorithm();
 }
 
 Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(ore), oreValue(oreValue) {
@@ -280,11 +252,11 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 	oreGroups.push_back(newGroup);
 }
 
-void Pathfinder::GeneticAlgorithm(const uint64_t duration){
-	uint16_t pathsSize = oreGroups.size()-1;
-	std::array<genome_t,genomeNum> genomes;
+void Pathfinder::GeneticAlgorithm(){
+	const uint16_t pathsSize = oreGroups.size()-1;
+	std::array<genome_t,GENOME_NUM> genomes;
 	std::cout<<"Generating paths...\n";
-	for(int i = 0; i < genomeNum; ++i){
+	for(int i = 0; i < GENOME_NUM; ++i){
 		std::cout<<i<<" ";
 		genomes.at(i).generated.reserve(pathsSize);
 		genomes.at(i).score = 0;
@@ -298,18 +270,18 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 	std::cout<<"Paths generated\n";
 
 	std::cout<<"Starting generations\n";
-	for(int i = 0; i < ITERCOUNT; ++i){
+	for(int i = 0; i < ITER_COUNT; ++i){
 		if(i>0) [[likely]]{
 			//Generate new paths
 		}
-		for(int j = 0; j < genomeNum; j++){
+		for(int j = 0; j < GENOME_NUM; j++){
 			std::cout<<"-----------------\nGenome number: "<<j<<"\n";
 			uint64_t usedTime = j;
 			uint32_t gatheredOreValue = 0;
 			uint16_t groupCount = 0; // stores the amount of groups the rover had time to go to
-			simulate(genomes.at(j).generated,duration,&usedTime,&gatheredOreValue,&groupCount);
+			simulate(genomes.at(j).generated,&usedTime,&gatheredOreValue,&groupCount);
 			std::cout<<"Simulatedvals:\n"<<"usedTime: "<<usedTime<<"\ngatheredOreValue: "<<gatheredOreValue<<"\ngroupCount: "<<groupCount<<"\n";
-			genomes.at(j).score = fitnessFunction(usedTime,gatheredOreValue,groupCount);
+			genomes.at(j).score = fitness(usedTime,gatheredOreValue,groupCount);
 			std::cout<<"Fitnessscore: "<<genomes.at(j).score<<"\n";
 		}
 		std::cout<<"Fitnessscores:\n{";
@@ -318,11 +290,10 @@ void Pathfinder::GeneticAlgorithm(const uint64_t duration){
 		std::cout<<"}\n";
 		//Sorting
 		std::sort(genomes.begin(),genomes.end(),[](const genome_t a, const genome_t b){return a.score < b.score;});
-		std::cout<<"Fitnessscores:\n{";
 	}
-	return;
 }
-void Pathfinder::simulate(const std::vector<uint16_t> path, const uint64_t duration,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
+
+void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
 	Path *currpath = &paths.at(getPathIndex(oreGroups.size()-1,path.at(0)));
 	coord_t currpos = startPos;
 	uint64_t timeused = 0;
@@ -341,9 +312,9 @@ void Pathfinder::simulate(const std::vector<uint16_t> path, const uint64_t durat
 			});
 	// oreGroups.size is ofcourse the length of the path var
 	while(true){
-		if(timeused >= duration){break;}
+		if(timeused >= timeLimit){break;}
 		if(visitingIndex >= path.size()){break;}
 	}
 }
-void Pathfinder::generatePath(std::vector<uint16_t> path){for(uint16_t i = 0; i < oreGroups.size();i++){path.push_back(i);}}
-uint32_t Pathfinder::fitnessFunction(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}
+void Pathfinder::generatePath(std::vector<uint16_t>& path){for(uint16_t i = 0; i < oreGroups.size();i++){path.push_back(i);}}
+uint32_t Pathfinder::fitness(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}
