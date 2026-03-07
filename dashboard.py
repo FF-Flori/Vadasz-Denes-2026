@@ -699,7 +699,7 @@ class DashboardUI:
 main = Ctk.CTk()
 
 if len(sys.argv) != 1:
-    window = DashboardUI(main, str(sys.argv[1]))
+    window = DashboardUI(main, "log/" + str(sys.argv[1]) + ".log")
 else:
     window = Logexplorer(main, "log")
 
