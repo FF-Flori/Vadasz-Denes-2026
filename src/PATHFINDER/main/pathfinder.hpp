@@ -15,10 +15,28 @@ class Pathfinder {
 		// constants
 		static constexpr uint8_t MAP_WIDTH = 50;
 		static constexpr uint8_t GROUP_LIMIT = 9;
-		static constexpr uint8_t START_TIME = 0; //How many half hours after 0:00
-		static constexpr uint16_t GENOME_NUM = 20;
-		static constexpr uint8_t PASSTHROUGH_RATE = 10;
-		static constexpr uint16_t ITER_COUNT = 1;
+		static constexpr uint8_t START_TIME = 0; // how many half hours after 0:00
+	
+		// genetic algorithm
+		static constexpr uint16_t GENETIC_ITERS   = 600;
+		static constexpr uint16_t GENERATION_SIZE = 400;
+
+		static constexpr uint16_t ELITISM         = GENERATION_SIZE *  5 / 100;
+
+		static constexpr uint16_t BREEDING                   = GENERATION_SIZE * 65 / 100;
+		static constexpr uint16_t BREEDING_TOURNAMENT_SIZE   = GENERATION_SIZE *  2 / 100;
+		static constexpr uint16_t BREEDING_MUTATION  = BREEDING * 15 / 100;
+		static constexpr uint16_t BREEDING_SWAP      = BREEDING_MUTATION * 20 / 100;
+		static constexpr uint16_t BREEDING_SCRAMBLE  = BREEDING_MUTATION * 15 / 100;
+		static constexpr uint16_t BREEDING_INSERTION = BREEDING_MUTATION * 15 / 100;
+		static constexpr uint16_t BREEDING_INVERSION = BREEDING_MUTATION - BREEDING_SWAP - BREEDING_SCRAMBLE - BREEDING_INSERTION;
+
+		static constexpr uint16_t CLONING                 = GENERATION_SIZE * 20 / 100;
+		static constexpr uint16_t CLONING_TOURNAMENT_SIZE = GENERATION_SIZE * 4 / 100;
+		static constexpr uint16_t CLONING_SWAP      = CLONING * 20 / 100;
+		static constexpr uint16_t CLONING_SCRAMBLE  = CLONING * 15 / 100;
+		static constexpr uint16_t CLONING_INSERTION = CLONING * 15 / 100;
+		static constexpr uint16_t CLONING_INVERSION = CLONING - CLONING_SWAP - CLONING_SCRAMBLE - CLONING_INSERTION;
 
 		/**
 		 * This method creates the singleton instance for Pathfinder
