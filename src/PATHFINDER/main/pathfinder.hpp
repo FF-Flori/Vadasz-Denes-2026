@@ -257,9 +257,9 @@ class Pathfinder {
 
 		// functions
 		void GeneticAlgorithm();
-		void generatePath(std::vector<uint16_t>& path);
-		uint32_t fitness(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount);
-		void simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
+		static Genome& tournamentSelect(const std::vector<Genome>& generation);
+		static int32_t fitness(const Genome* genome);
+		static void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
