@@ -327,11 +327,11 @@ void Pathfinder::GeneticAlgorithm() const {
 		for (; i < BREEDING + CLONING; i++) {
 			generation.emplace_back(oldGeneration[tournamentSelect(oldGeneration)]);
 
-			if (i < CLONING_SWAP) {
+			if (i < BREEDING + CLONING_SWAP) {
 				generation.back().swap();
-			} else if (i < CLONING_SWAP + CLONING_SCRAMBLE) {
+			} else if (i < BREEDING + CLONING_SWAP + CLONING_SCRAMBLE) {
 				generation.back().scramble();
-			} else if (i < CLONING_SWAP + CLONING_SCRAMBLE + CLONING_INSERTION) {
+			} else if (i < BREEDING + CLONING_SWAP + CLONING_SCRAMBLE + CLONING_INSERTION) {
 				generation.back().insertion();
 			} else {
 				generation.back().inversion();
@@ -341,7 +341,7 @@ void Pathfinder::GeneticAlgorithm() const {
 		}
 
 		// fill up with random new genomes
-		for (; i < GENERATION_SIZE; i++) {
+		for (; i < GENERATION_SIZE - ELITISM; i++) {
 			generation.emplace_back();
 			generation.back().dna = dnaOrder;
 			std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
