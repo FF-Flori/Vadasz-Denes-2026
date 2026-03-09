@@ -485,9 +485,9 @@ void Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &s
 	int posinpath = 0;
 	while(posinpath < pathtocheck->path.size()){
 		// Nights start at 20
-		if(starttime%24 < 21){
-
-		}else{
+		bool isDay = starttime%24 < 21;
+		int8_t addedSpeed = speedusage[speed*2+!isDay];
+		if(battery+addedSpeed < 0){
 
 		}
 
