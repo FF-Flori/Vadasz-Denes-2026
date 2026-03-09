@@ -286,28 +286,134 @@ void Pathfinder::GeneticAlgorithm() const {
 	// sort the elements for the next generation
 	std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
 
-	std::cout<<"Starting generations\n";
-	for(int i = 0; i < ITER_COUNT; ++i){
-		if(i>0) [[likely]]{
-			//Generate new paths
+	std::cout << "Starting generations\n";
+	for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
+		oldGeneration = generation;
+
+		// elitism
+		generation.resize(ELITISM);
+
+		uint16_t i = 0;
+
+		// breeding
+		for (; i < BREEDING_MUTATION; i++) {
+			// tournament selection of 2 parents
+			const uint16_t fatherIndex = tournamentSelect(oldGeneration);
+			Genome& father = oldGeneration[fatherIndex];
+			Genome& mother = oldGeneration[tournamentSelect(oldGeneration, fatherIndex)];
+			generation.emplace_back(father + mother);
+
+			if (i < BREEDING_SWAP) {
+				generation.back().swap();
+			} else if (i < BREEDING_SWAP + BREEDING_SCRAMBLE) {
+				generation.back().scramble();
+			} else if (i < BREEDING_SWAP + BREEDING_SCRAMBLE + BREEDING_INSERTION) {
+				generation.back().insertion();
+			} else {
+				generation.back().inversion();
+			}
+
+			generation.back().getFitness();
 		}
-		for(int j = 0; j < GENOME_NUM; j++){
-			std::cout<<"-----------------\nGenome number: "<<j<<"\n";
-			uint64_t usedTime = j;
-			uint32_t gatheredOreValue = 0;
-			uint16_t groupCount = 0; // stores the amount of groups the rover had time to go to
-			simulate(genomes.at(j).generated,&usedTime,&gatheredOreValue,&groupCount);
-			std::cout<<"Simulatedvals:\n"<<"usedTime: "<<usedTime<<"\ngatheredOreValue: "<<gatheredOreValue<<"\ngroupCount: "<<groupCount<<"\n";
-			genomes.at(j).score = fitness(usedTime,gatheredOreValue,groupCount);
-			std::cout<<"Fitnessscore: "<<genomes.at(j).score<<"\n";
+		for (; i < BREEDING; i++) {
+			// tournament selection of 2 parents
+			const uint16_t fatherIndex = tournamentSelect(oldGeneration);
+			Genome& father = oldGeneration[fatherIndex];
+			Genome& mother = oldGeneration[tournamentSelect(oldGeneration, fatherIndex)];
+			generation.emplace_back(father + mother);
+
+			generation.back().getFitness();
 		}
-		std::cout<<"Fitnessscores:\n{";
-		for(auto gnome : genomes)
-		{ std::cout<<gnome.score<<", "; }
-		std::cout<<"}\n";
-		//Sorting
-		std::sort(genomes.begin(),genomes.end(),[](const genome_t a, const genome_t b){return a.score < b.score;});
+
+		// cloning
+		for (; i < BREEDING + CLONING; i++) {
+			generation.emplace_back(oldGeneration[tournamentSelect(oldGeneration)]);
+
+			if (i < CLONING_SWAP) {
+				generation.back().swap();
+			} else if (i < CLONING_SWAP + CLONING_SCRAMBLE) {
+				generation.back().scramble();
+			} else if (i < CLONING_SWAP + CLONING_SCRAMBLE + CLONING_INSERTION) {
+				generation.back().insertion();
+			} else {
+				generation.back().inversion();
+			}
+
+			generation.back().getFitness();
+		}
+
+		// fill up with random new genomes
+		for (; i < GENERATION_SIZE; i++) {
+			generation.emplace_back();
+			generation.back().dna = dnaOrder;
+			std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
+
+			generation.back().getFitness();
+		}
+
+		// sort the created generation
+		std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
 	}
+
+	// TODO: simulate the best genome and save it
+}
+
+uint16_t Pathfinder::tournamentSelect(const std::vector<Genome>& generation) {
+	uint16_t winner = Genome::index_dist(gen);
+	for (uint16_t i = 0; i < BREEDING_TOURNAMENT_SIZE; ++i) {
+		if (const uint16_t participant = Genome::index_dist(gen); generation[participant].score > generation[winner].score) {
+			winner = participant;
+		}
+	}
+	return winner;
+}
+
+uint16_t Pathfinder::tournamentSelect(const std::vector<Genome>& generation, const uint16_t unwantedParticipant) {
+	uint16_t winner = Genome::index_dist(gen);
+	for (uint16_t i = 0; i < BREEDING_TOURNAMENT_SIZE; ++i) {
+		uint16_t participant = 0;
+
+		// try to exclude unwanted participant (ideally other parent)
+		for (uint8_t r = 0; r < INDEX_COLLISION_RETRIES; ++r) {
+			participant = Genome::index_dist(gen);
+			if (participant != unwantedParticipant) [[likely]] {break;}
+		}
+
+		if (generation[participant].score > generation[winner].score) {
+			winner = participant;
+		}
+	}
+	return winner;
+}
+
+Pathfinder::Genome Pathfinder::Genome::operator+(const Genome& other) const {
+	Genome child;
+	child.dna.resize(dna.size());
+
+	// copy random dna segment from first parent
+	const uint16_t a = index_dist(gen);
+	const uint16_t b = index_dist(gen);
+	const uint16_t segmentMin = min(a, b);
+	const uint16_t segmentMax = max(a, b);
+	std::vector<bool> childDnaFilled(dna.size());
+
+	for (uint16_t i = segmentMin; i < segmentMax; i++) {
+		child.dna[i] = dna[i];
+		childDnaFilled[dna[i]] = true;
+	}
+
+	// complete child's dna with the remaining dna segments from the second parent
+	uint16_t i = 0;
+	for (const uint16_t gene : other.dna) {
+		if (!childDnaFilled[gene]) {
+			if (i == segmentMin) [[unlikely]] {
+				i = segmentMax;
+			}
+			child.dna[i++] = gene;
+		}
+	}
+
+	return child;
 }
 
 void Pathfinder::Genome::swap() {
