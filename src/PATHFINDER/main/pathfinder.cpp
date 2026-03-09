@@ -1,7 +1,5 @@
 #include "pathfinder.hpp"
 #include <cstdlib>
-#include <cstdint>
-#include <cstring>
 #include <iostream>
 #include <algorithm>
 #include <fstream>
