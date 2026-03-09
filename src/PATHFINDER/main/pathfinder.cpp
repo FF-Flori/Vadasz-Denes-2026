@@ -483,7 +483,6 @@ bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &s
 	int8_t costofNight[2];
 	costofNight[0] = -4; // The energy cost of spending a single night idle
 	costofNight[1] = energyusage[speed*2+1]; // The energy cost of spending a single night going with the specified speed
-	int8_t battery = startBattery;
 
 	int posinpath = 0;
 	while(posinpath < pathtocheck->path.size()){
@@ -495,21 +494,23 @@ bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &s
 		int8_t addedEnergy = energyusage[speed*2+!isDay];
 
 		if(isDay){
-			if(battery+addedEnergy >= costofNight[0] || battery+addedEnergy >= costofNight[1]){
-				battery += addedEnergy;
-				if(battery > 100){battery=100;}
+			if(startBattery+addedEnergy >= costofNight[0] || startBattery+addedEnergy >= costofNight[1]){
+				startBattery += addedEnergy;
+				posinpath+=speed;
+				if(startBattery > 100){startBattery=100;}
 				//It is guaranteed that this wont go below zero because costofNight is always > 0
 			}else{
-				battery += energyusage[0]; //idle during the day
-				assert(battery < 101 && battery > -1);
+				startBattery += energyusage[0]; //idle during the day
+				assert(startBattery < 101);
 			}
 		}else{
-			if(24-starttime%24*addedEnergy > battery){
-				battery--; //idle at night
-				assert(battery < 101 && battery > -1);
+			if(24-starttime%24*addedEnergy > startBattery){
+				startBattery--; //idle at night
+				assert(startBattery < 101);
 			}else{
-				battery+=addedEnergy;
-				assert(battery < 101 && battery > -1);
+				startBattery+=addedEnergy;
+				posinpath+=speed;
+				assert(startBattery < 101);
 			}
 		}
 
