@@ -251,7 +251,7 @@ class Pathfinder {
 			}
 
 			void getFitness() {
-				assert(dna.empty());
+				assert(!dna.empty());
 				score = fitness(this);
 			}
 
