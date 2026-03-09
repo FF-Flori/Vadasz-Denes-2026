@@ -278,7 +278,7 @@ class Pathfinder {
 		std::vector<Path> paths;
 
 		// functions
-		void calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, const uint8_t speed); // starttime here is between 0 and 2*24 and the function will store the endtime in that var too
+		bool calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, const uint8_t speed);
 		void GeneticAlgorithm() const;
 		void generatePath(std::vector<uint16_t>& path);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);

@@ -470,29 +470,53 @@ void Pathfinder::Genome::inversion() {
 
 // The energy usage equation: Eusage = 2*speed^2
 // The rover gets 10 energy during the day
-void Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, const uint8_t speed){
+bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, uint8_t speed){
 	assert(speed > 0 && speed < 4);
 	// Four rows 2 columns
-	int8_t speedusage[4*2] = {
+	int8_t energyusage[4*2] = {
 		// day, night
 		9, -1,		// 10-idle(1), -idle
 		8, -2,		// 10-2*1^2, -2*1^2
 		2, -8,		// 10-2*2^2, -2*2^2
 		-8, -18		// 10-2*3
 	};
+	int8_t costofNight[2];
+	costofNight[0] = -4; // The energy cost of spending a single night idle
+	costofNight[1] = energyusage[speed*2+1]; // The energy cost of spending a single night going with the specified speed
 	int8_t battery = startBattery;
 
 	int posinpath = 0;
 	while(posinpath < pathtocheck->path.size()){
 		// Nights start at 20
 		bool isDay = starttime%24 < 21;
-		int8_t addedSpeed = speedusage[speed*2+!isDay];
-		if(battery+addedSpeed < 0){
+		if(pathtocheck->path.size()-posinpath < speed)
+		{ speed = pathtocheck->path.size()-posinpath; }
 
+		int8_t addedEnergy = energyusage[speed*2+!isDay];
+
+		if(isDay){
+			if(battery+addedEnergy >= costofNight[0] || battery+addedEnergy >= costofNight[1]){
+				battery += addedEnergy;
+				if(battery > 100){battery=100;}
+				//It is guaranteed that this wont go below zero because costofNight is always > 0
+			}else{
+				battery += energyusage[0]; //idle during the day
+				assert(battery < 101 && battery > -1);
+			}
+		}else{
+			if(24-starttime%24*addedEnergy > battery){
+				battery--; //idle at night
+				assert(battery < 101 && battery > -1);
+			}else{
+				battery+=addedEnergy;
+				assert(battery < 101 && battery > -1);
+			}
 		}
 
 		starttime++;
+		if(starttime>timeLimit){return false;}
 	}
+	return true;
 }
 void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
 	uint64_t timeused = 0;
