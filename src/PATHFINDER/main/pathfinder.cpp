@@ -263,20 +263,28 @@ void Pathfinder::GeneticAlgorithm() const {
 	std::iota(dnaOrder.begin(), dnaOrder.end(), 0);
 
 	Genome::initDistribution(dnaSize);
-	
-	std::cout<<"Generating paths...\n";
-	for(int i = 0; i < GENOME_NUM; ++i){
-		std::cout<<i<<" ";
-		genomes.at(i).generated.reserve(pathsSize);
-		genomes.at(i).score = 0;
-		generatePath(genomes.at(i).generated);
-		std::cout<<i<<": ";
-		for(int j = 0; j < pathsSize/3;j++){
-			std::cout<<j;
+
+	std::cout<<"Generating random genomes...\n";
+	std::vector<Genome> generation(GENERATION_SIZE);
+	std::vector<Genome> oldGeneration(GENERATION_SIZE);
+	for (uint16_t i = 0; i < GENERATION_SIZE; i++) {
+		// give a random dna to each genome
+		generation.emplace_back();
+		generation.back().dna = dnaOrder;
+		std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
+		generation.back().getFitness();
+
+		// runtime log
+		std::cout << i << ": ";
+		for (int j = 0; j < dnaSize / 3; j++) {
+			std::cout << j;
 		}
-		std::cout<<"...\n";
+		std::cout << "...\n";
 	}
-	std::cout<<"Paths generated\n";
+	std::cout << "Genomes generated\n";
+
+	// sort the elements for the next generation
+	std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
 
 	std::cout<<"Starting generations\n";
 	for(int i = 0; i < ITER_COUNT; ++i){
