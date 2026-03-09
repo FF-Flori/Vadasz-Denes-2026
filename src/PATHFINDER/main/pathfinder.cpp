@@ -293,6 +293,32 @@ void Pathfinder::GeneticAlgorithm(){
 	}
 }
 
+// The energy usage equation: Eusage = 2*speed^2
+// The rover gets 10 energy during the day
+void Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, const uint8_t speed){
+	assert(speed > 0 && speed < 4);
+	// Four rows 2 columns
+	int8_t speedusage[4*2] = {
+		// day, night
+		9, -1,		// 10-idle(1), -idle
+		8, -2,		// 10-2*1^2, -2*1^2
+		2, -8,		// 10-2*2^2, -2*2^2
+		-8, -18		// 10-2*3
+	};
+	int8_t battery = startBattery;
+
+	int posinpath = 0;
+	while(posinpath < pathtocheck->path.size()){
+		// Nights start at 20
+		if(starttime%24 < 21){
+
+		}else{
+
+		}
+
+		starttime++;
+	}
+}
 void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
 	Path *currpath = &paths.at(getPathIndex(oreGroups.size()-1,path.at(0)));
 	coord_t currpos = startPos;
