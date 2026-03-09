@@ -310,6 +310,60 @@ void Pathfinder::GeneticAlgorithm() const {
 	}
 }
 
+void Pathfinder::Genome::swap() {
+	const uint16_t a = index_dist(gen);
+	uint16_t b = 0;
+	for (uint8_t r = 0; r < INDEX_COLLISION_RETRIES; ++r) {
+		b = index_dist(gen);
+		if (a != b) [[likely]] {break;}
+	}
+
+	std::swap(dna[a], dna[b]);
+}
+
+void Pathfinder::Genome::scramble() {
+	const uint16_t a = index_dist(gen);
+	uint16_t b = 0;
+	for (uint8_t r = 0; r < INDEX_COLLISION_RETRIES; ++r) {
+		b = index_dist(gen);
+		if (a != b) [[likely]] {break;}
+	}
+
+	if (a < b) {
+		std::shuffle(dna.begin() + a, dna.begin() + b + 1, gen);
+	} else {
+		std::shuffle(dna.begin() + b, dna.begin() + a + 1, gen);
+	}
+}
+
+void Pathfinder::Genome::insertion() {
+	const uint16_t a = index_dist(gen);
+	uint16_t b = 0;
+	for (uint8_t r = 0; r < INDEX_COLLISION_RETRIES; ++r) {
+		b = index_dist(gen);
+		if (a != b) [[likely]] {break;}
+	}
+
+	const uint16_t gene = dna[a];
+	dna.erase(dna.begin() + a);
+	dna.insert(dna.begin() + b, gene);
+}
+
+void Pathfinder::Genome::inversion() {
+	const uint16_t a = index_dist(gen);
+	uint16_t b = 0;
+	for (uint8_t r = 0; r < INDEX_COLLISION_RETRIES; ++r) {
+		b = index_dist(gen);
+		if (a != b) [[likely]] {break;}
+	}
+
+	if (a < b) {
+		std::reverse(dna.begin() + a, dna.begin() + b + 1);
+	} else {
+		std::reverse(dna.begin() + b, dna.begin() + a + 1);
+	}
+}
+
 void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
 	Path *currpath = &paths.at(getPathIndex(oreGroups.size()-1,path.at(0)));
 	coord_t currpos = startPos;
