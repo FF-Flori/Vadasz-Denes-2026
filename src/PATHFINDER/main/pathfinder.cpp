@@ -254,9 +254,16 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 	oreGroups.push_back(newGroup);
 }
 
-void Pathfinder::GeneticAlgorithm(){
-	const uint16_t pathsSize = oreGroups.size()-1;
-	std::array<genome_t,GENOME_NUM> genomes;
+void Pathfinder::GeneticAlgorithm() const {
+	// oreGroups size without start tile
+	const uint16_t dnaSize = oreGroups.size() - 1;
+
+	// fill up a template vector for the dna fields
+	std::vector<uint16_t> dnaOrder(dnaSize);
+	std::iota(dnaOrder.begin(), dnaOrder.end(), 0);
+
+	Genome::initDistribution(dnaSize);
+	
 	std::cout<<"Generating paths...\n";
 	for(int i = 0; i < GENOME_NUM; ++i){
 		std::cout<<i<<" ";
