@@ -492,6 +492,10 @@ void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,ui
 		if(timeused >= timeLimit){break;}
 		if(visitingIndex >= path.size()){break;}
 	}
+	// TODO: simulate() does not work yet
 }
-void Pathfinder::generatePath(std::vector<uint16_t>& path){for(uint16_t i = 0; i < oreGroups.size();i++){path.push_back(i);}}
-uint32_t Pathfinder::fitness(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount){return usedTime;}
+
+int32_t Pathfinder::fitness(const Genome* genome) {
+	return static_cast<int32_t>(genome->dna.size());
+	// TODO: make a working fitness function
+}
