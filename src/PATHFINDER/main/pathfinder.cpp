@@ -7,6 +7,7 @@
 #include <fstream>
 #include <numeric>
 #include <queue>
+#include <random>
 #include <string>
 #include <stdexcept>
 #include <unordered_map>
