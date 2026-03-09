@@ -357,9 +357,9 @@ void Pathfinder::GeneticAlgorithm() const {
 }
 
 uint16_t Pathfinder::tournamentSelect(const std::vector<Genome>& generation) {
-	uint16_t winner = Genome::index_dist(gen);
+	uint16_t winner = generation_dist(gen);
 	for (uint16_t i = 0; i < BREEDING_TOURNAMENT_SIZE; ++i) {
-		if (const uint16_t participant = Genome::index_dist(gen); generation[participant].score > generation[winner].score) {
+		if (const uint16_t participant = generation_dist(gen); generation[participant].score > generation[winner].score) {
 			winner = participant;
 		}
 	}
@@ -367,13 +367,13 @@ uint16_t Pathfinder::tournamentSelect(const std::vector<Genome>& generation) {
 }
 
 uint16_t Pathfinder::tournamentSelect(const std::vector<Genome>& generation, const uint16_t unwantedParticipant) {
-	uint16_t winner = Genome::index_dist(gen);
+	uint16_t winner = generation_dist(gen);
 	for (uint16_t i = 0; i < BREEDING_TOURNAMENT_SIZE; ++i) {
 		uint16_t participant = 0;
 
 		// try to exclude unwanted participant (ideally other parent)
 		for (uint8_t r = 0; r < INDEX_COLLISION_RETRIES; ++r) {
-			participant = Genome::index_dist(gen);
+			participant = generation_dist(gen);
 			if (participant != unwantedParticipant) [[likely]] {break;}
 		}
 
