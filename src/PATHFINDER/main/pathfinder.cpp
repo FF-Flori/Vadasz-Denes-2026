@@ -63,10 +63,10 @@ void Pathfinder::calculate() {
 	std::cout<<"Grouped\n";
 
 	std::cout<<"Calculating paths..\n";
-	paths.reserve(oreGroups.size()*(oreGroups.size()+1)/2);
-	for(uint16_t a = 0; a < oreGroups.size(); a++){
-		for(uint16_t b = a+1; b < oreGroups.size();b++) {
-			paths.emplace_back(a,b);
+	paths.reserve(oreGroups.size() * (oreGroups.size() + 1) / 2);
+	for(size_t a = 0; a < oreGroups.size(); a++){
+		for(size_t b = a + 1; b < oreGroups.size(); b++) {
+			paths.emplace_back(a, b);
 		}
 	}
 	paths.shrink_to_fit();
@@ -230,7 +230,7 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 	newGroup.tiles.push_back({x,y});
 	map[getIndex(x,y)] = tile_t::grouped;
 
-	for(int i = 0; i < newGroup.tiles.size() && newGroup.tiles.size() <= GROUP_LIMIT; i++){
+	for(size_t i = 0; i < newGroup.tiles.size() && newGroup.tiles.size() <= GROUP_LIMIT; i++){
 		coord_t tilePos = newGroup.tiles.at(i);
 
 		//left
