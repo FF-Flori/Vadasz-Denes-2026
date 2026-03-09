@@ -279,6 +279,7 @@ class Pathfinder {
 		// variables
 		static inline Pathfinder* pathfinder = nullptr;
 		inline static std::mt19937 gen{std::random_device{}()};
+		inline static auto generation_dist = std::uniform_int_distribution<uint16_t>(0, GENERATION_SIZE - 1);
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		map_t map{};
