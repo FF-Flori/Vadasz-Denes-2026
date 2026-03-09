@@ -252,7 +252,7 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 	oreGroups.push_back(newGroup);
 }
 
-void Pathfinder::GeneticAlgorithm(){
+void Pathfinder::GeneticAlgorithm() const {
 	// oreGroups size without start tile
 	const uint16_t dnaSize = oreGroups.size() - 1;
 
