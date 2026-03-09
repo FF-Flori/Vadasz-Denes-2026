@@ -267,15 +267,6 @@ class Pathfinder {
 			void inversion();
 		};
 
-		struct simState {
-			Path *currpath; // The index of the path currently traversing
-			coord_t currpos; // The current position
-			uint64_t timeused;
-			uint16_t posinpath; // This is the position in the path between two nodes
-			uint16_t visitingIndex; // This is the index in the generated path that will be visited next
-			uint8_t battery;
-		};
-
 		// variables
 		static inline Pathfinder* pathfinder = nullptr;
 		inline static std::mt19937 gen{std::random_device{}()};
@@ -293,7 +284,7 @@ class Pathfinder {
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
 		static int32_t fitness(const Genome* genome);
-		static void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
+		void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}

@@ -252,7 +252,7 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 	oreGroups.push_back(newGroup);
 }
 
-void Pathfinder::GeneticAlgorithm() const {
+void Pathfinder::GeneticAlgorithm(){
 	// oreGroups size without start tile
 	const uint16_t dnaSize = oreGroups.size() - 1;
 
@@ -495,26 +495,12 @@ void Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &s
 	}
 }
 void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
-	Path *currpath = &paths.at(getPathIndex(oreGroups.size()-1,path.at(0)));
-	coord_t currpos = startPos;
 	uint64_t timeused = 0;
 	uint16_t posinpath = 0;
-	uint16_t visitingIndex = 0;
 	uint8_t battery = 100;
-	std::vector<simState> states;
-	states.reserve(oreGroups.size()-1);
-	states.push_back({
-			.currpath = currpath,
-			.currpos = currpos,
-			.timeused = timeused,
-			.posinpath = posinpath,
-			.visitingIndex = visitingIndex,
-			.battery = battery
-			});
 	// oreGroups.size is ofcourse the length of the path var
 	while(true){
 		if(timeused >= timeLimit){break;}
-		if(visitingIndex >= path.size()){break;}
 	}
 	// TODO: simulate() does not work yet
 }
