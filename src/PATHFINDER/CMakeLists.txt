@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 project(Pathfinder CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 set(PYBIND11_FINDPYTHON NEW)
 
 include(FetchContent)
@@ -19,6 +22,18 @@ set(SOURCES
         main/bindings.cpp
 )
 pybind11_add_module(pathfinder ${SOURCES})
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(pathfinder PRIVATE -O3 -march=native -Wall -Wextra)
+elseif(MSVC)
+    target_compile_options(pathfinder PRIVATE /O2 /arch:AVX2 /W4)
+endif()
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+if(ipo_supported)
+    set_property(TARGET pathfinder PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 if(MINGW)
     target_link_options(pathfinder PRIVATE "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive")

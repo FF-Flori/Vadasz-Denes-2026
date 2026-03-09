@@ -5,7 +5,9 @@
 #include <vector>
 #include <cstdint>
 #include <array>
+#include <memory>
 #include <string>
+#include <random>
 
 /**
  * Pathfinder calculates a route through a map with a genetic algorithm to maximalize collected value on the run.
@@ -15,10 +17,32 @@ class Pathfinder {
 		// constants
 		static constexpr uint8_t MAP_WIDTH = 50;
 		static constexpr uint8_t GROUP_LIMIT = 9;
-		static constexpr uint8_t START_TIME = 0; //How many half hours after 0:00
-		static constexpr uint16_t GENOME_NUM = 20;
-		static constexpr uint8_t PASSTHROUGH_RATE = 10;
-		static constexpr uint16_t ITER_COUNT = 1;
+		static constexpr uint8_t START_TIME = 0; // how many half hours after 0:00
+
+		// genetic algorithm settings
+		static constexpr uint16_t GENETIC_ITERS   = 600; // number of generations
+		static constexpr uint16_t GENERATION_SIZE = 400; // number of genomes in a generation
+
+		static constexpr uint16_t ELITISM         = GENERATION_SIZE *  5 / 100; // number of elements to be passed along by elitism
+
+		static constexpr uint16_t BREEDING                   = GENERATION_SIZE * 65 / 100;   // number of elements to be passed along by breeding
+		static constexpr uint16_t BREEDING_TOURNAMENT_SIZE   = 5;                            // number of gladiators in a tournament
+		static constexpr uint16_t BREEDING_MUTATION          = BREEDING * 15 / 100;          // number of elements to be mutated from breeds
+		static constexpr uint16_t BREEDING_SWAP              = BREEDING_MUTATION * 20 / 100; // distribution per mutation type
+		static constexpr uint16_t BREEDING_SCRAMBLE          = BREEDING_MUTATION * 15 / 100;
+		static constexpr uint16_t BREEDING_INSERTION         = BREEDING_MUTATION * 15 / 100;
+		static constexpr uint16_t BREEDING_INVERSION         = BREEDING_MUTATION - BREEDING_SWAP - BREEDING_SCRAMBLE - BREEDING_INSERTION;
+
+		static constexpr uint16_t CLONING                 = GENERATION_SIZE * 20 / 100;    // number of elements to be passed along by cloning
+		static constexpr uint16_t CLONING_TOURNAMENT_SIZE = 5;                             // -||-
+		static constexpr uint16_t CLONING_SWAP            = CLONING * 20 / 100;
+		static constexpr uint16_t CLONING_SCRAMBLE        = CLONING * 15 / 100;
+		static constexpr uint16_t CLONING_INSERTION       = CLONING * 15 / 100;
+		static constexpr uint16_t CLONING_INVERSION       = CLONING - CLONING_SWAP - CLONING_SCRAMBLE - CLONING_INSERTION;
+
+		static constexpr uint16_t RANDOM_NEW = GENERATION_SIZE - ELITISM - BREEDING - CLONING; // number of elements to be randomly generated to fill the remaining spots in a generation
+
+		static constexpr uint8_t  INDEX_COLLISION_RETRIES = 5; // amount of retries to select a unique member from the generation compared to a pair
 
 		/**
 		 * This method creates the singleton instance for Pathfinder
@@ -216,10 +240,33 @@ class Pathfinder {
 					}
 				};
 		};
-		struct genome_t {
-			std::vector<uint16_t> generated;
-			uint32_t score;
+
+		struct Genome {
+			std::vector<uint16_t> dna;
+			int32_t score = 0;
+			inline static std::uniform_int_distribution<uint16_t> index_dist;
+
+			static void initDistribution(const uint16_t size) {
+				index_dist = std::uniform_int_distribution<uint16_t>(0, size - 1);
+			}
+
+			void getFitness() {
+				assert(!dna.empty());
+				score = fitness(this);
+			}
+
+			bool operator>(const Genome& other) const {
+				return score > other.score;
+			}
+
+			Genome operator+(const Genome& other) const; // breeding
+
+			void swap();
+			void scramble();
+			void insertion();
+			void inversion();
 		};
+
 		struct simState {
 			Path *currpath; // The index of the path currently traversing
 			coord_t currpos; // The current position
@@ -231,6 +278,8 @@ class Pathfinder {
 
 		// variables
 		static inline Pathfinder* pathfinder = nullptr;
+		inline static std::mt19937 gen{std::random_device{}()};
+		inline static auto generation_dist = std::uniform_int_distribution<uint16_t>(0, GENERATION_SIZE - 1);
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		map_t map{};
@@ -241,8 +290,10 @@ class Pathfinder {
 		void calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, const uint8_t speed); // starttime here is between 0 and 2*24 and the function will store the endtime in that var too
 		void GeneticAlgorithm();
 		void generatePath(std::vector<uint16_t>& path);
-		uint32_t fitness(uint64_t usedTime,uint32_t gateredOreValue,uint16_t groupCount);
-		void simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
+		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
+		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
+		static int32_t fitness(const Genome* genome);
+		static void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
@@ -294,6 +345,7 @@ class Pathfinder {
 
 		void groupOres();
 		void createGroup(uint8_t x, uint8_t y);
+
 		/**
 		 * This function checks if the point at the supplied coordinates is the specified ore or not, and if it is, it adds it to the group and changes the value on the map to grouped
 		 * @param x The x coordinate of the checked point
