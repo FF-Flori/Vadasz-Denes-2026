@@ -756,11 +756,51 @@ class DashboardUI:
             lambda: on_close(self)
         )
 
+        self.resize_timer = None
+        self.is_resizing = False
+
+        self.main.bind("<Configure>", self.on_resize)
+
         self.refleshprg(True)
+
+    def on_resize(self, event):
+
+        if event.widget != self.main:
+            return
+
+        if not self.is_resizing:
+            self.is_resizing = True
+            self.detach_graphs()
+
+        if self.resize_timer:
+            self.main.after_cancel(self.resize_timer)
+
+        self.resize_timer = self.main.after(300, self.resize_finished)
+    
+    def detach_graphs(self):
+        self.batterycanvas.get_tk_widget().pack_forget()
+        self.speedcanvas.get_tk_widget().pack_forget()
+        self.materialcanvas.get_tk_widget().pack_forget()
+        self.positioncanvas.get_tk_widget().pack_forget()
+    
+    def resize_finished(self):
+        self.is_resizing = False
+        self.batterycanvas.get_tk_widget().pack(fill="both", expand=True)
+        self.speedcanvas.get_tk_widget().pack(fill="both", expand=True)
+        self.materialcanvas.get_tk_widget().pack(fill="both", expand=True)
+        self.positioncanvas.get_tk_widget().pack(fill="both", expand=True)
+
+        self.batterycanvas.draw_idle()
+        self.speedcanvas.draw_idle()
+        self.materialcanvas.draw_idle()
+        self.positioncanvas.draw_idle()
 
     def refleshprg(self, refles):
         global logsize, battery, time, materialB, materialG, materialY, speed, events, positionX, positionY
         refleshtime:int = 5
+
+        if self.is_resizing:
+            return
 
         if logsize < os.path.getsize(self.selectedlogfile):
             backend(self.selectedlogfile)
