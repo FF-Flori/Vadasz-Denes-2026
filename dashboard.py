@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import *
 import customtkinter as Ctk
 import os
 from customtkinter import *
@@ -7,6 +6,8 @@ from CTkListbox import *
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
+import csv
+import math
 
 Ctk.set_appearance_mode("dark")
 Ctk.set_default_color_theme("blue")
@@ -129,8 +130,8 @@ logline:int = 1
 logsize:int = 0
 time:list = []
 battery:list = []
-positionY:list = []
-positionX:list = []
+positionY:int = 0
+positionX:int = 0
 speed:list = []
 distance:list = []
 materialB:int = 0
@@ -151,8 +152,8 @@ def backend(logfile):
 
                 fullline:list = lines[i].strip().split(";")
 
-                positionX.append(int(fullline[0].split(",")[0]))
-                positionY.append(int(fullline[0].split(",")[1]))
+                positionX = int(fullline[0].split(",")[0])
+                positionY = int(fullline[0].split(",")[1])
                 battery.append(int(fullline[1]))
                 speed.append(int(fullline[2]))
                 distance.append(int(fullline[2]))
@@ -190,8 +191,6 @@ def backend(logfile):
                 )
                 materialch = ""
 
-            fullog.close()
-
             logline = len(lines)
             logsize = os.path.getsize(logfile)
 
@@ -204,7 +203,7 @@ class DashboardUI:
         clearwidget(self.main)
 
         self.main.title("Dashboard")
-        self.main.geometry("1390x800")
+        self.main.geometry("1400x900")
         self.main.resizable(True, True)
 
         BG = "#2e3237"
@@ -371,6 +370,22 @@ class DashboardUI:
             text_color="white"
         ).pack()
 
+        CTkLabel(
+            self.positionheaderframe,
+            text="Rover poziciója:",
+            font=CTkFont(family="Courier New", size=15, weight="bold"),
+            text_color="white"
+        ).pack(anchor="w")
+
+        self.positionvar = tk.StringVar(value="X: 0 | Y: 0")
+
+        CTkLabel(
+            self.positionheaderframe,
+            textvariable=self.positionvar,
+            font=CTkFont(family="Courier New", size=15, weight="bold"),
+            text_color="white"
+        ).pack(anchor="w")
+
         for i in range(2):
             self.dataframe.columnconfigure(i, weight=1)
             if i < 1:
@@ -449,19 +464,31 @@ class DashboardUI:
             BG="#171717"
         )
 
-        self.dataaiblokkvar = tk.StringVar(value="Ásvány / blokk: 0")
-        self.dataaienergiavar = tk.StringVar(value="Ásvány / energia: 0")
+        self.dataaiblokkvar = tk.IntVar(value=0)
+        self.dataaienergiavar = tk.IntVar(value=0)
+
+        CTkLabel(
+            self.dataaiframe,
+            text="Ásvány / blokk:",
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
 
         CTkLabel(
             self.dataaiframe,
             textvariable=self.dataaiblokkvar,
+            font=CTkFont(family="Courier New", size=17, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.dataaiframe,
+            text="Ásvány / energia:",
             font=CTkFont(family="Courier New", size=20, weight="bold")
         ).pack()
 
         CTkLabel(
             self.dataaiframe,
             textvariable=self.dataaienergiavar,
-            font=CTkFont(family="Courier New", size=20, weight="bold")
+            font=CTkFont(family="Courier New", size=17, weight="bold")
         ).pack()
 
         def createbardiagram(ylabel:str, xlabel:str, frame:CTkFrame):
@@ -582,8 +609,8 @@ class DashboardUI:
             )
 
             fg.subplots_adjust(
-                left=0.1,
-                right=0.6,
+                left=0.14,
+                right=0.9,
                 bottom=0.2,
                 top=0.9
             )
@@ -600,17 +627,7 @@ class DashboardUI:
 
             fg.patch.set_facecolor(BG2)
 
-            x = [5,-3,-6,0,0,4]
-            y = [3,1,-4,-3,0,-5]
-
-            n=['A','B','C','D','E','F']
-
-            ax.scatter(x, y)
-
-            for i, txt in enumerate(n):
-                ax.annotate(txt, (x[i], y[i]))
-
-            ax.grid(True, linestyle="--", linewidth=0.5)
+            ax.grid(True)
 
             ax.set_facecolor(BG2)
 
@@ -623,13 +640,56 @@ class DashboardUI:
             ax.spines["left"].set_color("white")
             ax.spines["top"].set_color("white")
             ax.spines["right"].set_color("white")
+            ax.set_ylabel("Y")
+            ax.set_xlabel("X")
 
-            return fg, ax, canvas
+            ax.set_xlim(0, 50)
+            ax.set_ylim(0, 50)
+
+            mars_map:list = []
+
+            with open("src/PATHFINDER/mars_map_50x50.csv", "r") as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    mars_map.append(row)
+            
+            for y in range(50):
+                    for x in range(50):
+                        tile = mars_map[y][x]
+
+                        if tile == "#":
+                            ax.scatter(x, y, color="gray", s=10)
+                        
+                        elif tile == "B":
+                            ax.scatter(x, y, color="blue", s=10)
+                        
+                        elif tile == "Y":
+                            ax.scatter(x, y, color="yellow", s=10)
+                        
+                        elif tile == "G":
+                            ax.scatter(x, y, color="green", s=10)
+                        
+                        elif tile == "S":
+                            ax.scatter(x, y, color="lightgreen", s=20)
+                            starttxt = ax.annotate("Kiinduló Pont", (x, y))
+                            starttxt.set_fontweight("bold")
+                            starttxt.set_color("lightgreen")
+
+                            rover_coords = ax.scatter(x, y, color="red", s=20)
+                            rover_coordstxt = ax.annotate("Rover", (x, y))
+                            rover_coordstxt.set_fontweight("bold")
+                            rover_coordstxt.set_color("black")
+                            
+                            start_x = x
+                            start_y = y
+
+            ax.invert_yaxis()
+            return fg, ax, canvas, rover_coords, rover_coordstxt, start_x, start_y
 
         self.batteryfg, self.batteryax, self.batterycanvas, self.batterybar = createbardiagram("Töltöttség (%)", "Idő (óra:perc)", self.batteryframe)
         self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra:perc)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
         self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
-        self.positionfg, self.positionax, self.positioncanvas = createcoordinatesdiagram(self.positionframe)
+        self.positionfg, self.positionax, self.positioncanvas, self.rover_coords, self.rover_coordstxt, self.start_x, self.start_y = createcoordinatesdiagram(self.positionframe)
         
         self.logframe2 = CTkFrame(
             self.logframe,
@@ -664,7 +724,7 @@ class DashboardUI:
         self.refleshprg(True)
 
     def refleshprg(self, refles):
-        global logsize, battery, time, materialB, materialG, materialY, speed, events
+        global logsize, battery, time, materialB, materialG, materialY, speed, events, positionX, positionY
         refleshtime:int = 5
 
         if logsize < os.path.getsize(self.selectedlogfile):
@@ -674,7 +734,6 @@ class DashboardUI:
             for i in range(len(events)):
                 if i >= self.loglsbx.size():
                     self.loglsbx.insert(END, events[i])
-
 
             def linediagram(ax, datas, maxdata:int, canvas):
                 line = ax.lines[0]
@@ -763,13 +822,17 @@ class DashboardUI:
                 )
 
                 ax.set_facecolor("#2e3237")
-                canvas.draw()
-
+                canvas.draw_idle()
+            
             self.allmaterial.set(value="Összes ásvány: " + str(materialB + materialY + materialG) + " db")
-            self.distancestartvar.set(value="Távolság a kiinduló ponttól: " + str("ERROR") + " blokk")
+            self.distancestartvar.set(value="Távolság a kiinduló ponttól: " + str(round(math.sqrt((positionX - self.start_x)**2 + (positionY - self.start_y)**2), 10)) + " blokk")
             self.batterybar = bardiagram(self.batteryax, battery, maxdata, self.batterycanvas, self.batterybar)
             linediagram(self.speedax, speed, maxdata, self.speedcanvas)
             piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
+            self.positionvar.set(value=f"X: {positionX} | Y: {positionY}")
+            self.rover_coords.set_offsets([positionX, positionY])
+            self.rover_coordstxt.set_position([positionX, positionY])
+            self.positioncanvas.draw_idle()
             self.timevar.set(value=f"{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}")
 
             if (int(time[-1]) % 1440) < 960:
@@ -808,8 +871,8 @@ class DashboardUI:
             self.datamindtvar.set(value="Minimum: " + str(minbt) + "%")
             self.dataatlagdtvar.set(value="Átlag: " + str(atlagbt) + "%")
             self.datamaxdtvar.set(value="Maximum: " + str(maxbt) + "%")
-            self.dataaiblokkvar.set(value="Ásvány / blokk: " + str(round((materialB + materialY + materialG)/distance, 2)))
-            self.dataaienergiavar.set(value="Ásvány / energia: " + str(usedallbattery))
+            self.dataaiblokkvar.set(value=round((materialB + materialY + materialG)/distance, 16))
+            self.dataaienergiavar.set(value=usedallbattery)
             
             if refles == True:
                 self.main.after(
