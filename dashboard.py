@@ -5,6 +5,7 @@ from customtkinter import *
 from CTkListbox import *
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.colors import ListedColormap
 import sys
 import csv
 import math
@@ -628,7 +629,6 @@ class DashboardUI:
             fg.patch.set_facecolor(BG2)
 
             ax.grid(True)
-
             ax.set_facecolor(BG2)
 
             ax.tick_params(colors="white")
@@ -640,49 +640,84 @@ class DashboardUI:
             ax.spines["left"].set_color("white")
             ax.spines["top"].set_color("white")
             ax.spines["right"].set_color("white")
+
             ax.set_ylabel("Y")
             ax.set_xlabel("X")
 
             ax.set_xlim(0, 50)
             ax.set_ylim(0, 50)
-
-            mars_map:list = []
+            mars_map = []
 
             with open("src/PATHFINDER/mars_map_50x50.csv", "r") as f:
                 reader = csv.reader(f)
                 for row in reader:
                     mars_map.append(row)
-            
+
+            grid = []
+
+            start_x = 0
+            start_y = 0
+
             for y in range(50):
-                    for x in range(50):
-                        tile = mars_map[y][x]
 
-                        if tile == "#":
-                            ax.scatter(x, y, color="gray", s=10)
-                        
-                        elif tile == "B":
-                            ax.scatter(x, y, color="blue", s=10)
-                        
-                        elif tile == "Y":
-                            ax.scatter(x, y, color="yellow", s=10)
-                        
-                        elif tile == "G":
-                            ax.scatter(x, y, color="green", s=10)
-                        
-                        elif tile == "S":
-                            ax.scatter(x, y, color="lightgreen", s=20)
-                            starttxt = ax.annotate("Kiinduló Pont", (x, y))
-                            starttxt.set_fontweight("bold")
-                            starttxt.set_color("lightgreen")
+                grid_row = []
 
-                            rover_coords = ax.scatter(x, y, color="red", s=20)
-                            rover_coordstxt = ax.annotate("Rover", (x, y))
-                            rover_coordstxt.set_fontweight("bold")
-                            rover_coordstxt.set_color("black")
-                            
-                            start_x = x
-                            start_y = y
+                for x in range(50):
 
+                    tile = mars_map[y][x]
+
+                    if tile == "#":
+                        grid_row.append(1)
+
+                    elif tile == "B":
+                        grid_row.append(2)
+
+                    elif tile == "Y":
+                        grid_row.append(3)
+
+                    elif tile == "G":
+                        grid_row.append(4)
+
+                    elif tile == "S":
+
+                        grid_row.append(5)
+
+                        start_x = x
+                        start_y = y
+
+                    else:
+                        grid_row.append(0)
+
+                grid.append(grid_row)
+
+            cmap = ListedColormap([
+                "#2e3237",
+                "gray",
+                "blue",
+                "yellow",
+                "green",
+                "lightgreen"
+            ])
+
+            ax.imshow(
+                grid,
+                cmap=cmap,
+                origin="upper",
+                extent=(0,50,50,0)
+            )
+
+            rover_coords = ax.scatter(start_x, start_y, color="red", s=40)
+
+            rover_coordstxt = ax.annotate("Rover", (start_x, start_y))
+            rover_coordstxt.set_fontweight("bold")
+            rover_coordstxt.set_color("black")
+
+            ax.scatter(start_x, start_y, color="lightgreen", s=40)
+            starttxt = ax.annotate("Kiinduló Pont", (start_x, start_y))
+            starttxt.set_fontweight("bold")
+            starttxt.set_color("lightgreen")
+
+            ax.set_aspect("auto")
             ax.invert_yaxis()
             return fg, ax, canvas, rover_coords, rover_coordstxt, start_x, start_y
 
@@ -721,11 +756,45 @@ class DashboardUI:
             lambda: on_close(self)
         )
 
+        self.resize_timer = None
+        self.is_resizing = False
+
+        self.main.bind("<Configure>", self.on_resize)
+
         self.refleshprg(True)
+
+    def on_resize(self, event):
+
+        if event.widget != self.main:
+            return
+
+        if not self.is_resizing:
+            self.is_resizing = True
+            self.detach_graphs()
+
+        if self.resize_timer:
+            self.main.after_cancel(self.resize_timer)
+
+        self.resize_timer = self.main.after(300, self.resize_finished)
+    
+    def detach_graphs(self):
+        self.bodyframe.pack_forget()
+    
+    def resize_finished(self):
+        self.is_resizing = False
+        self.bodyframe.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.batterycanvas.draw_idle()
+        self.speedcanvas.draw_idle()
+        self.materialcanvas.draw_idle()
+        self.positioncanvas.draw_idle()
 
     def refleshprg(self, refles):
         global logsize, battery, time, materialB, materialG, materialY, speed, events, positionX, positionY
         refleshtime:int = 5
+
+        if self.is_resizing:
+            return
 
         if logsize < os.path.getsize(self.selectedlogfile):
             backend(self.selectedlogfile)
