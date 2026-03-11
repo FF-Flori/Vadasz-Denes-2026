@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <random>
+#include <stdexcept>
 
 /**
  * Pathfinder calculates a route through a map with a genetic algorithm to maximalize collected value on the run.
@@ -170,7 +171,77 @@ class Pathfinder {
 			}
 		};
 
-		// ban copying
+		/**
+		 * instructions type (half bytes)
+		 */
+		enum class instruction_t : uint8_t {
+			up_left     = 0b0000,
+		 	up          = 0b0001,
+		 	up_right    = 0b0010,
+		 	right       = 0b0011,
+		 	down_right  = 0b0100,
+		 	down        = 0b0101,
+		 	down_left   = 0b0110,
+		 	left        = 0b0111,
+		 	set_speed_0 = 0b1000,
+		 	set_speed_1 = 0b1001,
+		 	set_speed_2 = 0b1010,
+		 	set_speed_3 = 0b1011,
+		 	mine        = 0b1100
+		};
+
+		/**
+		 * instruction container
+		 */
+		class route_t {
+			public:
+				void push_back(const instruction_t instruction) {
+					if (floatingInstruction & 1) {
+						instructions.push_back((floatingInstruction & 0xf0) | (static_cast<uint8_t>(instruction) & 0x0f));
+						floatingInstruction--;
+					} else {
+						floatingInstruction = (static_cast<uint8_t>(instruction) << 4) + 1;
+					}
+				}
+
+				[[nodiscard]] size_t size() const {
+					return instructions.size() * 2 + (floatingInstruction & 1);
+				}
+
+				[[nodiscard]] instruction_t operator[](const size_t i) const {
+					if (i & 1) {
+						return static_cast<instruction_t>(instructions[i / 2] & 0x0f);
+					}
+
+					if (i < size() - 1) {
+						return static_cast<instruction_t>(instructions[i / 2] >> 4);
+					}
+
+					return static_cast<instruction_t>(floatingInstruction >> 4);
+				}
+
+				[[nodiscard]] instruction_t at(const size_t i) const {
+					if (i >= size()) {
+						throw std::out_of_range("pathfinder::at() out of range");
+					}
+
+					if (i & 1) {
+						return static_cast<instruction_t>(instructions[i / 2] & 0x0f);
+					}
+
+					if (i < size() - 1) {
+						return static_cast<instruction_t>(instructions[i / 2] >> 4);
+					}
+
+					return static_cast<instruction_t>(floatingInstruction >> 4);
+				}
+
+			private:
+				std::vector<uint8_t> instructions{};
+				uint8_t floatingInstruction = 0;
+		};
+
+		// no copying tuff
 		Pathfinder(const Pathfinder&) = delete;
 		Pathfinder& operator=(const Pathfinder&) = delete;
 		Pathfinder(Pathfinder&&) = delete;
