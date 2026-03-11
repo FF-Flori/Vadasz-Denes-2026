@@ -468,11 +468,58 @@ void Pathfinder::Genome::inversion() {
 	}
 }
 
+bool Pathfinder::calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup,uint8_t &startBattery, uint64_t &starttime){
+	// This is a gross overestimation
+	uint8_t estimatedMoves = pOreGroup->tiles.size()*2;
+	//TODO: Check if it is possible to even start moving (check if the rover starts at night and if it has enough energy to make it to morning)
+
+	int8_t energyusage[2*2] = {
+		// day, night
+		9, -1,		// 10-idle(1), -idle
+		8, -2,		// 10-2*1^2, -2*1^2
+	};
+	int8_t costofNight[2];
+	costofNight[0] = -4; // The energy cost of spending a single night idle
+	costofNight[1] = energyusage[3]; // The energy cost of spending a single night with 1 speed
+
+	int posinpath = 0;
+	while(posinpath < estimatedMoves){
+		// Nights start at 20
+		bool isDay = starttime%24 < 21;
+		int8_t addedEnergy = energyusage[2+!isDay];
+
+		if(isDay){
+			if(startBattery+addedEnergy >= costofNight[0] || startBattery+addedEnergy >= costofNight[1]){
+				startBattery += addedEnergy;
+				posinpath++;
+				if(startBattery > 100){startBattery=100;}
+			}else{
+				startBattery += energyusage[0]; //idle during the day
+				assert(startBattery < 101);
+			}
+		}else{
+			if(24-starttime%24*addedEnergy > startBattery){
+				startBattery--; //idle at night
+				assert(startBattery < 101);
+			}else{
+				startBattery+=addedEnergy;
+				posinpath++;
+				assert(startBattery < 101);
+			}
+		}
+
+		starttime++;
+		if(starttime>timeLimit){return false;}
+	}
+
+	return true;
+}
 // The energy usage equation: Eusage = 2*speed^2
 // The rover gets 10 energy during the day
 bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, uint8_t speed){
 	assert(speed > 0 && speed < 4);
 	// Four rows 2 columns
+	//TODO: Check if it is possible to even start moving (check if the rover starts at night and if it has enough energy to make it to morning)
 	int8_t energyusage[4*2] = {
 		// day, night
 		9, -1,		// 10-idle(1), -idle
@@ -523,9 +570,52 @@ void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,ui
 	uint64_t timeused = 0;
 	uint16_t posinpath = 0;
 	uint8_t battery = 100;
-	// oreGroups.size is ofcourse the length of the path var
-	while(true){
-		if(timeused >= timeLimit){break;}
+
+	// path to each group + the usages of the group itself + the path back
+	state_t states[path.size()*2+1];
+	uint16_t lastGroup = oreGroups.size()-1;
+
+	for(int i = 0; i < path.size(); i++){
+		uint8_t usedbattery = battery;
+		uint64_t usedTime = timeused;
+		uint8_t speed = 1;
+		for(; speed < 4;speed++){
+			if(!calculateBatteryAndTimeUsage(&paths.at(getPathIndex(path.at(i),lastGroup)),usedbattery,usedTime,3)){
+				usedbattery = battery;
+				usedTime = timeused;
+			}else{break;}
+		}
+		if(speed > 3){
+			// TODO: this
+			// This path is impossible
+		}else{
+			battery = usedbattery;
+			timeused = usedTime;
+			states[i*2] = {
+				.timeUsage = usedTime,
+				.energyUsage = usedbattery,
+				.usedSpeed = speed
+			};
+		}
+
+
+		// Now for the group
+		usedbattery = battery;
+		usedTime = timeused;
+		if(!calculateGroupBatteryAndTimeUsage(&oreGroups.at(path.at(i)),usedbattery,usedTime)){
+			// TODO: this
+			// Impossible
+		}else{
+			battery = usedbattery;
+			timeused = usedTime;
+			states[i*2+1] = {
+				.timeUsage = usedTime,
+				.energyUsage = usedbattery,
+				.usedSpeed = 1
+			};
+		}
+
+		lastGroup = path.at(i);
 	}
 	// TODO: simulate() does not work yet
 }
