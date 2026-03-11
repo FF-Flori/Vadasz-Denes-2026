@@ -778,17 +778,11 @@ class DashboardUI:
         self.resize_timer = self.main.after(300, self.resize_finished)
     
     def detach_graphs(self):
-        self.batterycanvas.get_tk_widget().pack_forget()
-        self.speedcanvas.get_tk_widget().pack_forget()
-        self.materialcanvas.get_tk_widget().pack_forget()
-        self.positioncanvas.get_tk_widget().pack_forget()
+        self.bodyframe.pack_forget()
     
     def resize_finished(self):
         self.is_resizing = False
-        self.batterycanvas.get_tk_widget().pack(fill="both", expand=True)
-        self.speedcanvas.get_tk_widget().pack(fill="both", expand=True)
-        self.materialcanvas.get_tk_widget().pack(fill="both", expand=True)
-        self.positioncanvas.get_tk_widget().pack(fill="both", expand=True)
+        self.bodyframe.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.batterycanvas.draw_idle()
         self.speedcanvas.draw_idle()
