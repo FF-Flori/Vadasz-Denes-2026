@@ -195,6 +195,63 @@ def backend(logfile):
             logline = len(lines)
             logsize = os.path.getsize(logfile)
 
+class FullGraphWindow:
+    def __init__(self, main, title, xdata, ydata, ylabel, xlabel, mode="line", ticks=None, ticklabels=None):
+        self.win = CTkToplevel(main)
+        self.win.title(title)
+        self.win.geometry("900x600")
+        self.win.resizable(True, True)
+
+        self.fg, self.ax = plt.subplots(figsize=(4, 3), dpi=100)
+
+        self.canvas = FigureCanvasTkAgg(self.fg, master=self.win)
+        self.canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        self.fg.patch.set_facecolor("#262626")
+        self.ax.set_facecolor("#262626")
+        self.ax.tick_params(colors="white")
+        self.ax.xaxis.label.set_color("white")
+        self.ax.yaxis.label.set_color("white")
+        self.ax.spines["bottom"].set_color("white")
+        self.ax.spines["left"].set_color("white")
+        self.ax.spines["top"].set_color("white")
+        self.ax.spines["right"].set_color("white")
+
+        self.mode = mode
+        self.xdata = xdata
+        self.ydata = ydata
+        self.ylabel = ylabel
+        self.xlabel = xlabel
+        self.ticks = ticks
+        self.ticklabels = ticklabels
+
+        self.update_graph()
+
+    def update_graph(self):
+        self.ax.clear()
+        if self.mode == "line":
+            self.ax.plot(self.xdata, self.ydata, marker="o")
+        elif self.mode == "bar":
+            self.ax.bar(self.xdata, self.ydata, width=20, linewidth=1, color="lightgreen")
+        self.ax.set_ylabel(self.ylabel, color="white")
+        self.ax.set_xlabel(self.xlabel, color="white")
+
+        if self.ticks is not None and self.ticklabels is not None:
+            self.ax.set_yticks(self.ticks)
+            self.ax.set_yticklabels(self.ticklabels)
+
+        self.ax.set_xticks(self.xdata)
+
+        labels = [
+                f"{int(i)//60}:{int(i)%60:02d}"
+                for i in self.xdata
+                ]
+        
+        self.ax.set_xticklabels(labels)
+        self.ax.grid(True, linestyle="--", linewidth=0.5)
+        self.ax.set_facecolor("#262626")
+        self.fg.patch.set_facecolor("#262626")
+        self.canvas.draw_idle()
 
 class DashboardUI:
     def __init__(self, main:Ctk.CTk, selectedlogfile:str):
@@ -245,7 +302,17 @@ class DashboardUI:
             if i < 2:
                 self.bodyframe.rowconfigure(i, weight=1)
 
-        def create_panel(parent, title, row, col, colspan=1, rfbtn=False, BG=BG2):
+        self.fullgraph_battery = None
+        self.fullgraph_speed = None
+
+        def open_full_graph(self, graph_type):
+            if graph_type == 'battery':
+                self.fullgraph_battery = FullGraphWindow(self.main, "Akkumulátor Töltöttség", time, battery, "Töltöttség (%)", "Idő (óra:perc)", mode="bar")
+
+            elif graph_type == 'speed':
+                self.fullgraph_speed = FullGraphWindow(self.main, "Sebesség", time, speed, "Sebesség", "Idő (óra:perc)", mode="line", ticks=[0,1,2,3], ticklabels=["Áll","Lassú","Normál","Gyors"])
+
+        def create_panel(parent, title, row, col, colspan=1, rfbtn=False, BG=BG2, typein=""):
             outer = CTkFrame(
                 parent,
                 fg_color=BG,
@@ -271,14 +338,14 @@ class DashboardUI:
                 font=CTkFont(family="Courier New", size=18, weight="bold")
             ).grid(row=0, column=0, sticky="ew", pady=(5, 0), padx=(5,5))
 
-
             if rfbtn:
                 CTkButton(
-                    outer,
-                    text="Teljese nézet",
-                    font=CTkFont(family="Courier New", size=14, weight="bold"),
-                    cursor="hand2",
-                    corner_radius=8
+                outer,
+                text="Teljese nézet",
+                font=CTkFont(family="Courier New", size=14, weight="bold"),
+                cursor="hand2",
+                corner_radius=8,
+                command=lambda: open_full_graph(self, typein) 
                 ).grid(row=0, column=1, pady=(5, 0), padx=(5,5))
 
             graph_area = CTkFrame(
@@ -309,6 +376,7 @@ class DashboardUI:
             "Akkumulátor Töltöttség (%)",
             0, 1,
             rfbtn=True,
+            typein='battery',
             BG=BG2
         )
 
@@ -317,6 +385,7 @@ class DashboardUI:
             "Sebesség",
             0, 2,
             rfbtn=True,
+            typein='speed',
             BG=BG2
         )
 
@@ -733,22 +802,19 @@ class DashboardUI:
 
         self.logframe2.pack(fill="both", expand=True, pady=5, padx=5)
 
-        self.loglsbx = CTkListbox(
-                self.logframe2,
-                font=CTkFont(family="Courier New", size=15),
-                multiple_selection=False,
-                hover=False,
-                fg_color="#171717"
-            )
-
+        self.loglsbx = CTkListbox( 
+            self.logframe2, 
+            font=CTkFont(family="Courier New", size=15), 
+            multiple_selection=False, 
+            hover=False, 
+            fg_color="#171717" 
+            ) 
+        
         self.loglsbx.pack(fill=BOTH, expand=True)
 
         def on_close(self):
-
             plt.close("all")
-
             self.main.destroy()
-
             self.main.quit()
 
         self.main.protocol(
@@ -810,16 +876,20 @@ class DashboardUI:
                 xdata = list(line.get_xdata())
                 ydata = list(line.get_ydata())
 
-                if type(ydata) != list:
-                    ydata.tolist()
+                if not isinstance(ydata, list):
+                    ydata = ydata.tolist()
 
                 if len(datas) > len(ydata):
 
                     new_y = datas[len(ydata):]
                     new_x = time[len(xdata):]
 
-                    xdata = (xdata + new_x)[-maxdata:]
-                    ydata = (ydata + new_y)[-maxdata:]
+                    if maxdata != 0:
+                        xdata = (xdata + new_x)[-maxdata:]
+                        ydata = (ydata + new_y)[-maxdata:]
+                    else:
+                        xdata = (xdata + new_x)
+                        ydata = (ydata + new_y)
 
                     line.set_data(xdata, ydata)
 
@@ -837,8 +907,13 @@ class DashboardUI:
                     canvas.draw_idle()
             
             def bardiagram(ax, datas, maxdata, canvas, bar):
-                xdata = time[-maxdata:]
-                ydata = datas[-maxdata:]
+                if maxdata != 0:
+                    xdata = time[-maxdata:]
+                    ydata = datas[-maxdata:]
+                else:
+                    xdata = time
+                    ydata = datas
+                    
                 for i in bar:
                     i.remove()
                 bar = ax.bar(xdata, ydata, width=20, linewidth=1, color="lightgreen")
@@ -897,6 +972,16 @@ class DashboardUI:
             self.distancestartvar.set(value="Távolság a kiinduló ponttól: " + str(round(math.sqrt((positionX - self.start_x)**2 + (positionY - self.start_y)**2), 10)) + " blokk")
             self.batterybar = bardiagram(self.batteryax, battery, maxdata, self.batterycanvas, self.batterybar)
             linediagram(self.speedax, speed, maxdata, self.speedcanvas)
+            if self.fullgraph_battery is not None:
+                self.fullgraph_battery.xdata = time
+                self.fullgraph_battery.ydata = battery
+                self.fullgraph_battery.update_graph()
+
+            if self.fullgraph_speed is not None:
+                self.fullgraph_speed.xdata = time
+                self.fullgraph_speed.ydata = speed
+                self.fullgraph_speed.update_graph()
+
             piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
             self.positionvar.set(value=f"X: {positionX} | Y: {positionY}")
             self.rover_coords.set_offsets([positionX, positionY])
