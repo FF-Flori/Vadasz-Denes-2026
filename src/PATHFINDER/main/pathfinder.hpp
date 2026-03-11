@@ -337,6 +337,11 @@ class Pathfinder {
 			void insertion();
 			void inversion();
 		};
+		struct state_t{
+			uint64_t timeUsage;
+			uint8_t energyUsage;
+			uint8_t usedSpeed;
+		};
 
 		// variables
 		static inline Pathfinder* pathfinder = nullptr;
@@ -350,6 +355,7 @@ class Pathfinder {
 
 		// functions
 		bool calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, const uint8_t speed);
+		bool calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup,uint8_t &startBattery, uint64_t &starttime);
 		void GeneticAlgorithm() const;
 		void generatePath(std::vector<uint16_t>& path);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
