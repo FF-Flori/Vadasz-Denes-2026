@@ -337,6 +337,7 @@ class Pathfinder {
 			void insertion();
 			void inversion();
 		};
+
 		struct state_t{
 			uint64_t timeUsage;
 			uint8_t energyUsage;
@@ -354,8 +355,8 @@ class Pathfinder {
 		std::vector<Path> paths;
 
 		// functions
-		bool calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, uint8_t speed);
-		bool calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup,uint8_t &startBattery, uint64_t &starttime);
+		bool calculateBatteryAndTimeUsage(const Path* pathToCheck, uint8_t& startBattery, uint64_t& startTime, uint8_t speed) const;
+		bool calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup, uint8_t& startBattery, uint64_t& startTime) const;
 		void GeneticAlgorithm() const;
 		void generatePath(std::vector<uint16_t>& path);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);

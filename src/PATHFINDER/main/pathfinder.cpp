@@ -468,59 +468,59 @@ void Pathfinder::Genome::inversion() {
 	}
 }
 
-bool Pathfinder::calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup,uint8_t &startBattery, uint64_t &starttime){
+bool Pathfinder::calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup, uint8_t &startBattery, uint64_t &startTime) const {
 	// This is a gross overestimation
-	uint8_t estimatedMoves = pOreGroup->tiles.size()*2;
+	const uint8_t estimatedMoves = pOreGroup->tiles.size()*2;
 	//TODO: Check if it is possible to even start moving (check if the rover starts at night and if it has enough energy to make it to morning)
 
-	int8_t energyusage[2*2] = {
+	constexpr int8_t energyusage[2*2] = {
 		// day, night
 		9, -1,		// 10-idle(1), -idle
 		8, -2,		// 10-2*1^2, -2*1^2
 	};
-	int8_t costofNight[2];
-	costofNight[0] = -4; // The energy cost of spending a single night idle
-	costofNight[1] = energyusage[3]; // The energy cost of spending a single night with 1 speed
+	int8_t costOfNight[2];
+	costOfNight[0] = -4; // The energy cost of spending a single night idle
+	costOfNight[1] = energyusage[3]; // The energy cost of spending a single night with 1 speed
 
-	int posinpath = 0;
-	while(posinpath < estimatedMoves){
+	int posInPath = 0;
+	while(posInPath < estimatedMoves){
 		// Nights start at 20
-		bool isDay = starttime%24 < 21;
-		int8_t addedEnergy = energyusage[2+!isDay];
+		const bool isDay = startTime%24 < 21;
+		const int8_t addedEnergy = energyusage[2+!isDay];
 
 		if(isDay){
-			if(startBattery+addedEnergy >= costofNight[0] || startBattery+addedEnergy >= costofNight[1]){
+			if(startBattery+addedEnergy >= costOfNight[0] || startBattery+addedEnergy >= costOfNight[1]){
 				startBattery += addedEnergy;
-				posinpath++;
+				posInPath++;
 				if(startBattery > 100){startBattery=100;}
 			}else{
 				startBattery += energyusage[0]; //idle during the day
 				assert(startBattery < 101);
 			}
 		}else{
-			if(24-starttime%24*addedEnergy > startBattery){
+			if(24-startTime%24*addedEnergy > startBattery){
 				startBattery--; //idle at night
 				assert(startBattery < 101);
 			}else{
 				startBattery+=addedEnergy;
-				posinpath++;
+				posInPath++;
 				assert(startBattery < 101);
 			}
 		}
 
-		starttime++;
-		if(starttime>timeLimit){return false;}
+		startTime++;
+		if(startTime>timeLimit){return false;}
 	}
 
 	return true;
 }
 // The energy usage equation: Eusage = 2*speed^2
 // The rover gets 10 energy during the day
-bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, uint8_t speed){
+bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathToCheck, uint8_t &startBattery, uint64_t &startTime, uint8_t speed) const {
 	assert(speed > 0 && speed < 4);
 	// Four rows 2 columns
 	//TODO: Check if it is possible to even start moving (check if the rover starts at night and if it has enough energy to make it to morning)
-	int8_t energyusage[4*2] = {
+	constexpr int8_t energyUsage[4*2] = {
 		// day, night
 		9, -1,		// 10-idle(1), -idle
 		8, -2,		// 10-2*1^2, -2*1^2
@@ -529,44 +529,44 @@ bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &s
 	};
 	int8_t costofNight[2];
 	costofNight[0] = -4; // The energy cost of spending a single night idle
-	costofNight[1] = energyusage[speed*2+1]; // The energy cost of spending a single night going with the specified speed
+	costofNight[1] = energyUsage[speed*2+1]; // The energy cost of spending a single night going with the specified speed
 
-	int posinpath = 0;
-	while(posinpath < pathtocheck->path.size()){
+	size_t posInPath = 0;
+	while(posInPath < pathToCheck->path.size()){
 		// Nights start at 20
-		bool isDay = starttime%24 < 21;
-		if(pathtocheck->path.size()-posinpath < speed)
-		{ speed = pathtocheck->path.size()-posinpath; }
+		const bool isDay = startTime%24 < 21;
+		if(pathToCheck->path.size()-posInPath < speed)
+		{ speed = pathToCheck->path.size()-posInPath; }
 
-		int8_t addedEnergy = energyusage[speed*2+!isDay];
+		const int8_t addedEnergy = energyUsage[speed*2+!isDay];
 
 		if(isDay){
 			if(startBattery+addedEnergy >= costofNight[0] || startBattery+addedEnergy >= costofNight[1]){
 				startBattery += addedEnergy;
-				posinpath+=speed;
+				posInPath+=speed;
 				if(startBattery > 100){startBattery=100;}
-				//It is guaranteed that this wont go below zero because costofNight is always > 0
+				//It is guaranteed that this won't go below zero because costofNight is always > 0
 			}else{
-				startBattery += energyusage[0]; //idle during the day
+				startBattery += energyUsage[0]; //idle during the day
 				assert(startBattery < 101);
 			}
 		}else{
-			if(24-starttime%24*addedEnergy > startBattery){
+			if(24-startTime%24*addedEnergy > startBattery){
 				startBattery--; //idle at night
 				assert(startBattery < 101);
 			}else{
 				startBattery+=addedEnergy;
-				posinpath+=speed;
+				posInPath+=speed;
 				assert(startBattery < 101);
 			}
 		}
 
-		starttime++;
-		if(starttime>timeLimit){return false;}
+		startTime++;
+		if(startTime>timeLimit){return false;}
 	}
 	return true;
 }
-void Pathfinder::simulate(const std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount){
+void Pathfinder::simulate(const std::vector<uint16_t> path, uint64_t* usedTime, uint32_t* gateredOreValue, uint16_t* groupCount){
 	uint64_t timeused = 0;
 	uint16_t posinpath = 0;
 	uint8_t battery = 100;
@@ -624,3 +624,4 @@ int32_t Pathfinder::fitness(const Genome* genome) {
 	return static_cast<int32_t>(genome->dna.size());
 	// TODO: make a working fitness function
 }
+
