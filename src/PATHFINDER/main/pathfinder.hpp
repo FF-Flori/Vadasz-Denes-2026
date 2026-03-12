@@ -354,7 +354,7 @@ class Pathfinder {
 		std::vector<Path> paths;
 
 		// functions
-		bool calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, const uint8_t speed);
+		bool calculateBatteryAndTimeUsage(const Path* pathtocheck,uint8_t &startBattery, uint64_t &starttime, uint8_t speed);
 		bool calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup,uint8_t &startBattery, uint64_t &starttime);
 		void GeneticAlgorithm() const;
 		void generatePath(std::vector<uint16_t>& path);
