@@ -361,6 +361,7 @@ class Pathfinder {
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
 		static int32_t fitness(const Genome* genome);
 		void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
+		static void calculateFinalRoute(route_t& toRoute, std::vector<uint16_t>& groups);
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}

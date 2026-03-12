@@ -625,3 +625,14 @@ int32_t Pathfinder::fitness(const Genome* genome) {
 	// TODO: make a working fitness function
 }
 
+void Pathfinder::calculateFinalRoute(route_t& toRoute, std::vector<uint16_t>& groups) {
+	constexpr uint8_t segmentTypes[5][7] = {
+		{36, 3, 3},
+		{24, 2, 2, 2},
+		{20, 2, 2, 1, 1},
+		{16, 2, 1, 1, 1, 1},
+		{12, 1, 1, 1, 1, 1, 1}
+	};
+
+	std::vector<> routeSegments;
+}
