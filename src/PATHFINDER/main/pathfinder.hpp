@@ -193,52 +193,50 @@ class Pathfinder {
 		/**
 		 * instruction container
 		 */
-		class route_t {
-			public:
-				void push_back(const instruction_t instruction) {
-					if (floatingInstruction & 1) {
-						instructions.push_back((floatingInstruction & 0xf0) | (static_cast<uint8_t>(instruction) & 0x0f));
-						floatingInstruction--;
-					} else {
-						floatingInstruction = (static_cast<uint8_t>(instruction) << 4) + 1;
-					}
+		struct route_t {
+			std::vector<uint8_t> instructions{};
+			uint8_t floatingInstruction = 0;
+
+			void push_back(const instruction_t instruction) {
+				if (floatingInstruction & 1) {
+					instructions.push_back((floatingInstruction & 0xf0) | (static_cast<uint8_t>(instruction) & 0x0f));
+					floatingInstruction--;
+				} else {
+					floatingInstruction = (static_cast<uint8_t>(instruction) << 4) + 1;
+				}
+			}
+
+			[[nodiscard]] size_t size() const {
+				return instructions.size() * 2 + (floatingInstruction & 1);
+			}
+
+			[[nodiscard]] instruction_t operator[](const size_t i) const {
+				if (i & 1) {
+					return static_cast<instruction_t>(instructions[i / 2] & 0x0f);
 				}
 
-				[[nodiscard]] size_t size() const {
-					return instructions.size() * 2 + (floatingInstruction & 1);
+				if (i < size() - 1) {
+					return static_cast<instruction_t>(instructions[i / 2] >> 4);
 				}
 
-				[[nodiscard]] instruction_t operator[](const size_t i) const {
-					if (i & 1) {
-						return static_cast<instruction_t>(instructions[i / 2] & 0x0f);
-					}
+				return static_cast<instruction_t>(floatingInstruction >> 4);
+			}
 
-					if (i < size() - 1) {
-						return static_cast<instruction_t>(instructions[i / 2] >> 4);
-					}
-
-					return static_cast<instruction_t>(floatingInstruction >> 4);
+			[[nodiscard]] instruction_t at(const size_t i) const {
+				if (i >= size()) {
+					throw std::out_of_range("pathfinder::at() out of range");
 				}
 
-				[[nodiscard]] instruction_t at(const size_t i) const {
-					if (i >= size()) {
-						throw std::out_of_range("pathfinder::at() out of range");
-					}
-
-					if (i & 1) {
-						return static_cast<instruction_t>(instructions[i / 2] & 0x0f);
-					}
-
-					if (i < size() - 1) {
-						return static_cast<instruction_t>(instructions[i / 2] >> 4);
-					}
-
-					return static_cast<instruction_t>(floatingInstruction >> 4);
+				if (i & 1) {
+					return static_cast<instruction_t>(instructions[i / 2] & 0x0f);
 				}
 
-			private:
-				std::vector<uint8_t> instructions{};
-				uint8_t floatingInstruction = 0;
+				if (i < size() - 1) {
+					return static_cast<instruction_t>(instructions[i / 2] >> 4);
+				}
+
+				return static_cast<instruction_t>(floatingInstruction >> 4);
+			}
 		};
 
 		// no copying tuff
