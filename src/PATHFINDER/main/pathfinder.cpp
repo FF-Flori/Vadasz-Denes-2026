@@ -471,13 +471,31 @@ void Pathfinder::Genome::inversion() {
 bool Pathfinder::calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup, uint8_t &startBattery, uint64_t &startTime) const {
 	// This is a gross overestimation
 	const uint8_t estimatedMoves = pOreGroup->tiles.size()*2;
-	//TODO: Check if it is possible to even start moving (check if the rover starts at night and if it has enough energy to make it to morning)
 
 	constexpr int8_t energyusage[2*2] = {
 		// day, night
 		9, -1,		// 10-idle(1), -idle
 		8, -2,		// 10-2*1^2, -2*1^2
 	};
+
+	if(startTime%24 > 20){
+		// The only two ways to survive the night are:
+		// The rover has enough energy to idle through it
+		// The rover can mine all the ores before dawn, or before it runs out of energy
+		// (Both of these assume that there is enough time to finish the night)
+		uint8_t timeleft = 24-startTime%24;
+		uint8_t usableTime = timeLimit-startTime;
+		if( (timeleft > startBattery) ||
+			!(estimatedMoves < timeleft && estimatedMoves*energyusage[3] <= startBattery))
+		{ startBattery = 0; }
+		
+		if(timeleft > usableTime || estimatedMoves > usableTime)
+		{ startTime = 0; }
+		
+		if(!startTime || !startBattery)
+		{ return false; }
+	}
+
 	int8_t costOfNight[2];
 	costOfNight[0] = -4; // The energy cost of spending a single night idle
 	costOfNight[1] = energyusage[3]; // The energy cost of spending a single night with 1 speed
@@ -519,7 +537,6 @@ bool Pathfinder::calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup, ui
 bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathToCheck, uint8_t &startBattery, uint64_t &startTime, uint8_t speed) const {
 	assert(speed > 0 && speed < 4);
 	// Four rows 2 columns
-	//TODO: Check if it is possible to even start moving (check if the rover starts at night and if it has enough energy to make it to morning)
 	constexpr int8_t energyUsage[4*2] = {
 		// day, night
 		9, -1,		// 10-idle(1), -idle
@@ -527,6 +544,12 @@ bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathToCheck, uint8_t &
 		2, -8,		// 10-2*2^2, -2*2^2
 		-8, -18		// 10-2*3
 	};
+	if(startTime%24 > 20){
+		if(24-startTime%24 > startBattery)
+		{ startBattery = 0; return false; }
+		if(24-startTime%24 + startTime > timeLimit)
+		{ startTime = 0; return false; }
+	}
 	int8_t costofNight[2];
 	costofNight[0] = -4; // The energy cost of spending a single night idle
 	costofNight[1] = energyUsage[speed*2+1]; // The energy cost of spending a single night going with the specified speed
@@ -562,7 +585,7 @@ bool Pathfinder::calculateBatteryAndTimeUsage(const Path* pathToCheck, uint8_t &
 		}
 
 		startTime++;
-		if(startTime>timeLimit){return false;}
+		if(startTime>timeLimit){ startTime = 0; return false;}
 	}
 	return true;
 }
@@ -576,41 +599,41 @@ void Pathfinder::simulate(const std::vector<uint16_t> path, uint64_t* usedTime, 
 	uint16_t lastGroup = oreGroups.size()-1;
 
 	for(int i = 0; i < path.size(); i++){
-		uint8_t usedbattery = battery;
-		uint64_t usedTime = timeused;
-		uint8_t speed = 1;
-		for(; speed < 4;speed++){
-			if(!calculateBatteryAndTimeUsage(&paths.at(getPathIndex(path.at(i),lastGroup)),usedbattery,usedTime,3)){
-				usedbattery = battery;
-				usedTime = timeused;
-			}else{break;}
+		uint8_t tempBattery; uint64_t tempTime;
+		uint8_t speed = 3;
+		for(; speed > 0;speed--){
+			tempBattery = battery;
+			tempTime = timeused;
+			if(calculateBatteryAndTimeUsage(&paths.at(getPathIndex(path.at(i),lastGroup)),tempBattery,tempTime,3))
+			{break;}
 		}
-		if(speed > 3){
-			// TODO: this
-			// This path is impossible
+		if(speed < 1){
+			for(int j = i; j > -1; j--){
+
+			}
 		}else{
-			battery = usedbattery;
-			timeused = usedTime;
+			battery = tempBattery;
+			timeused = tempTime;
 			states[i*2] = {
-				.timeUsage = usedTime,
-				.energyUsage = usedbattery,
+				.timeUsage = tempTime,
+				.energyUsage = tempBattery,
 				.usedSpeed = speed
 			};
 		}
 
 
 		// Now for the group
-		usedbattery = battery;
-		usedTime = timeused;
-		if(!calculateGroupBatteryAndTimeUsage(&oreGroups.at(path.at(i)),usedbattery,usedTime)){
+		tempBattery = battery;
+		tempTime = timeused;
+		if(!calculateGroupBatteryAndTimeUsage(&oreGroups.at(path.at(i)),tempBattery,tempTime)){
 			// TODO: this
 			// Impossible
 		}else{
-			battery = usedbattery;
-			timeused = usedTime;
+			battery = tempBattery;
+			timeused = tempTime;
 			states[i*2+1] = {
-				.timeUsage = usedTime,
-				.energyUsage = usedbattery,
+				.timeUsage = tempTime,
+				.energyUsage = tempBattery,
 				.usedSpeed = 1
 			};
 		}

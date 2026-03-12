@@ -353,6 +353,8 @@ class Pathfinder {
 		std::vector<Path> paths;
 
 		// functions
+		// if these return true the values are what will remain after the rover takes that path, if this returns false, then the var with value 0 is the resource that ran out
+		// when the simulation starts starttime is 0 by default, but that cant cause logical errors, because when the sim is starting out it will start at night anyway, and the program only checks if startTime is 0 at night
 		bool calculateBatteryAndTimeUsage(const Path* pathToCheck, uint8_t& startBattery, uint64_t& startTime, uint8_t speed) const;
 		bool calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup, uint8_t& startBattery, uint64_t& startTime) const;
 		void GeneticAlgorithm() const;
