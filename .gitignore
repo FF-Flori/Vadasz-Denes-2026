@@ -2,3 +2,4 @@
 .venv/
 ./src/GUI/__pycache__/
 ./src/GAME/__pycache__/
+./src/DASHBOARD/__pycache__/
