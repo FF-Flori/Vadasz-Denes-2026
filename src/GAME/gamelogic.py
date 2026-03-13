@@ -1,5 +1,6 @@
 import pygame
-import math
+from math import ceil
+from random import randint
 from src.GAME.rover import *
 
 class GameLogic:
@@ -19,7 +20,35 @@ class GameLogic:
         self.viewedWidth:int = self.width//self.orewidth
         self.rover:Rover = Rover(self.map)
         self.zoom:float = 0.5
+        self.createBG()
         self.scale()
+    def createBG(self)->None:
+        source:pygame.Surface = pygame.image.load("./src/img/bg.png").convert_alpha()
+        self.background:pygame.Surface = pygame.Surface((self.width,self.height))
+        tilesize:int = 64
+
+        srcRect:pygame.Rect = pygame.Rect(0,0,tilesize,tilesize)
+        for x in range(len(self.map)):
+            for y in range(len(self.map[0])):
+                randnum:int = randint(0,99)
+                # 80% for the topleft
+                # 10% for the topright
+                # 7% for the bottomleft
+                # 3% for the bottomright
+                if randnum > -1 and randnum < 80:
+                    srcRect.x = 0
+                    srcRect.y = 0
+                elif randnum < 90:
+                    srcRect.x = tilesize
+                    srcRect.y = 0
+                elif randnum < 97:
+                    srcRect.x = 0
+                    srcRect.y = tilesize
+                else:
+                    srcRect.x = tilesize
+                    srcRect.y = tilesize
+                self.background.blit(source,(x*tilesize,y*tilesize),srcRect)
+
     # Posx and Posy store where the ore is in the map
     def drawOre(self, oreType:str, posx:float, posy:float, screen:pygame.Surface):
         oreRect = pygame.Rect(0,0,self.orewidth,self.orewidth)
@@ -78,7 +107,9 @@ class GameLogic:
             self.moveCamera(0,self.speed/1000*deltaTime)
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.moveCamera(self.speed/1000*deltaTime,0)
-        for y in range(int(self.viewed[1]),math.ceil(self.viewed[1]+self.viewedWidth)):
-            for x in range(int(self.viewed[0]),math.ceil(self.viewed[0]+self.viewedWidth)):
+
+        screen.blit(self.background,(0,0),(self.viewed[0]*64,self.viewed[1]*64,self.width,self.height))
+        for y in range(int(self.viewed[1]),ceil(self.viewed[1]+self.viewedWidth)):
+            for x in range(int(self.viewed[0]),ceil(self.viewed[0]+self.viewedWidth)):
                 self.drawOre(self.map[y][x],(x-self.viewed[0])*self.orewidth,(y-self.viewed[1])*self.orewidth,screen)
         self.rover.draw(screen,self.orewidth,self.viewed,self.viewedWidth)

@@ -1,7 +1,7 @@
 import pygame
 class Rover:
     def __init__(self,mapin:list[list[str]])->None:
-        self.sprite:pygame.Surface = pygame.image.load("./src/img/rover.png")
+        self.sprite:pygame.Surface = pygame.image.load("./src/img/rover.png").convert_alpha()
         self.scaled:pygame.Surface = self.sprite
         self.map:list[list[str]] = mapin
         for y in range(len(mapin)):
