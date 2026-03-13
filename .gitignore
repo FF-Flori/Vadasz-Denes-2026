@@ -1,5 +1,3 @@
 .idea/
 .venv/
-src/GUI/__pycache__/
-src/GAME/__pycache__/
-src/DASHBOARD/__pycache__/
+__pycache__/
