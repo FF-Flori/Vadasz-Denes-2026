@@ -1,6 +1,8 @@
 import pygame
 class Rover:
     def __init__(self,mapin:list[list[str]])->None:
+        self.sprite:pygame.Surface = pygame.image.load("./src/img/rover.png")
+        self.scaled:pygame.Surface = self.sprite
         self.map:list[list[str]] = mapin
         for y in range(len(mapin)):
             for x in range(len(mapin[y])):
@@ -18,4 +20,4 @@ class Rover:
     def draw(self, screen:pygame.Surface, orewidth:float, viewstart:list[float], viewwidth:int) -> None:
         if self.pos[0]-viewstart[0] > viewwidth or self.pos[1]-viewstart[1] > viewwidth:
             return
-        pygame.draw.rect(screen,'gray',((self.pos[0]-viewstart[0])*orewidth, (self.pos[1]-viewstart[1])*orewidth,orewidth,orewidth))
+        screen.blit(self.scaled,((self.pos[0]-viewstart[0])*orewidth,(self.pos[1]-viewstart[1])*orewidth))
