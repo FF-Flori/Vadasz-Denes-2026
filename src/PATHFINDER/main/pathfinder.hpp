@@ -19,6 +19,7 @@ class Pathfinder {
 		static constexpr uint8_t MAP_WIDTH = 50;
 		static constexpr uint8_t GROUP_LIMIT = 9;
 		static constexpr uint8_t START_TIME = 0; // how many half hours after 0:00
+		static constexpr uint8_t START_BATTERY = 100; // battery percentage at start
 
 		// genetic algorithm settings
 		static constexpr uint16_t GENETIC_ITERS   = 600; // number of generations
@@ -45,9 +46,11 @@ class Pathfinder {
 
 		static constexpr uint8_t  INDEX_COLLISION_RETRIES = 5; // amount of retries to select a unique member from the generation compared to a pair
 
+		static constexpr uint8_t STEP_COST[4] = {0, 2, 8, 18};
+
 		/**
 		 * This method creates the singleton instance for Pathfinder
-		 * @param timeLimit Time limit in the simulation for the rover to complete the task
+		 * @param timeLimit Time limit in the simulation (in half hours!) for the rover to complete the task
 		 * @param mapPath Absolute path to the file containing the map
 		 */
 		static void create(const uint16_t timeLimit, const std::string& mapPath) {
@@ -312,7 +315,7 @@ class Pathfinder {
 
 		struct Genome {
 			std::vector<uint16_t> dna;
-			int32_t score = 0;
+			uint32_t score = 0;
 			inline static std::uniform_int_distribution<uint16_t> index_dist;
 
 			static void initDistribution(const uint16_t size) {
@@ -342,6 +345,12 @@ class Pathfinder {
 			uint8_t usedSpeed;
 		};
 
+		struct bfsState {
+			uint16_t dist;
+			uint16_t time;
+			uint8_t battery;
+		};
+
 		// variables
 		static inline Pathfinder* pathfinder = nullptr;
 		inline static std::mt19937 gen{std::random_device{}()};
@@ -359,7 +368,8 @@ class Pathfinder {
 		void generatePath(std::vector<uint16_t>& path);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
-		static int32_t fitness(const Genome* genome);
+		[[nodiscard]] bfsState runFastBFS(uint16_t targetDist, uint16_t startTime, uint8_t startBattery) const;
+		uint32_t fitness(const Genome* genome) const;
 		void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
 		static void calculateFinalRoute(route_t& toRoute, std::vector<uint16_t>& groups);
 

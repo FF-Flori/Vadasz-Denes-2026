@@ -620,9 +620,99 @@ void Pathfinder::simulate(const std::vector<uint16_t> path, uint64_t* usedTime, 
 	// TODO: simulate() does not work yet
 }
 
-int32_t Pathfinder::fitness(const Genome* genome) {
-	return static_cast<int32_t>(genome->dna.size());
-	// TODO: make a working fitness function
+Pathfinder::bfsState Pathfinder::runFastBFS(const uint16_t targetDist, const uint16_t startTime, const uint8_t startBattery) const {
+	static thread_local std::vector<uint16_t> memoTable;
+
+	const uint32_t requiredSize = (targetDist + 1) * (timeLimit + 1);
+
+	if (memoTable.size() < requiredSize) {
+		memoTable.resize(requiredSize, -1);
+	}
+
+	std::fill_n(memoTable.begin(), requiredSize, -1);
+
+	std::queue<bfsState> q;
+	q.push({0, startTime, startBattery});
+
+	memoTable[startTime] = startBattery;
+
+	while(!q.empty()) {
+		const bfsState state = q.front();
+		q.pop();
+
+		if (state.dist == targetDist) [[unlikely]] {
+			return state;
+		}
+
+		const uint16_t nextTime = state.time + 1;
+		if (nextTime > timeLimit) {
+			continue;
+		}
+
+		const uint8_t charge = (state.time % 48 < 32) ? 10 : 0;
+
+		for (int i = 0; i < 4; i++) {
+			if (state.battery >= STEP_COST[i]) {
+				const uint16_t nextDist = std::min(targetDist, static_cast<uint16_t>(state.dist + i));
+				int nextBatCalc = state.battery - STEP_COST[i] + charge;
+				const uint8_t nextBattery = std::min(100, nextBatCalc);
+
+				if (const uint32_t index = nextDist * timeLimit + nextTime; memoTable[index] < nextBattery) {
+					memoTable[index] = nextBattery;
+					q.push({nextDist, nextTime, nextBattery});
+				}
+			}
+		}
+	}
+	return {0, 0, 0};
+}
+
+uint32_t Pathfinder::fitness(const Genome* genome) const {
+	uint32_t totalValue = 0;
+	uint16_t time = START_TIME;
+	uint8_t battery = START_BATTERY;
+	uint16_t group = oreGroups.size() - 1;
+
+	for (const uint16_t target : genome->dna) {
+		const uint16_t distToTarget = paths[getPathIndex(group, target)].path.size() - 1;
+		const uint16_t distToBase = paths[getPathIndex(target, oreGroups.size() - 1)].path.size() - 1;
+
+		const bfsState toTarget = runFastBFS(distToTarget, time, battery);
+
+		if (toTarget.time == 0 && distToTarget > 0) {
+			break;
+		}
+
+		const uint16_t targetValue = oreGroups[target].tiles.size() * oreGroups[target].oreValue;
+		// slightly overthrow the value to protect unusual oreGroups
+		const uint16_t targetActions = oreGroups[target].tiles.size() * 22 / 10;
+
+		uint16_t timeAfterTarget = toTarget.time;
+		uint8_t batteryAfterTarget = toTarget.battery;
+
+		for (uint16_t t = 0; t < targetActions; ++t) {
+			timeAfterTarget++;
+			if (timeAfterTarget % 48 < 32) {
+				batteryAfterTarget = std::min(100, batteryAfterTarget + 8);
+			} else {
+				if (batteryAfterTarget >= 2) {
+					batteryAfterTarget -= 2;
+				}
+			}
+		}
+
+		if (const bfsState toBase = runFastBFS(distToBase, time, battery);
+		toBase.time > 0 || distToBase == 0) {
+			totalValue += targetValue;
+			time = timeAfterTarget;
+			battery = batteryAfterTarget;
+			group = target;
+
+		} else {
+			break;
+		}
+	}
+	return totalValue;
 }
 
 void Pathfinder::calculateFinalRoute(route_t& toRoute, std::vector<uint16_t>& groups) {
