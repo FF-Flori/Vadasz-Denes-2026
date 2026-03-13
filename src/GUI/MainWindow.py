@@ -20,6 +20,9 @@ class MainWindow:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                if event.type == pygame.MOUSEWHEEL:
+                    self.game.gameHandler.gameHandler.logicModule.zoom += event.y/10
+                    self.game.gameHandler.gameHandler.logicModule.scale()
 
             self.screen.fill("black")
 
