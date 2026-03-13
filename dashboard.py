@@ -1,6 +1,5 @@
 import customtkinter as Ctk
 from customtkinter import *
-from CTkListbox import *
 import sys
 from src.DASHBOARD.logexplorer import *
 from src.DASHBOARD.mainui import *

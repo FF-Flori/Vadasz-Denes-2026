@@ -7,6 +7,7 @@ from src.DASHBOARD.logexplorer import *
 from src.DASHBOARD.fullgraphwindow import *
 from src.DASHBOARD.logread import *
 import math
+from pathlib import Path
 
 logline:int = 1
 logsize:int = 0
@@ -28,7 +29,7 @@ class DashboardUI:
         
         clearwidget(self.main)
 
-        if selectedlogfile == "log/None.log":
+        if selectedlogfile == "log/None.log" or Path(selectedlogfile).is_file() == False:
             Logexplorer(self.main, "log")
             return
 
