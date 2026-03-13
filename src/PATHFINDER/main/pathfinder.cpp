@@ -715,14 +715,77 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
 	return totalValue;
 }
 
-void Pathfinder::calculateFinalRoute(route_t& toRoute, std::vector<uint16_t>& groups) {
-	constexpr uint8_t segmentTypes[5][7] = {
-		{36, 3, 3},
-		{24, 2, 2, 2},
-		{20, 2, 2, 1, 1},
-		{16, 2, 1, 1, 1, 1},
-		{12, 1, 1, 1, 1, 1, 1}
-	};
+/*
+void Pathfinder::calculateRoute(route_t& toRoute, const Genome& genome) const {
+	toRoute.instructions.clear();
 
-	std::vector<> routeSegments;
+	uint16_t time = START_TIME;
+	uint8_t battery = START_BATTERY;
+	uint32_t totalValue = 0;
+	uint16_t previousGroup = oreGroups.size() - 1;
+
+	for (size_t g = 0; g < genome.dna.size(); g++) {
+		const uint16_t targetGroup = genome.dna[g];
+		uint16_t distance = paths[getPathIndex(previousGroup, targetGroup)].path.size() - 1;
+
+
+
+		previousGroup = targetGroup;
+	}
+
+
+	toRoute.instructions.clear();
+
+	// {segmentType0, battery0, segmentType1, battery1...}
+	std::vector<uint8_t> routeSegments;
+	routeSegments.reserve(genome.dna.size() * 6);
+
+	uint16_t remainingPath = paths[getPathIndex(0, genome.dna[0])].path.size() - 1;
+	uint16_t g = 0;                // group index in genome dna
+	uint32_t i = 0;                 // segment index
+	uint16_t time = START_TIME;      // time in half hours
+	uint8_t battery = START_BATTERY;  // battery percentage (0-100)
+	std::vector<uint32_t> wastefulSegments;
+	while (time < timeLimit) {
+		if (time % 48 < 32)              {battery += 10;}
+		if ((time + 1) % 48 < timeLimit) {battery += 10;}
+
+		if (battery >= segmentTypes[1][0]) {
+			routeSegments.push_back(1);
+			routeSegments.push_back(segmentTypes[1][0]);
+			wastefulSegments.push_back(i);
+			time += 2;
+			remainingPath -= 6;
+			i += 2;
+			continue;
+		}
+
+		if ((time + 2) % 48 < timeLimit) {battery += 10;}
+
+		if (battery >= segmentTypes[2][0]) {
+			routeSegments.push_back(2);
+			routeSegments.push_back(segmentTypes[2][0]);
+			time += 3;
+			remainingPath -= 6;
+			i += 2;
+			continue;
+		}
+
+		const uint8_t energyRequired = segmentTypes[2][0] - battery;
+
+		while (!wastefulSegments.empty() && energyRequired <= 0) {
+			routeSegments[wastefulSegments.back()]--;
+			wastefulSegments.pop_back();
+		}
+
+
+
+		for ()
+
+		// this can not happen
+		// if (battery > 100) [[unlikely]] {
+		// 	battery = 100;
+		// }
+	}
 }
+*/

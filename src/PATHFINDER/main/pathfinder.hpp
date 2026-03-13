@@ -324,7 +324,7 @@ class Pathfinder {
 
 			void getFitness() {
 				assert(!dna.empty());
-				score = fitness(this);
+				score = pathfinder->fitness(this);
 			}
 
 			bool operator>(const Genome& other) const {
@@ -371,7 +371,9 @@ class Pathfinder {
 		[[nodiscard]] bfsState runFastBFS(uint16_t targetDist, uint16_t startTime, uint8_t startBattery) const;
 		uint32_t fitness(const Genome* genome) const;
 		void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
-		static void calculateFinalRoute(route_t& toRoute, std::vector<uint16_t>& groups);
+
+		// void calculateRoute(route_t& toRoute, const Genome& genome) const;
+		// TODO: do sth with this
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
