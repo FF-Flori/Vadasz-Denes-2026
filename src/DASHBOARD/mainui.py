@@ -8,6 +8,9 @@ from src.DASHBOARD.fullgraphwindow import *
 from src.DASHBOARD.logread import *
 import math
 from pathlib import Path
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.colors import ListedColormap
 
 logline:int = 1
 logsize:int = 0

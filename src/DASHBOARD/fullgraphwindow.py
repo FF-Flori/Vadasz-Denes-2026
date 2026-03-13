@@ -1,4 +1,3 @@
-import customtkinter as Ctk
 from customtkinter import *
 from CTkListbox import *
 import matplotlib.pyplot as plt
