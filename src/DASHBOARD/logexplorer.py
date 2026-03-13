@@ -3,9 +3,9 @@ from customtkinter import *
 from CTkListbox import *
 
 class Logexplorer:
-    def __init__(self, main:Ctk.CTk, logfile: str):
+    def __init__(self, main:Ctk.CTk):
         self.main = main
-        self.logfile = logfile
+        self.mainlog = "log"
 
         self.main.title("Dashboard - Log kiválasztása")
         self.main.geometry("400x400")
@@ -68,13 +68,13 @@ class Logexplorer:
             text="Kész",
             font=CTkFont(family="Courier New", size=15),
             cursor="hand2",
-            command=lambda: self.done(logfile + "/" + str(self.listbox.get()) + ".log"),
+            command=lambda: self.done(str(self.listbox.get())),
             corner_radius=8
         )
 
         self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
-        if len(os.listdir(logfile)) <= 0:
+        if len(os.listdir(self.mainlog)) <= 0:
             self.listbox.pack_forget()
             self.donebtn.pack_forget()
             self.errorframe.pack(expand=True)
@@ -84,12 +84,12 @@ class Logexplorer:
             self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
             self.listbox.delete(0, END)
-            for file in os.listdir(logfile):
+            for file in os.listdir(self.mainlog):
                 self.listbox.insert(END, file[:-4])
 
     def reflesh(self):
 
-        if len(os.listdir(self.logfile)) <= 0:
+        if len(os.listdir(self.mainlog)) <= 0:
             self.listbox.pack_forget()
             self.donebtn.pack_forget()
             self.errorframe.pack(expand=True)
@@ -99,7 +99,7 @@ class Logexplorer:
             self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
             self.listbox.delete(0, END)
-            for file in os.listdir(self.logfile):
+            for file in os.listdir(self.mainlog):
                 self.listbox.insert(END, file[:-4])
 
     def done(self, logfile):

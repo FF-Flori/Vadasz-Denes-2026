@@ -9,8 +9,8 @@ Ctk.set_default_color_theme("blue")
 main = Ctk.CTk()
 
 if len(sys.argv) != 1:
-    DashboardUI(main, "log/" + str(sys.argv[1]) + ".log")
+    DashboardUI(main, str(sys.argv[1]))
 else:
-    Logexplorer(main, "log")
+    Logexplorer(main)
 
 main.mainloop()

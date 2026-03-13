@@ -25,12 +25,12 @@ events:list = []
 class DashboardUI:
     def __init__(self, main:Ctk.CTk, selectedlogfile:str):
         self.main:Ctk.CTk = main
-        self.selectedlogfile:str = selectedlogfile
+        self.selectedmainlogfile:str = "log/" + selectedlogfile + ".log"
         
         clearwidget(self.main)
 
-        if selectedlogfile == "log/None.log" or Path(selectedlogfile).is_file() == False:
-            Logexplorer(self.main, "log")
+        if Path(self.selectedmainlogfile).is_file() == False:
+            Logexplorer(self.main)
             return
 
 
@@ -641,9 +641,9 @@ class DashboardUI:
         if self.is_resizing:
             return
 
-        if logsize < os.path.getsize(self.selectedlogfile):
+        if logsize < os.path.getsize(self.selectedmainlogfile):
             logsize, logline, time, battery, positionY, positionX, speed, distance, materialB, materialY, materialG, events = logread(
-                    logfile=self.selectedlogfile, 
+                    logfile=self.selectedmainlogfile, 
                     logsize=logsize, 
                     logline=logline, 
                     time=time, 
