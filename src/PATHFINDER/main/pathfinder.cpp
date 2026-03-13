@@ -201,7 +201,7 @@ void Pathfinder::groupOres() {
 				std::cout<<"BLUE:\n";
 				break;
 			default:
-				std::cout<<"ERROR\n";
+				std::cout<<"ERROR / START POS\n";
 				continue;
 		}
 		for(coord_t tile : group.tiles){
@@ -271,13 +271,6 @@ void Pathfinder::GeneticAlgorithm() const {
 		generation.back().dna = dnaOrder;
 		std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
 		generation.back().getFitness();
-
-		// runtime log
-		std::cout << i << ": ";
-		for (int j = 0; j < dnaSize / 3; j++) {
-			std::cout << j;
-		}
-		std::cout << "...\n";
 	}
 	std::cout << "Genomes generated\n";
 
@@ -285,75 +278,83 @@ void Pathfinder::GeneticAlgorithm() const {
 	std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
 
 	std::cout << "Starting generations\n";
-	for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
-		oldGeneration = generation;
+	try {
+		for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
+			oldGeneration = generation;
 
-		// elitism
-		generation.resize(ELITISM);
+			// elitism
+			generation.resize(ELITISM);
 
-		uint16_t i = 0;
+			uint16_t i = 0;
 
-		// breeding
-		for (; i < BREEDING_MUTATION; i++) {
-			// tournament selection of 2 parents
-			const uint16_t fatherIndex = tournamentSelect(oldGeneration);
-			Genome& father = oldGeneration[fatherIndex];
-			Genome& mother = oldGeneration[tournamentSelect(oldGeneration, fatherIndex)];
-			generation.emplace_back(father + mother);
+			// breeding
+			for (; i < BREEDING_MUTATION; i++) {
+				// tournament selection of 2 parents
+				const uint16_t fatherIndex = tournamentSelect(oldGeneration);
+				Genome& father = oldGeneration[fatherIndex];
+				Genome& mother = oldGeneration[tournamentSelect(oldGeneration, fatherIndex)];
+				generation.emplace_back(father + mother);
 
-			if (i < BREEDING_SWAP) {
-				generation.back().swap();
-			} else if (i < BREEDING_SWAP + BREEDING_SCRAMBLE) {
-				generation.back().scramble();
-			} else if (i < BREEDING_SWAP + BREEDING_SCRAMBLE + BREEDING_INSERTION) {
-				generation.back().insertion();
-			} else {
-				generation.back().inversion();
+				if (i < BREEDING_SWAP) {
+					generation.back().swap();
+				} else if (i < BREEDING_SWAP + BREEDING_SCRAMBLE) {
+					generation.back().scramble();
+				} else if (i < BREEDING_SWAP + BREEDING_SCRAMBLE + BREEDING_INSERTION) {
+					generation.back().insertion();
+				} else {
+					generation.back().inversion();
+				}
+
+				generation.back().getFitness();
+			}
+			for (; i < BREEDING; i++) {
+				// tournament selection of 2 parents
+				const uint16_t fatherIndex = tournamentSelect(oldGeneration);
+				Genome& father = oldGeneration[fatherIndex];
+				Genome& mother = oldGeneration[tournamentSelect(oldGeneration, fatherIndex)];
+				generation.emplace_back(father + mother);
+
+				generation.back().getFitness();
 			}
 
-			generation.back().getFitness();
-		}
-		for (; i < BREEDING; i++) {
-			// tournament selection of 2 parents
-			const uint16_t fatherIndex = tournamentSelect(oldGeneration);
-			Genome& father = oldGeneration[fatherIndex];
-			Genome& mother = oldGeneration[tournamentSelect(oldGeneration, fatherIndex)];
-			generation.emplace_back(father + mother);
+			// cloning
+			for (; i < BREEDING + CLONING; i++) {
+				generation.emplace_back(oldGeneration[tournamentSelect(oldGeneration)]);
 
-			generation.back().getFitness();
-		}
+				if (i < BREEDING + CLONING_SWAP) {
+					generation.back().swap();
+				} else if (i < BREEDING + CLONING_SWAP + CLONING_SCRAMBLE) {
+					generation.back().scramble();
+				} else if (i < BREEDING + CLONING_SWAP + CLONING_SCRAMBLE + CLONING_INSERTION) {
+					generation.back().insertion();
+				} else {
+					generation.back().inversion();
+				}
 
-		// cloning
-		for (; i < BREEDING + CLONING; i++) {
-			generation.emplace_back(oldGeneration[tournamentSelect(oldGeneration)]);
-
-			if (i < BREEDING + CLONING_SWAP) {
-				generation.back().swap();
-			} else if (i < BREEDING + CLONING_SWAP + CLONING_SCRAMBLE) {
-				generation.back().scramble();
-			} else if (i < BREEDING + CLONING_SWAP + CLONING_SCRAMBLE + CLONING_INSERTION) {
-				generation.back().insertion();
-			} else {
-				generation.back().inversion();
+				generation.back().getFitness();
 			}
 
-			generation.back().getFitness();
+			// fill up with random new genomes
+			for (; i < GENERATION_SIZE - ELITISM; i++) {
+				generation.emplace_back();
+				generation.back().dna = dnaOrder;
+				std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
+
+				generation.back().getFitness();
+			}
+
+			// sort the created generation
+			std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
 		}
-
-		// fill up with random new genomes
-		for (; i < GENERATION_SIZE - ELITISM; i++) {
-			generation.emplace_back();
-			generation.back().dna = dnaOrder;
-			std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
-
-			generation.back().getFitness();
-		}
-
-		// sort the created generation
-		std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
+	} catch (std::exception& e) {
+		std::cout << "Exception: " << e.what() << std::endl;
 	}
 
-	// TODO: simulate the best genome and save it
+	std::cout << "Genetic algorythm finished!" << std::endl << "Best genome's groups:" << std::endl;
+	for (const uint16_t gr : generation[0].dna) {
+		std::cout << gr << " (" << oreGroups[gr].tiles[0].x << "; " << oreGroups[gr].tiles[0].y << ")" << std::endl;
+	}
+	// TODO: simulate the best genome and save it (and remove test couts above and everywhere else)
 }
 
 uint16_t Pathfinder::tournamentSelect(const std::vector<Genome>& generation) {
