@@ -1,0 +1,4 @@
+.idea/
+.venv/
+./src/GUI/__pycache__/
+./src/GAME/__pycache__/

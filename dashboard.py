@@ -1,352 +1,1051 @@
 import tkinter as tk
+import customtkinter as Ctk
 import os
-from tkinter import *
-import tkinter.font
+from customtkinter import *
+from CTkListbox import *
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-import numpy as np
+from matplotlib.colors import ListedColormap
+import sys
+import csv
+import math
+
+Ctk.set_appearance_mode("dark")
+Ctk.set_default_color_theme("blue")
+
 
 def clearwidget(main):
     for widget in main.winfo_children():
         widget.destroy()
 
+
 class Logexplorer:
-    def __init__(self, main, logfile:str):
+    def __init__(self, main:Ctk.CTk, logfile: str):
         self.main = main
         self.logfile = logfile
+
         self.main.title("Dashboard - Log kiválasztása")
         self.main.geometry("400x400")
-        self.main.resizable(False,False)
+        self.main.resizable(True, True)
+        self.main.iconbitmap("src/img/dashboardicon.ico")
 
-        self.frame = tk.Frame(self.main)
-        self.frame.pack(fill=tk.BOTH, expand=True)
+        self.frame = CTkFrame(self.main, corner_radius=10, fg_color="transparent")
+        self.frame.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
-        self.header = tk.Frame(self.frame)
-        self.header.pack(fill=tk.X)
+        self.header = CTkFrame(self.frame, fg_color="transparent")
+        self.header.pack(fill=X, pady=(0, 10))
 
-        self.label = tk.Label(self.header, text= "Log kiválasztása", font= tkinter.font.Font(family="Couriel New", size=15))
-        self.label.grid(row=0, column=0)
+        self.header.columnconfigure(0, weight=1)
 
-        self.sublabel = tk.Label(self.header, text="Kérjük válasszon egy dátumot!")
-        self.sublabel.grid(row=1, column=0)
+        CTkLabel(
+            self.header,
+            text="Log kiválasztása",
+            font=CTkFont(family="Courier New", size=18, weight="bold")
+        ).grid(row=0, column=0, sticky="w")
 
-        self.refbtn = tk.Button(self.header, text="\U0001F504 Újratöltés", font=tkinter.font.Font(family="Couriel New", size=15), cursor="hand2", command=lambda: self.reflesh())
-        self.refbtn.grid(row=0, rowspan=2, column=1, padx=50)
+        CTkLabel(
+            self.header,
+            text="Kérjük válasszon egy dátumot!",
+            font=CTkFont(size=13)
+        ).grid(row=1, column=0, sticky="w")
 
-        self.yscrollbar = tk.Scrollbar(self.frame, orient=tk.VERTICAL)
-        self.yscrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        CTkButton(
+            self.header,
+            text="🔄 Újratöltés",
+            font=CTkFont(family="Courier New", size=14),
+            cursor="hand2",
+            command=lambda: self.reflesh(),
+            corner_radius=8
+        ).grid(row=0, rowspan=2, column=1, padx=(10, 0), sticky="e")
 
-        self.frame2 = tk.Frame(self.frame)
-        self.frame2.pack(fill=tk.BOTH, expand=True)
-        
-        self.listbox = tk.Listbox(self.frame2, yscrollcommand=self.yscrollbar.set)
-        self.listbox.pack(fill=tk.BOTH, expand=True)
-        self.yscrollbar.config(command=self.listbox.yview)
 
-        self.errorframe = tk.Frame(self.frame2)
-        self.erroriconlb = tk.Label(self.errorframe, text="\U000024D8", font=tkinter.font.Font(family="Couriel New", size=20, weight="bold"))
-        self.errorlb = tk.Label(self.errorframe, text="Sajnos nem található log.", font=tkinter.font.Font(family="Couriel New", size=18, weight="bold"))
-        self.erroriconlb.pack(side=tk.LEFT, padx=5)
-        self.errorlb.pack(side=tk.LEFT, padx=5)
+        self.frame2 = CTkFrame(self.frame, corner_radius=10)
+        self.frame2.pack(fill=BOTH, expand=True)
 
-        self.donebtn = tk.Button(self.frame2, text="Kész", font=tkinter.font.Font(family="Couriel New", size=15), cursor="hand2", command=lambda: self.done(logfile + "/" + str(self.listbox.selection_get())))
-        self.donebtn.pack(side=BOTTOM)
+        self.listbox = CTkListbox(self.frame2, multiple_selection=False)
+
+        self.listbox.pack(fill=BOTH, expand=True, padx=5, pady=5)
+
+        self.errorframe = CTkFrame(self.frame2, fg_color="transparent")
+
+        CTkLabel(
+            self.errorframe,
+            text="ⓘ",
+            font=CTkFont(family="Courier New", size=26, weight="bold")
+        ).pack(side=LEFT, padx=5)
+
+        CTkLabel(
+            self.errorframe,
+            text="Sajnos nem található log.",
+            font=CTkFont(family="Courier New", size=18, weight="bold")
+        ).pack(side=LEFT, padx=5)
+
+        self.donebtn = CTkButton(
+            self.frame2,
+            text="Kész",
+            font=CTkFont(family="Courier New", size=15),
+            cursor="hand2",
+            command=lambda: self.done(logfile + "/" + str(self.listbox.get()) + ".log"),
+            corner_radius=8
+        )
+
+        self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
         if len(os.listdir(logfile)) <= 0:
             self.listbox.pack_forget()
-            self.yscrollbar.pack_forget()
             self.donebtn.pack_forget()
-
             self.errorframe.pack(expand=True)
-
         else:
             self.errorframe.pack_forget()
-            self.listbox.pack(fill=tk.BOTH, expand=True)
-            self.yscrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            self.donebtn.pack(side=tk.BOTTOM, fill=tk.X)
+            self.listbox.pack(fill=BOTH, expand=True, padx=5, pady=5)
+            self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
             self.listbox.delete(0, END)
             for file in os.listdir(logfile):
-                self.listbox.insert(END, file)
-
-            self.listbox.yview_moveto(0)
+                self.listbox.insert(END, file[:-4])
 
     def reflesh(self):
 
         if len(os.listdir(self.logfile)) <= 0:
             self.listbox.pack_forget()
-            self.yscrollbar.pack_forget()
             self.donebtn.pack_forget()
-
             self.errorframe.pack(expand=True)
-
         else:
-            clearwidget(self.main)
-            Logexplorer(self.main, self.logfile)
-    
+            self.errorframe.pack_forget()
+            self.listbox.pack(fill=BOTH, expand=True, padx=5, pady=5)
+            self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
+
+            self.listbox.delete(0, END)
+            for file in os.listdir(self.logfile):
+                self.listbox.insert(END, file[:-4])
+
     def done(self, logfile):
         if logfile != None and len(logfile) > 0:
             global window
             window = DashboardUI(self.main, logfile)
         else:
             print("Kötelező kijelölni 1 elemet!")
-        
-logline:int = 0
+
+
+logline:int = 1
 logsize:int = 0
 time:list = []
 battery:list = []
-positionY:list = []
-positionX:list = []
+positionY:int = 0
+positionX:int = 0
 speed:list = []
 distance:list = []
 materialB:int = 0
 materialY:int = 0
 materialG:int = 0
+events:list = []
+
 
 def backend(logfile):
-    global logsize
+    global logsize, logline, time, battery, positionY, positionX, speed, distance, materialB, materialY, materialG
     if logfile != None and len(logfile) > 0 and logsize < os.path.getsize(logfile):
-        global logline
-        global time
-        global battery
-        global positionY
-        global positionX
-        global speed
-        global distance
-        global materialB
-        global materialY
-        global materialG
-
         with open(logfile, "r") as fullog:
             lines = fullog.readlines()
+            materialch:str = ""
+            speedch:str = ""
 
             for i in range(logline, len(lines)):
-                fullline:list = lines[i].split(";")
 
-                positionX.append(int(fullline[0].split(",")[0]))
-                positionY.append(int(fullline[0].split(",")[1]))
+                fullline:list = lines[i].strip().split(";")
+
+                positionX = int(fullline[0].split(",")[0])
+                positionY = int(fullline[0].split(",")[1])
                 battery.append(int(fullline[1]))
                 speed.append(int(fullline[2]))
-                distance.append(int(fullline[3]))
-                materialB += int(fullline[4].split(",")[0].replace("\n", ""))
-                materialY += int(fullline[4].split(",")[1].replace("\n", ""))
-                materialG += int(fullline[4].split(",")[2].replace("\n", ""))
-                        
+                distance.append(int(fullline[2]))
+
+                if len(fullline) >= 4:
+
+                    if fullline[3].lower() == "y":
+                        materialY += 1
+                        materialch = "| ⛏ Sárga ásvány"
+
+                    elif fullline[3].lower() == "b":
+                        materialB += 1
+                        materialch = "| ⛏ Kék ásvány"
+
+                    elif fullline[3].lower() == "g":
+                        materialG += 1
+                        materialch = "| ⛏ Zöld ásvány"
+
                 if len(time) == 0:
                     time.append(0)
                 else:
-                    time.append(time[len(time)-1] + 30)
+                    time.append(time[len(time) - 1] + 30)
 
-            fullog.close()
+                if int(fullline[2]) == 3:
+                    speedch = "Gyors"
+                elif int(fullline[2]) == 2:
+                    speedch = "Normál"
+                elif int(fullline[2]) == 1:
+                    speedch = "Lassú"
+                elif int(fullline[2]) == 0:
+                    speedch = "Áll"
+
+                events.append(
+                    f"[{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}] ⚡{battery[len(battery)-1]}% | 🚀 {speedch} {materialch}"
+                )
+                materialch = ""
+
             logline = len(lines)
             logsize = os.path.getsize(logfile)
 
+class FullGraphWindow:
+    def __init__(self, main, title, xdata, ydata, ylabel, xlabel, mode="line", ticks=None, ticklabels=None):
+        self.win = CTkToplevel(main)
+        self.win.title(title)
+        self.win.geometry("900x600")
+        self.win.resizable(True, True)
+
+        self.fg, self.ax = plt.subplots(figsize=(4, 3), dpi=100)
+
+        self.canvas = FigureCanvasTkAgg(self.fg, master=self.win)
+        self.canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        self.fg.patch.set_facecolor("#262626")
+        self.ax.set_facecolor("#262626")
+        self.ax.tick_params(colors="white")
+        self.ax.xaxis.label.set_color("white")
+        self.ax.yaxis.label.set_color("white")
+        self.ax.spines["bottom"].set_color("white")
+        self.ax.spines["left"].set_color("white")
+        self.ax.spines["top"].set_color("white")
+        self.ax.spines["right"].set_color("white")
+
+        self.mode = mode
+        self.xdata = xdata
+        self.ydata = ydata
+        self.ylabel = ylabel
+        self.xlabel = xlabel
+        self.ticks = ticks
+        self.ticklabels = ticklabels
+
+        self.update_graph()
+
+    def update_graph(self):
+        self.ax.clear()
+        if self.mode == "line":
+            self.ax.plot(self.xdata, self.ydata, marker="o")
+        elif self.mode == "bar":
+            self.ax.bar(self.xdata, self.ydata, width=20, linewidth=1, color="lightgreen")
+        self.ax.set_ylabel(self.ylabel, color="white")
+        self.ax.set_xlabel(self.xlabel, color="white")
+
+        if self.ticks is not None and self.ticklabels is not None:
+            self.ax.set_yticks(self.ticks)
+            self.ax.set_yticklabels(self.ticklabels)
+
+        self.ax.set_xticks(self.xdata)
+
+        labels = [
+                f"{int(i)//60}:{int(i)%60:02d}"
+                for i in self.xdata
+                ]
+        
+        self.ax.set_xticklabels(labels)
+        self.ax.grid(True, linestyle="--", linewidth=0.5)
+        self.ax.set_facecolor("#262626")
+        self.fg.patch.set_facecolor("#262626")
+        self.canvas.draw_idle()
+
 class DashboardUI:
-    def __init__(self, main: Tk, selectedlogfile):
-        self.main = main
-        self.selectedlogfile = selectedlogfile
-        self.refleshing = False
+    def __init__(self, main:Ctk.CTk, selectedlogfile:str):
+        self.main:Ctk.CTk = main
+        self.selectedlogfile:str = selectedlogfile
 
         clearwidget(self.main)
 
         self.main.title("Dashboard")
-        self.main.geometry("1200x800")
-        self.main.resizable(False, False)
+        self.main.geometry("1400x900")
+        self.main.resizable(True, True)
 
         BG = "#2e3237"
-        BORDER = "#848690"
+        BG2 = "#262626"
 
-        
-        self.frame = tk.Frame(self.main, bg=BG)
+        self.frame = CTkFrame(self.main, fg_color=BG, corner_radius=0)
         self.frame.pack(fill="both", expand=True)
 
-        
-        self.header = tk.Frame(self.frame, bg=BG)
-        self.header.pack(fill="x", padx=10, pady=10)
+        self.header = CTkFrame(self.frame, fg_color="transparent")
+        self.header.pack(fill="x", padx=15, pady=15)
 
-        self.refbtn = tk.Button(self.header, text="🔄 Újratöltés", font=tkinter.font.Font(family="Courier New", size=16), cursor="hand2", bg="#5c5c5c", fg="white", relief="flat", padx=10, pady=5, command=lambda: self.refleshprg(False))
-        
-        self.refbtn.pack(side="right")
+        CTkButton(
+            self.header,
+            text="🔄 Újratöltés",
+            font=CTkFont(family="Courier New", size=20),
+            cursor="hand2",
+            corner_radius=8,
+            command=lambda: self.refleshprg(False)
+        ).pack(side="right")
 
-        self.refbtn.bind("<Enter>", lambda e: self.refbtn.config(bg="#363535"))
-        self.refbtn.bind("<Leave>", lambda e: self.refbtn.config(bg="#5c5c5c"))
+        CTkLabel(
+            self.header,
+            text="Dashboard",
+            font=CTkFont(family="Courier New", size=30, weight="bold")
+        ).pack(anchor="w")
 
-        self.title = tk.Label(self.header, text="Dashboard", font=tkinter.font.Font(family="Courier New", size=30), fg="white", bg=BG)
-        self.title.pack(anchor="w")
-
-        self.subtitle = tk.Label(self.header, text="Logok betöltése 5 másodpercenként.", font=tkinter.font.Font(family="Courier New", size=16), fg="white", bg=BG)
-        self.subtitle.pack(anchor="w")
-
-        
-        self.bodyframe = tk.Frame(self.frame, bg=BG)
+        CTkLabel(
+            self.header,
+            text="Logok betöltése 5 másodpercenként.",
+            font=CTkFont(family="Courier New", size=16)
+        ).pack(anchor="w")
+       
+        self.bodyframe = CTkFrame(self.frame, fg_color="transparent")
         self.bodyframe.pack(fill="both", expand=True, padx=10, pady=10)
 
-        
         for i in range(3):
             self.bodyframe.columnconfigure(i, weight=1)
+            if i < 2:
+                self.bodyframe.rowconfigure(i, weight=1)
 
-        for i in range(2):
-            self.bodyframe.rowconfigure(i, weight=1)
+        self.fullgraph_battery = None
+        self.fullgraph_speed = None
 
-        
-        def create_panel(parent, title, row, col, colspan=1):
-            outer = tk.Frame(
+        def open_full_graph(self, graph_type):
+            if graph_type == 'battery':
+                self.fullgraph_battery = FullGraphWindow(self.main, "Akkumulátor Töltöttség", time, battery, "Töltöttség (%)", "Idő (óra:perc)", mode="bar")
+
+            elif graph_type == 'speed':
+                self.fullgraph_speed = FullGraphWindow(self.main, "Sebesség", time, speed, "Sebesség", "Idő (óra:perc)", mode="line", ticks=[0,1,2,3], ticklabels=["Áll","Lassú","Normál","Gyors"])
+
+        def create_panel(parent, title, row, col, colspan=1, rfbtn=False, BG=BG2, typein=""):
+            outer = CTkFrame(
                 parent,
-                bg=BG,
-                highlightbackground=BORDER,
-                highlightthickness=2
+                fg_color=BG,
+                border_width=2,
+                corner_radius=10
             )
+
             outer.grid(
                 row=row,
                 column=col,
                 columnspan=colspan,
                 sticky="nsew",
-                padx=5,
-                pady=5
+                padx=6,
+                pady=6
             )
 
             outer.rowconfigure(1, weight=1)
             outer.columnconfigure(0, weight=1)
 
-            title_label = tk.Label(
+            CTkLabel(
                 outer,
                 text=title,
-                font=tkinter.font.Font(family="Courier New", size=14),
-                fg="white",
-                bg=BG,
-                highlightbackground="gray",
-                highlightthickness=1
-            )
-            title_label.grid(row=0, column=0, sticky="ew")
-            
-            graph_area = tk.Frame(
+                font=CTkFont(family="Courier New", size=18, weight="bold")
+            ).grid(row=0, column=0, sticky="ew", pady=(5, 0), padx=(5,5))
+
+            if rfbtn:
+                CTkButton(
                 outer,
-                bg=BG
+                text="Teljese nézet",
+                font=CTkFont(family="Courier New", size=14, weight="bold"),
+                cursor="hand2",
+                corner_radius=8,
+                command=lambda: open_full_graph(self, typein) 
+                ).grid(row=0, column=1, pady=(5, 0), padx=(5,5))
+
+            graph_area = CTkFrame(
+                outer,
+                fg_color="transparent"
             )
+
             graph_area.grid(
                 row=1,
                 column=0,
+                columnspan=2,
                 sticky="nsew",
                 padx=5,
                 pady=5
             )
 
             return graph_area
-
         
+        self.dataframe = create_panel(
+            self.bodyframe,
+            "Egyéb Adatok",
+            0, 0,
+            BG=BG2
+        )
+
         self.batteryframe = create_panel(
             self.bodyframe,
             "Akkumulátor Töltöttség (%)",
-            0, 0
+            0, 1,
+            rfbtn=True,
+            typein='battery',
+            BG=BG2
         )
 
         self.speedframe = create_panel(
             self.bodyframe,
-            "Sebesség (km/h)",
-            0, 1
+            "Sebesség",
+            0, 2,
+            rfbtn=True,
+            typein='speed',
+            BG=BG2
         )
 
-        self.distanceframe = create_panel(
-            self.bodyframe,
-            "Megtett Távolság",
-            0, 2
-        )
-
-        
         self.materialframe = create_panel(
             self.bodyframe,
             "Gyűjtött Ásványok",
-            1, 0
+            1, 0,
+            BG=BG2
         )
 
         self.positionframe = create_panel(
             self.bodyframe,
             "Rover Pozíciója",
             1, 1,
-            colspan=2
+            BG=BG2
         )
 
-        #Battery diagram
-        self.batteryfg, self.batteryax=plt.subplots(figsize=(4,3), dpi=100)
-        self.batteryax.plot([], [], marker="o", color="lightgreen")
-        self.batteryax.set_ylim(0, 100)
-        self.batteryax.set_ylabel("Töltöttség (%)")
-        self.batteryax.set_xlabel("Idő (perc)")
-        self.batteryax.grid(True, linestyle="--", linewidth=0.5)
-        self.batterycanvas = FigureCanvasTkAgg(self.batteryfg, master=self.batteryframe)
-        self.batterycanvas.get_tk_widget().pack(fill="both", expand=True)
-        self.batteryfg.patch.set_facecolor(BG)
-        self.batteryax.set_facecolor(BG)
-        self.batteryax.tick_params(colors="white")
-        self.batteryax.xaxis.label.set_color("white")
-        self.batteryax.yaxis.label.set_color("white")
-        self.batteryax.spines["bottom"].set_color("white")
-        self.batteryax.spines["left"].set_color("white")
-        self.batteryax.spines["top"].set_color("white")
-        self.batteryax.spines["right"].set_color("white")
+        self.logframe = create_panel(
+            self.bodyframe,
+            "Eseménynapló",
+            1, 2,
+            BG=BG2
+        )
 
-        #Materials diagram
+        self.materialheaderframe = CTkFrame(
+            self.materialframe,
+            fg_color="transparent"
+        )
 
-        self.materialfg, self.materialax = plt.subplots(figsize=(1,1), dpi=100)
-        wedges, texts, autotexts = self.materialax.pie([], colors=["cyan", "yellow", "green"], autopct="%1.1f%%", startangle=90)
-        self.materialax.set_aspect("equal")
-        self.materialax.legend(wedges, ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"], title="Ásványok", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-        self.materialfg.patch.set_facecolor(BG)
-        self.materialax.set_facecolor(BG)
-        self.materialcanvas = FigureCanvasTkAgg(self.materialfg, master=self.materialframe)
-        self.materialcanvas.get_tk_widget().pack(fill="both", expand=True)
+        self.materialheaderframe.pack(expand=True)
+        self.allmaterial = tk.StringVar(value="Összes ásvány: 0 db")
+
+        CTkLabel(
+            self.materialheaderframe,
+            textvariable=self.allmaterial,
+            font=CTkFont(family="Courier New", size=18, weight="bold"),
+            text_color="white"
+        ).pack()
+
+        self.positionheaderframe = CTkFrame(
+            self.positionframe,
+            fg_color="transparent"
+        )
+
+        self.positionheaderframe.pack(expand=True)
+        self.distancestartvar = tk.StringVar(value="Távolság a kiinduló ponttól: 0 blokk")
+
+        CTkLabel(
+            self.positionheaderframe,
+            textvariable=self.distancestartvar,
+            font=CTkFont(family="Courier New", size=15, weight="bold"),
+            text_color="white"
+        ).pack()
+
+        CTkLabel(
+            self.positionheaderframe,
+            text="Rover poziciója:",
+            font=CTkFont(family="Courier New", size=15, weight="bold"),
+            text_color="white"
+        ).pack(anchor="w")
+
+        self.positionvar = tk.StringVar(value="X: 0 | Y: 0")
+
+        CTkLabel(
+            self.positionheaderframe,
+            textvariable=self.positionvar,
+            font=CTkFont(family="Courier New", size=15, weight="bold"),
+            text_color="white"
+        ).pack(anchor="w")
+
+        for i in range(2):
+            self.dataframe.columnconfigure(i, weight=1)
+            if i < 1:
+                self.dataframe.rowconfigure(i, weight=1)
+    
+        self.timeframe = create_panel(
+            self.dataframe,
+            "Szimulációs Idő",
+            0, 0,
+            BG="#171717"
+        )
+
+        self.timevar = tk.StringVar(value="0:00")
+        self.subtimevar = tk.StringVar(value="Nappal")
+        
+        CTkLabel(
+            self.timeframe,
+            textvariable=self.timevar,
+            font=CTkFont(family="Courier New", size=25, weight="bold")
+            ).pack()
+        
+        CTkLabel(
+            self.timeframe,
+            textvariable=self.subtimevar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        self.datadistanceframe = create_panel(
+            self.dataframe,
+            "Megtett távolság",
+            0, 1,
+            BG="#171717"
+        )
+
+        self.distancevar = tk.StringVar(value="0 blokk")
+
+        CTkLabel(
+            self.datadistanceframe,
+            textvariable=self.distancevar,
+            font=CTkFont(family="Courier New", size=25, weight="bold")
+        ).pack()
+
+        self.databatteryframe = create_panel(
+            self.dataframe,
+            "Energia Fogyasztás",
+            1, 0,
+            BG="#171717"
+        )
+
+        self.datamindtvar = tk.StringVar(value="Minimum: 0%")
+        self.dataatlagdtvar = tk.StringVar(value="Átlag: 0%")
+        self.datamaxdtvar = tk.StringVar(value="Maximum: 0%")
+
+        CTkLabel(
+            self.databatteryframe,
+            textvariable=self.datamindtvar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.databatteryframe,
+            textvariable=self.dataatlagdtvar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.databatteryframe,
+            textvariable=self.datamaxdtvar,
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        self.dataaiframe = create_panel(
+            self.dataframe,
+            "AI Hatékonyság",
+            1, 1,
+            BG="#171717"
+        )
+
+        self.dataaiblokkvar = tk.IntVar(value=0)
+        self.dataaienergiavar = tk.IntVar(value=0)
+
+        CTkLabel(
+            self.dataaiframe,
+            text="Ásvány / blokk:",
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.dataaiframe,
+            textvariable=self.dataaiblokkvar,
+            font=CTkFont(family="Courier New", size=17, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.dataaiframe,
+            text="Ásvány / energia:",
+            font=CTkFont(family="Courier New", size=20, weight="bold")
+        ).pack()
+
+        CTkLabel(
+            self.dataaiframe,
+            textvariable=self.dataaienergiavar,
+            font=CTkFont(family="Courier New", size=17, weight="bold")
+        ).pack()
+
+        def createbardiagram(ylabel:str, xlabel:str, frame:CTkFrame):
+            fg, ax = plt.subplots(figsize=(4, 3), dpi=100)
+
+            fg.subplots_adjust(
+                left=0.125,
+                right=0.9,
+                bottom=0.25,
+                top=0.9
+            )
+
+            bar = ax.bar([], [], width=20, linewidth=1, color="lightgreen")
+
+            ax.set_ylim(0, 100)
+            ax.set_ylabel(ylabel)
+            ax.set_xlabel(xlabel)
+            ax.grid(True, linestyle="--", linewidth=0.5)
+
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
+
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
+
+            fg.patch.set_facecolor(BG2)
+            ax.set_facecolor(BG2)
+
+            ax.tick_params(colors="white")
+
+            ax.xaxis.label.set_color("white")
+            ax.yaxis.label.set_color("white")
+            ax.spines["bottom"].set_color("white")
+            ax.spines["left"].set_color("white")
+            ax.spines["top"].set_color("white")
+            ax.spines["right"].set_color("white")
+            
+            return fg, ax, canvas, bar
+
+        def createlinediagram(ylabel:str, xlabel:str, yticklables:list, yticks:list, frame:CTkFrame):
+            fg, ax = plt.subplots(figsize=(4, 3), dpi=100)
+
+            fg.subplots_adjust(
+                left=0.2,
+                right=0.9,
+                bottom=0.25,
+                top=0.9
+            )
+
+            ax.plot([], [], marker="o")
+
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(yticklables)
+            ax.set_ylabel(ylabel)
+            ax.set_xlabel(xlabel)
+            ax.grid(True, linestyle="--", linewidth=0.5)
+
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
+
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
+
+            fg.patch.set_facecolor(BG2)
+            ax.set_facecolor(BG2)
+
+            ax.tick_params(colors="white")
+
+            ax.xaxis.label.set_color("white")
+            ax.yaxis.label.set_color("white")
+
+            ax.spines["bottom"].set_color("white")
+            ax.spines["left"].set_color("white")
+            ax.spines["top"].set_color("white")
+            ax.spines["right"].set_color("white")
+
+            return fg, ax, canvas
+        
+        def createpiediagram(frame:CTkFrame):
+            fg, ax = plt.subplots(
+                    figsize=(4, 3),
+                    dpi=100
+                    )
+
+            fg.subplots_adjust(
+                left=0.1,
+                right=0.6,
+                bottom=0.2,
+                top=0.9
+            )
+
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
+
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
+
+            fg.patch.set_facecolor(BG2)
+
+            return fg, ax, canvas
+        
+        def createcoordinatesdiagram(frame:CTkFrame):
+            fg, ax = plt.subplots(
+                figsize=(4, 3),
+                dpi=100
+            )
+
+            fg.subplots_adjust(
+                left=0.14,
+                right=0.9,
+                bottom=0.2,
+                top=0.9
+            )
+
+            canvas = FigureCanvasTkAgg(
+                fg,
+                master=frame
+            )
+
+            canvas.get_tk_widget().pack(
+                fill="both",
+                expand=True
+            )
+
+            fg.patch.set_facecolor(BG2)
+
+            ax.grid(True)
+            ax.set_facecolor(BG2)
+
+            ax.tick_params(colors="white")
+
+            ax.xaxis.label.set_color("white")
+            ax.yaxis.label.set_color("white")
+
+            ax.spines["bottom"].set_color("white")
+            ax.spines["left"].set_color("white")
+            ax.spines["top"].set_color("white")
+            ax.spines["right"].set_color("white")
+
+            ax.set_ylabel("Y")
+            ax.set_xlabel("X")
+
+            ax.set_xlim(0, 50)
+            ax.set_ylim(0, 50)
+            mars_map = []
+
+            with open("src/PATHFINDER/mars_map_50x50.csv", "r") as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    mars_map.append(row)
+
+            grid = []
+
+            start_x = 0
+            start_y = 0
+
+            for y in range(50):
+
+                grid_row = []
+
+                for x in range(50):
+
+                    tile = mars_map[y][x]
+
+                    if tile == "#":
+                        grid_row.append(1)
+
+                    elif tile == "B":
+                        grid_row.append(2)
+
+                    elif tile == "Y":
+                        grid_row.append(3)
+
+                    elif tile == "G":
+                        grid_row.append(4)
+
+                    elif tile == "S":
+
+                        grid_row.append(5)
+
+                        start_x = x
+                        start_y = y
+
+                    else:
+                        grid_row.append(0)
+
+                grid.append(grid_row)
+
+            cmap = ListedColormap([
+                "#2e3237",
+                "gray",
+                "blue",
+                "yellow",
+                "green",
+                "lightgreen"
+            ])
+
+            ax.imshow(
+                grid,
+                cmap=cmap,
+                origin="upper",
+                extent=(0,50,50,0)
+            )
+
+            rover_coords = ax.scatter(start_x, start_y, color="red", s=40)
+
+            rover_coordstxt = ax.annotate("Rover", (start_x, start_y))
+            rover_coordstxt.set_fontweight("bold")
+            rover_coordstxt.set_color("black")
+
+            ax.scatter(start_x, start_y, color="lightgreen", s=40)
+            starttxt = ax.annotate("Kiinduló Pont", (start_x, start_y))
+            starttxt.set_fontweight("bold")
+            starttxt.set_color("lightgreen")
+
+            ax.set_aspect("auto")
+            ax.invert_yaxis()
+            return fg, ax, canvas, rover_coords, rover_coordstxt, start_x, start_y
+
+        self.batteryfg, self.batteryax, self.batterycanvas, self.batterybar = createbardiagram("Töltöttség (%)", "Idő (óra:perc)", self.batteryframe)
+        self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra:perc)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
+        self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
+        self.positionfg, self.positionax, self.positioncanvas, self.rover_coords, self.rover_coordstxt, self.start_x, self.start_y = createcoordinatesdiagram(self.positionframe)
+        
+        self.logframe2 = CTkFrame(
+            self.logframe,
+            fg_color="transparent"
+        )
+
+        self.logframe2.pack(fill="both", expand=True, pady=5, padx=5)
+
+        self.loglsbx = CTkListbox( 
+            self.logframe2, 
+            font=CTkFont(family="Courier New", size=15), 
+            multiple_selection=False, 
+            hover=False, 
+            fg_color="#171717" 
+            ) 
+        
+        self.loglsbx.pack(fill=BOTH, expand=True)
 
         def on_close(self):
             plt.close("all")
             self.main.destroy()
             self.main.quit()
 
-        self.main.protocol("WM_DELETE_WINDOW", lambda: on_close(self))
+        self.main.protocol(
+            "WM_DELETE_WINDOW",
+            lambda: on_close(self)
+        )
 
-        self.refleshprg(False)
+        self.resize_timer = None
+        self.is_resizing = False
+
+        self.main.bind("<Configure>", self.on_resize)
+
+        self.refleshprg(True)
+
+    def on_resize(self, event):
+
+        if event.widget != self.main:
+            return
+
+        if not self.is_resizing:
+            self.is_resizing = True
+            self.detach_graphs()
+
+        if self.resize_timer:
+            self.main.after_cancel(self.resize_timer)
+
+        self.resize_timer = self.main.after(300, self.resize_finished)
+    
+    def detach_graphs(self):
+        self.bodyframe.pack_forget()
+    
+    def resize_finished(self):
+        self.is_resizing = False
+        self.bodyframe.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.batterycanvas.draw_idle()
+        self.speedcanvas.draw_idle()
+        self.materialcanvas.draw_idle()
+        self.positioncanvas.draw_idle()
 
     def refleshprg(self, refles):
-        global logsize
+        global logsize, battery, time, materialB, materialG, materialY, speed, events, positionX, positionY
         refleshtime:int = 5
+
+        if self.is_resizing:
+            return
+
         if logsize < os.path.getsize(self.selectedlogfile):
             backend(self.selectedlogfile)
-            global battery, time, materialB, materialG, materialY
-            batteryax = self.batteryax
+            maxdata:int = 7
 
-            line = batteryax.lines[0]
-            ydata = line.get_ydata()
-            if type(ydata) != list:
-                ydata.tolist()
+            for i in range(len(events)):
+                if i >= self.loglsbx.size():
+                    self.loglsbx.insert(END, events[i])
 
-            if len(battery) > len(ydata):
-                new_y = battery[len(ydata):]
-                new_x = time[len(ydata):]
-                line.set_ydata(list(ydata) + new_y)
-                line.set_xdata(list(line.get_xdata()) + new_x)
-                batteryax.set_xticks(time)
-                self.batterycanvas.draw()
+            def linediagram(ax, datas, maxdata:int, canvas):
+                line = ax.lines[0]
 
-            self.materialax.clear()
-            wedges, texts, autotexts = self.materialax.pie([materialB, materialY, materialG], colors=["cyan", "yellow", "green"], autopct="%1.1f%%", startangle=90)
-            self.materialax.set_aspect("equal")
-            self.materialax.legend(wedges, ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"], title="Ásványok", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-            self.materialfg.patch.set_facecolor("#2e3237")
-            self.materialax.set_facecolor("#2e3237")
+                xdata = list(line.get_xdata())
+                ydata = list(line.get_ydata())
 
-            self.materialcanvas.draw()
+                if not isinstance(ydata, list):
+                    ydata = ydata.tolist()
 
-            if self.refleshing == False or refles == True:
-                self.main.after(refleshtime * 1000, lambda: self.refleshprg(True))
-                self.refleshing = True
+                if len(datas) > len(ydata):
+
+                    new_y = datas[len(ydata):]
+                    new_x = time[len(xdata):]
+
+                    if maxdata != 0:
+                        xdata = (xdata + new_x)[-maxdata:]
+                        ydata = (ydata + new_y)[-maxdata:]
+                    else:
+                        xdata = (xdata + new_x)
+                        ydata = (ydata + new_y)
+
+                    line.set_data(xdata, ydata)
+
+                    ax.set_xticks(xdata)
+
+                    labels = [
+                        f"{int(i)//60}:{int(i)%60:02d}"
+                        for i in xdata
+                    ]
+
+                    ax.set_xticklabels(labels)
+
+                    ax.relim()
+                    ax.autoscale_view()
+                    canvas.draw_idle()
+            
+            def bardiagram(ax, datas, maxdata, canvas, bar):
+                if maxdata != 0:
+                    xdata = time[-maxdata:]
+                    ydata = datas[-maxdata:]
+                else:
+                    xdata = time
+                    ydata = datas
+                    
+                for i in bar:
+                    i.remove()
+                bar = ax.bar(xdata, ydata, width=20, linewidth=1, color="lightgreen")
+
+                labels = [
+                    f"{int(i)//60}:{int(i)%60:02d}"
+                    for i in xdata
+                ]
+
+                ax.set_xticks(xdata)
+                ax.set_xticklabels(labels)
+
+                ax.relim()
+                ax.autoscale_view()
+                canvas.draw_idle()
+
+                return bar
+            
+            def piediagram(ax, canvas, datas:list, datascolor:list, legendtitles:list):
+                ax.clear()
+
+                wedges, texts, autotexts = ax.pie(
+                    datas,
+                    colors=datascolor,
+                    shadow=True,
+                    autopct="%1.1f%%",
+                    startangle=90,
+                    radius=1.2
+                )
+
+                for autotext in autotexts:
+
+                    autotext.set_color('black')
+                    autotext.set_fontweight('bold')
+
+                ax.set_aspect("equal")
+
+                ax.legend(
+                    wedges,
+                    legendtitles,
+                    loc="center left",
+                    bbox_to_anchor=(1, 0, 0.5, 1),
+                    facecolor="#2e3237",
+                    labelcolor="white",
+                    fancybox=False,
+                    frameon=False,
+                    alignment="left",
+                    handlelength=1.5,
+                    handleheight=1.5
+                )
+
+                ax.set_facecolor("#2e3237")
+                canvas.draw_idle()
+            
+            self.allmaterial.set(value="Összes ásvány: " + str(materialB + materialY + materialG) + " db")
+            self.distancestartvar.set(value="Távolság a kiinduló ponttól: " + str(round(math.sqrt((positionX - self.start_x)**2 + (positionY - self.start_y)**2), 10)) + " blokk")
+            self.batterybar = bardiagram(self.batteryax, battery, maxdata, self.batterycanvas, self.batterybar)
+            linediagram(self.speedax, speed, maxdata, self.speedcanvas)
+            if self.fullgraph_battery is not None:
+                self.fullgraph_battery.xdata = time
+                self.fullgraph_battery.ydata = battery
+                self.fullgraph_battery.update_graph()
+
+            if self.fullgraph_speed is not None:
+                self.fullgraph_speed.xdata = time
+                self.fullgraph_speed.ydata = speed
+                self.fullgraph_speed.update_graph()
+
+            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
+            self.positionvar.set(value=f"X: {positionX} | Y: {positionY}")
+            self.rover_coords.set_offsets([positionX, positionY])
+            self.rover_coordstxt.set_position([positionX, positionY])
+            self.positioncanvas.draw_idle()
+            self.timevar.set(value=f"{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}")
+
+            if (int(time[-1]) % 1440) < 960:
+                self.subtimevar.set(value="Nappal")
+            else:
+                self.subtimevar.set(value="Éjszaka")
+            
+            distance = 0
+            for i in speed:
+                distance += int(i)
+
+            self.distancevar.set(value=str(distance) + " blokk")
+
+            minbt = int(battery[0])
+            maxbt = int(battery[0])
+            atlagbt = 0
+            buffer = 0
+
+            for i in battery:
+                if int(i) < minbt:
+                    minbt = int(i)
+                elif int(i) > maxbt:
+                    maxbt = int(i)
+                
+                buffer += int(i)
+
+            atlagbt = round(buffer/len(battery))
+            buffer = 0
+            usedallbattery = 0
+
+            for i in range(1, len(battery)):
+                buffer = battery[i-1] - battery[i]
+                if buffer > 0:
+                    usedallbattery += buffer
+
+            self.datamindtvar.set(value="Minimum: " + str(minbt) + "%")
+            self.dataatlagdtvar.set(value="Átlag: " + str(atlagbt) + "%")
+            self.datamaxdtvar.set(value="Maximum: " + str(maxbt) + "%")
+            self.dataaiblokkvar.set(value=round((materialB + materialY + materialG)/distance, 16))
+            self.dataaienergiavar.set(value=usedallbattery)
+            
+            if refles == True:
+                self.main.after(
+                    refleshtime * 1000,
+                    lambda: self.refleshprg(True)
+                )
+
         else:
-            if self.refleshing == False or refles == True:
-                self.main.after(refleshtime * 1000, lambda: self.refleshprg(True))
-                self.refleshing = True
+            if refles == True:
+                self.main.after(
+                    refleshtime * 1000,
+                    lambda: self.refleshprg(True)
+                )
 
-main = tk.Tk()
+main = Ctk.CTk()
 
-
-window = Logexplorer(main, "log")
+if len(sys.argv) != 1:
+    window = DashboardUI(main, "log/" + str(sys.argv[1]) + ".log")
+else:
+    window = Logexplorer(main, "log")
 
 main.mainloop()
