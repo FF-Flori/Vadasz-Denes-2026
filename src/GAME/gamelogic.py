@@ -50,6 +50,10 @@ class GameLogic:
             self.viewed[0] = len(self.map)-self.viewedWidth
         if self.viewed[1]+self.viewedWidth >= len(self.map[0]):
             self.viewed[1] = len(self.map[0])-self.viewedWidth
+        if self.viewed[0] < 0:
+            self.viewed[0] = 0
+        if self.viewed[1] < 0:
+            self.viewed[1] = 0
     def moveCamera(self,dispX:float,dispY:float)->None:
         self.viewed[0] += dispX
         self.viewed[1] += dispY
@@ -66,13 +70,13 @@ class GameLogic:
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.moveCamera(-self.speed/1000*deltaTime,0)
-        if keys[pygame.K_w]:
+        if keys[pygame.K_w] or keys[pygame.K_UP]:
             self.moveCamera(0,-self.speed/1000*deltaTime)
-        if keys[pygame.K_s]:
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
             self.moveCamera(0,self.speed/1000*deltaTime)
-        if keys[pygame.K_d]:
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.moveCamera(self.speed/1000*deltaTime,0)
         for y in range(int(self.viewed[1]),math.ceil(self.viewed[1]+self.viewedWidth)):
             for x in range(int(self.viewed[0]),math.ceil(self.viewed[0]+self.viewedWidth)):
