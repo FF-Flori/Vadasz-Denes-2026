@@ -46,7 +46,11 @@ class Pathfinder {
 
 		static constexpr uint8_t  INDEX_COLLISION_RETRIES = 5; // amount of retries to select a unique member from the generation compared to a pair
 
-		static constexpr uint8_t STEP_COST[4] = {0, 2, 8, 18};
+		// simulation settings
+		static constexpr int8_t STEP_COSTS[2][4] = { // cost of steps per one time unit, the first is 0 steps, should be in ascending order
+			{-9, -8, -2,  8}, // daytime
+			{ 1,  2,  8, 18} // nighttime
+		};
 
 		/**
 		 * This method creates the singleton instance for Pathfinder

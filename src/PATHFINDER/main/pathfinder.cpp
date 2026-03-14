@@ -470,49 +470,187 @@ void Pathfinder::Genome::inversion() {
 }
 
 uint32_t Pathfinder::fitness(const Genome* genome) const {
-	uint32_t totalValue = 0;
-	uint16_t time = START_TIME;
-	uint8_t battery = START_BATTERY;
-	uint16_t group = oreGroups.size() - 1;
+	// helper tables in local thread
+	thread_local std::vector<uint8_t> memoTable;    // best battery for a state
+	thread_local std::vector<uint32_t> versionTable; // version of the state stored in memoTable (helps to skip clearing memoTable)
+	thread_local uint32_t currentVersion = 0;
 
-	for (const uint16_t target : genome->dna) {
-		const uint16_t distToTarget = paths[getPathIndex(group, target)].path.size() - 1;
-		const uint16_t distToBase = paths[getPathIndex(target, oreGroups.size() - 1)].path.size() - 1;
+	// count of every possible bfsState (without isReturning)
+	static const size_t stateSize = oreGroups.size() * maxDistPerSegment * (timeLimit + 1);
 
-		const bfsState toTarget = runFastBFS(distToTarget, time, battery);
+	// new version to skip wiping off memoTable
+	currentVersion++;
 
-		if (toTarget.time == 0 && distToTarget > 0) {
-			break;
+	uint16_t returnedOres = 0; // value of returned ores
+	uint16_t lastReachableGroupIndex = oreGroups.size() - 1; // last reachable group (decreases if a dead segment is found)
+
+	// fill up memoTable with starter values if empty
+	if (const size_t requiredSize = stateSize * 2;
+	memoTable.size() < requiredSize) {
+		memoTable.resize(requiredSize, 0);
+		versionTable.resize(requiredSize, 0);
+	}
+
+	// get group-group and group-start distances
+	std::vector<uint16_t> distances;
+	distances.reserve(oreGroups.size());
+	distances.push_back(paths[getPathIndex(oreGroups.size() - 1, genome->dna[0])].path.size() - 1);
+	std::vector<uint16_t> returnDistances;
+	returnDistances.reserve(oreGroups.size());
+	returnDistances.push_back(distances[0]);
+	for (size_t g = 1; g < oreGroups.size(); g++) {
+		distances.push_back(paths[getPathIndex(genome->dna[g - 1], genome->dna[g])].path.size() - 1);
+		returnDistances.push_back(paths[getPathIndex(oreGroups.size() - 1, genome->dna[g])].path.size() - 1);
+	}
+
+	// bfs queue with start pos
+	std::queue<bfsState> q;
+	q.push({0, 0, 0, START_BATTERY});
+
+	while(!q.empty()) {
+		auto [groupIndex, dist, time, battery, isReturning] = q.front();
+		q.pop();
+
+		if (isReturning && groupIndex + 1 <= returnedOres) {
+			continue;
 		}
 
-		const uint16_t targetValue = oreGroups[target].tiles.size() * oreGroups[target].oreValue;
-		// slightly overthrow the value to protect unusual oreGroups
-		const uint16_t targetActions = oreGroups[target].tiles.size() * 22 / 10;
+		if (groupIndex > lastReachableGroupIndex) {
+			continue;
+		}
 
-		uint16_t timeAfterTarget = toTarget.time;
-		uint8_t batteryAfterTarget = toTarget.battery;
+		// get current path segment's length
+		const uint16_t currentSegmentLength = isReturning ? returnDistances[groupIndex] : distances[groupIndex];
 
-		for (uint16_t t = 0; t < targetActions; ++t) {
-			timeAfterTarget++;
-			if (timeAfterTarget % 48 < 32) {
-				batteryAfterTarget = std::min(100, batteryAfterTarget + 8);
+		// if the segment is finished
+		if (dist >= currentSegmentLength) {
+			// reached start
+			if (isReturning) {
+				returnedOres = groupIndex + 1;
+
+				// if all groups collected
+				if (returnedOres == oreGroups.size()) [[unlikely]] {break;}
+
+				// reached an ore group - simulate the rover inside the group
 			} else {
-				if (batteryAfterTarget >= 2) {
-					batteryAfterTarget -= 2;
+				// slightly overthrow group action count to have correct estimation on unusual groups
+				const uint16_t targetActions = oreGroups[groupIndex].tiles.size() * 11 / 5; // *11/5 = *2.2
+				uint8_t cycleTime = time % 48;
+				uint16_t elapsedTime = 0;
+				for (uint16_t t = 0; t < targetActions;) {
+					elapsedTime++;
+					cycleTime++;
+					if (cycleTime >= 48) {
+						cycleTime = 0;
+					}
+					if (cycleTime <= 32) {
+						battery = std::min(100, battery + 8);
+					} else {
+						if (battery >= 2) {
+							battery -= 2;
+						} else {
+							battery = 0; // rover dies
+							break;
+						}
+					}
+					t++;
+				}
+				// if ran out of energy in the group
+				if (battery == 0) [[unlikely]] {continue;}
+
+				// if no more time left
+				if (time + elapsedTime >= timeLimit) [[unlikely]] {
+					// if the first group is unreachable
+					if (groupIndex == 0) [[unlikely]] {
+						return 0;
+					}
+					// the last reachable group is the previous one
+					lastReachableGroupIndex = groupIndex - 1;
+					if (lastReachableGroupIndex + 1 <= returnedOres) [[unlikely]] {break;} // if the max possible ore groups are reached
+					continue;
+				}
+
+				time += elapsedTime;
+
+				if (groupIndex + 1 > returnedOres) {
+					q.push({groupIndex, 0, time, battery, true});
+				}
+				if (groupIndex < lastReachableGroupIndex) {
+					q.push({static_cast<uint16_t>(groupIndex + 1), 0, time, battery});
+				}
+			}
+			continue;
+		}
+
+		// normal movement calculation on path segment (else)
+		const uint16_t nextTime = time + 1;
+
+		// if no more time left
+		if (nextTime > timeLimit) {
+			// if the first group is unreachable
+			if (groupIndex == 0) [[unlikely]] {
+				return 0;
+			}
+			// the last reachable group is the previous one
+			lastReachableGroupIndex = groupIndex - 1;
+			if (lastReachableGroupIndex + 1 <= returnedOres) [[unlikely]] {break;} // if the max possible ore groups are reached
+			continue;
+		}
+
+		// make next states
+		if (nextTime % 48 < 32) { // daytime
+			for (uint8_t i = 0; i < 4; i++) {
+				// if not enough energy to complete that step (can't complete any other steps either, steps in ascending order)
+				if (battery < STEP_COSTS[0][i]) {break;}
+				const uint8_t nextBattery = std::min(100, battery - STEP_COSTS[0][i]);
+
+				// if the current segment is shorter than the step (-||-)
+				const uint16_t nextDist = dist + i;
+				if (currentSegmentLength < nextDist) {break;}
+
+				// calculate index in memoTable
+				const size_t returningOffset = isReturning ? stateSize : 0;
+				const size_t index = returningOffset + (groupIndex * maxDistPerSegment + nextDist) * (timeLimit + 1) + nextTime;
+
+				// new or better state than saved
+				if (versionTable[index] != currentVersion || memoTable[index] < nextBattery) {
+					versionTable[index] = currentVersion;
+					memoTable[index] = nextBattery;
+
+					q.push({groupIndex, nextDist, nextTime, nextBattery, isReturning});
+				}
+			}
+
+		} else { // nighttime
+			for (uint8_t i = 0; i < 4; i++) {
+				// if not enough energy to complete that step (can't complete any other steps either, steps in ascending order)
+				if (battery < STEP_COSTS[1][i]) {break;}
+				const uint8_t nextBattery = std::min(100, battery - STEP_COSTS[1][i]);
+
+				// if the current segment is shorter than the step (-||-)
+				const uint16_t nextDist = dist + i;
+				if (currentSegmentLength < nextDist) {break;}
+
+				// calculate index in memoTable
+				const size_t returningOffset = isReturning ? stateSize : 0;
+				const size_t index = returningOffset + (groupIndex * maxDistPerSegment + nextDist) * (timeLimit + 1) + nextTime;
+
+				// if found new or better state than saved
+				if (versionTable[index] != currentVersion || memoTable[index] < nextBattery) {
+					versionTable[index] = currentVersion;
+					memoTable[index] = nextBattery;
+					q.push({groupIndex, nextDist, nextTime, nextBattery, isReturning});
 				}
 			}
 		}
-
-		if (const bfsState toBase = runFastBFS(distToBase, time, battery);
-		toBase.time > 0 || distToBase == 0) {
-			totalValue += targetValue;
-			time = timeAfterTarget;
-			battery = batteryAfterTarget;
-			group = target;
-
-		} else {
-			break;
-		}
 	}
-	return totalValue;
+
+	// calculate collected ores' sum
+	uint32_t returnedValue = 0;
+	for (uint16_t i = 0; i < returnedOres; i++) {
+		returnedValue += oreGroups[genome->dna[i]].tiles.size() * oreGroups[genome->dna[i]].oreValue;
+	}
+
+	// my life got 12 hours, 38 minutes and 44 seconds shorter because of this single function
+	return returnedValue;
 }
