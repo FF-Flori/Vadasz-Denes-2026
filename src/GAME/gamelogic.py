@@ -68,12 +68,16 @@ class GameLogic:
     def scale(self):
         if self.zoom > 5:
             self.zoom = 5
-        if self.zoom < 0.1:
-            self.zoom = 0.1
-        self.oreImgs = pygame.transform.scale(self.oreSrc,(self.oreSrc.get_width()*self.zoom,self.oreSrc.get_height()*self.zoom))
+        if self.zoom < 0.3:
+            self.zoom = 0.3
         self.orewidth = self.oreSrc.get_height()*self.zoom
-        center:list[float] = [self.viewed[0]+self.viewedWidth/2,self.viewed[1]+self.viewedWidth/2]
+        neworewidth = self.oreSrc.get_height()*self.zoom
+        if ceil(self.width//neworewidth) >= len(self.map):
+            self.zoom += 0.1
+            return
         self.viewedWidth = self.width//self.orewidth
+        self.oreImgs = pygame.transform.scale(self.oreSrc,(self.oreSrc.get_width()*self.zoom,self.oreSrc.get_height()*self.zoom))
+        center:list[float] = [self.viewed[0]+self.viewedWidth/2,self.viewed[1]+self.viewedWidth/2]
         self.rover.scaled = pygame.transform.scale(self.rover.sprite,(self.rover.sprite.get_width()*self.zoom,self.rover.sprite.get_height()*self.zoom))
         self.viewed = [center[0]-self.viewedWidth/2,center[1]-self.viewedWidth/2]
         if self.viewed[0]+self.viewedWidth >= len(self.map)-1:
@@ -109,6 +113,8 @@ class GameLogic:
             self.moveCamera(0,self.speed/1000*deltaTime)
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.moveCamera(self.speed/1000*deltaTime,0)
+        if keys[pygame.K_p]:
+            print(self.zoom)
 
         screen.blit(self.scaledBG,(0,0),(self.viewed[0]*self.orewidth,self.viewed[1]*self.orewidth,self.width,self.height))
         for y in range(int(self.viewed[1]),ceil(self.viewed[1]+self.viewedWidth)):
