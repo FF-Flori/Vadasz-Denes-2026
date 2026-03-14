@@ -21,11 +21,12 @@ class GameLogic:
         self.rover:Rover = Rover(self.map)
         self.zoom:float = 0.5
         self.createBG()
+        self.scaledBG:pygame.Surface = self.background
         self.scale()
     def createBG(self)->None:
         source:pygame.Surface = pygame.image.load("./src/img/bg.png").convert_alpha()
-        self.background:pygame.Surface = pygame.Surface((self.width,self.height))
         tilesize:int = 64
+        self.background:pygame.Surface = pygame.Surface((tilesize*len(self.map),tilesize*len(self.map[0])))
 
         srcRect:pygame.Rect = pygame.Rect(0,0,tilesize,tilesize)
         for x in range(len(self.map)):
@@ -75,27 +76,28 @@ class GameLogic:
         self.viewedWidth = self.width//self.orewidth
         self.rover.scaled = pygame.transform.scale(self.rover.sprite,(self.rover.sprite.get_width()*self.zoom,self.rover.sprite.get_height()*self.zoom))
         self.viewed = [center[0]-self.viewedWidth/2,center[1]-self.viewedWidth/2]
-        if self.viewed[0]+self.viewedWidth >= len(self.map):
-            self.viewed[0] = len(self.map)-self.viewedWidth
-        if self.viewed[1]+self.viewedWidth >= len(self.map[0]):
-            self.viewed[1] = len(self.map[0])-self.viewedWidth
+        if self.viewed[0]+self.viewedWidth >= len(self.map)-1:
+            self.viewed[0] = len(self.map)-self.viewedWidth-1
+        if self.viewed[1]+self.viewedWidth >= len(self.map[0])-1:
+            self.viewed[1] = len(self.map[0])-self.viewedWidth-1
         if self.viewed[0] < 0:
             self.viewed[0] = 0
         if self.viewed[1] < 0:
             self.viewed[1] = 0
+        self.scaledBG = pygame.transform.scale(self.background,(self.background.get_width()*self.zoom,self.background.get_height()*self.zoom))
     def moveCamera(self,dispX:float,dispY:float)->None:
         self.viewed[0] += dispX
         self.viewed[1] += dispY
         if dispX != 0:
             if self.viewed[0] < 0:
                 self.viewed[0] = 0
-            elif self.viewed[0] > len(self.map[0])-self.viewedWidth:
-                self.viewed[0] = len(self.map[0])-self.viewedWidth
+            elif self.viewed[0] > len(self.map[0])-self.viewedWidth-1:
+                self.viewed[0] = len(self.map[0])-self.viewedWidth-1
         if dispY != 0:
             if self.viewed[1] < 0:
                 self.viewed[1] = 0
-            elif self.viewed[1] > len(self.map)-self.viewedWidth:
-                self.viewed[1] = len(self.map)-self.viewedWidth
+            elif self.viewed[1] > len(self.map)-self.viewedWidth-1:
+                self.viewed[1] = len(self.map)-self.viewedWidth-1
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         keys = pygame.key.get_pressed()
@@ -108,7 +110,7 @@ class GameLogic:
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.moveCamera(self.speed/1000*deltaTime,0)
 
-        screen.blit(self.background,(0,0),(self.viewed[0]*64,self.viewed[1]*64,self.width,self.height))
+        screen.blit(self.scaledBG,(0,0),(self.viewed[0]*self.orewidth,self.viewed[1]*self.orewidth,self.width,self.height))
         for y in range(int(self.viewed[1]),ceil(self.viewed[1]+self.viewedWidth)):
             for x in range(int(self.viewed[0]),ceil(self.viewed[0]+self.viewedWidth)):
                 self.drawOre(self.map[y][x],(x-self.viewed[0])*self.orewidth,(y-self.viewed[1])*self.orewidth,screen)
