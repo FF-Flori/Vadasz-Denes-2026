@@ -61,16 +61,22 @@ void Pathfinder::calculate() {
 	std::cout<<"Grouped\n";
 
 	std::cout<<"Calculating paths..\n";
-	paths.reserve(oreGroups.size() * (oreGroups.size() + 1) / 2);
+	paths.reserve(oreGroups.size() * (oreGroups.size() - 1) / 2);
 	for(size_t a = 0; a < oreGroups.size(); a++){
 		for(size_t b = a + 1; b < oreGroups.size(); b++) {
 			paths.emplace_back(a, b);
+
+			// get the longest distance between 2 groups
+			if (paths.back().path.size() > maxDistPerSegment) {
+				maxDistPerSegment = paths.back().path.size();
+			}
 		}
 	}
 	paths.shrink_to_fit();
 	std::cout<<"Starting genetic algorithm...\n";
 	// start Genetic
 	GeneticAlgorithm();
+	std::cout << "Done" << std::endl;
 }
 
 Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(ore), oreValue(oreValue) {
@@ -212,13 +218,13 @@ void Pathfinder::groupOres() {
 	std::cout<<"There are "<<oreGroups.size()<<"groups\n";
 }
 
-void Pathfinder::checkCoord(const uint8_t x, const uint8_t y, const tile_t oreType, OreGroup& group){
+void Pathfinder::checkCoord(const int16_t x, const int16_t y, const tile_t oreType, OreGroup& group){
 	if(x < 0 || MAP_WIDTH <= x){return;}
 	if(y < 0 || MAP_WIDTH <= y){return;}
 	if(group.tiles.size()>=GROUP_LIMIT){return;}
 
 	if(map[getIndex(x,y)] == oreType) {
-		group.tiles.push_back({x,y});
+		group.tiles.push_back({static_cast<uint8_t>(x), static_cast<uint8_t>(y)});
 		map[getIndex(x,y)] = tile_t::grouped;
 	}
 }
@@ -263,8 +269,11 @@ void Pathfinder::GeneticAlgorithm() const {
 	Genome::initDistribution(dnaSize);
 
 	std::cout<<"Generating random genomes...\n";
-	std::vector<Genome> generation(GENERATION_SIZE);
-	std::vector<Genome> oldGeneration(GENERATION_SIZE);
+	std::vector<Genome> generation;
+	std::vector<Genome> oldGeneration;
+	generation.reserve(GENERATION_SIZE);
+	oldGeneration.reserve(GENERATION_SIZE);
+
 	for (uint16_t i = 0; i < GENERATION_SIZE; i++) {
 		// give a random dna to each genome
 		generation.emplace_back();
@@ -280,6 +289,8 @@ void Pathfinder::GeneticAlgorithm() const {
 	std::cout << "Starting generations\n";
 	try {
 		for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
+			std::cout << "Generation " << static_cast<int>(generationIndex) << "/" << static_cast<int>(GENETIC_ITERS) << std::endl;
+
 			oldGeneration = generation;
 
 			// elitism
@@ -350,9 +361,9 @@ void Pathfinder::GeneticAlgorithm() const {
 		std::cout << "Exception: " << e.what() << std::endl;
 	}
 
-	std::cout << "Genetic algorythm finished!" << std::endl << "Best genome's groups:" << std::endl;
+	std::cout << "Genetic algorythm finished!" << std::endl << "Best genome's groups are:" << std::endl;
 	for (const uint16_t gr : generation[0].dna) {
-		std::cout << gr << " (" << oreGroups[gr].tiles[0].x << "; " << oreGroups[gr].tiles[0].y << ")" << std::endl;
+		std::cout << gr << " (" << static_cast<int>(oreGroups[gr].tiles[0].x) << "; " << static_cast<int>(oreGroups[gr].tiles[0].y) << ")" << std::endl;
 	}
 	// TODO: simulate the best genome and save it (and remove test couts above and everywhere else)
 }
@@ -392,8 +403,8 @@ Pathfinder::Genome Pathfinder::Genome::operator+(const Genome& other) const {
 	// copy random dna segment from first parent
 	const uint16_t a = index_dist(gen);
 	const uint16_t b = index_dist(gen);
-	const uint16_t segmentMin = min(a, b);
-	const uint16_t segmentMax = max(a, b);
+	const uint16_t segmentMin = std::min(a, b);
+	const uint16_t segmentMax = std::max(a, b);
 	std::vector<bool> childDnaFilled(dna.size());
 
 	for (uint16_t i = segmentMin; i < segmentMax; i++) {
@@ -476,13 +487,13 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
 	thread_local uint32_t currentVersion = 0;
 
 	// count of every possible bfsState (without isReturning)
-	static const size_t stateSize = oreGroups.size() * maxDistPerSegment * (timeLimit + 1);
+	static const size_t stateSize = genome->dna.size() * maxDistPerSegment * (timeLimit + 1);
 
 	// new version to skip wiping off memoTable
 	currentVersion++;
 
 	uint16_t returnedOres = 0; // value of returned ores
-	uint16_t lastReachableGroupIndex = oreGroups.size() - 1; // last reachable group (decreases if a dead segment is found)
+	uint16_t lastReachableGroupIndex = genome->dna.size() - 1; // last reachable group (decreases if a dead segment is found)
 
 	// fill up memoTable with starter values if empty
 	if (const size_t requiredSize = stateSize * 2;
@@ -493,12 +504,12 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
 
 	// get group-group and group-start distances
 	std::vector<uint16_t> distances;
-	distances.reserve(oreGroups.size());
+	distances.reserve(genome->dna.size());
 	distances.push_back(paths[getPathIndex(oreGroups.size() - 1, genome->dna[0])].path.size() - 1);
 	std::vector<uint16_t> returnDistances;
-	returnDistances.reserve(oreGroups.size());
+	returnDistances.reserve(genome->dna.size());
 	returnDistances.push_back(distances[0]);
-	for (size_t g = 1; g < oreGroups.size(); g++) {
+	for (size_t g = 1; g < genome->dna.size(); g++) {
 		distances.push_back(paths[getPathIndex(genome->dna[g - 1], genome->dna[g])].path.size() - 1);
 		returnDistances.push_back(paths[getPathIndex(oreGroups.size() - 1, genome->dna[g])].path.size() - 1);
 	}
@@ -529,7 +540,7 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
 				returnedOres = groupIndex + 1;
 
 				// if all groups collected
-				if (returnedOres == oreGroups.size()) [[unlikely]] {break;}
+				if (returnedOres == genome->dna.size()) [[unlikely]] {break;}
 
 				// reached an ore group - simulate the rover inside the group
 			} else {

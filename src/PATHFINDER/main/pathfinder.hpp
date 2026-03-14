@@ -12,10 +12,12 @@
 
 /**
  * Pathfinder calculates a route through a map with a genetic algorithm to maximalize collected value on the run.
+ * @authors FF-Flori, HiAndris
  */
 class Pathfinder {
 	public:
 		// constants
+		// global settings
 		static constexpr uint8_t MAP_WIDTH = 50;
 		static constexpr uint8_t GROUP_LIMIT = 9;
 		static constexpr uint8_t START_TIME = 0; // how many half hours after 0:00
@@ -53,9 +55,10 @@ class Pathfinder {
 		};
 
 		/**
-		 * This method creates the singleton instance for Pathfinder
+		 * Creates the singleton instance for Pathfinder
 		 * @param timeLimit Time limit in the simulation (in half hours!) for the rover to complete the task
 		 * @param mapPath Absolute path to the file containing the map
+		 * @return void
 		 */
 		static void create(const uint16_t timeLimit, const std::string& mapPath) {
 			if (pathfinder == nullptr) {
@@ -257,13 +260,14 @@ class Pathfinder {
 		 * Holy constructor sigma 67 gg
 		 * @param timeLimit Time limit in the simulation for the rover to complete the task
 		 * @param mapPath Absolute path to the file containing the map
+		 * @author HiAndris
 		 */
 		Pathfinder(uint16_t timeLimit, const std::string& mapPath);
 
 		// classes
 		class OreGroup {
 			public:
-				const tile_t ore; // ore type
+				const tile_t ore;      // ore type
 				const uint8_t oreValue; // value per ore
 				std::vector<coord_t> tiles;
 
@@ -281,7 +285,7 @@ class Pathfinder {
 				explicit Path(size_t a, size_t b);
 			private:
 				[[nodiscard]] static uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
-					return max(std::abs(coordA.x - coordB.x), std::abs(coordA.y - coordB.y));
+					return std::max(std::abs(coordA.x - coordB.x), std::abs(coordA.y - coordB.y));
 				}
 				[[nodiscard]] static uint16_t getSquaredDiagonal(const coord_t coordA, const coord_t coordB) {
 					const uint8_t x = std::abs(coordA.x - coordB.x);
@@ -293,8 +297,8 @@ class Pathfinder {
 
 				struct Node {
 					coord_t coords{};
-					uint16_t g; // Cost from start
-					uint16_t f; // Estimated whole cost
+					uint16_t g;         // Cost from start
+					uint16_t f;          // Estimated whole cost
 					direction_t parent{}; // direction to parent node
 
 					Node(const coord_t coords, const uint16_t g, const coord_t endPos,
@@ -342,12 +346,14 @@ class Pathfinder {
 			void insertion();
 			void inversion();
 		};
-	
 
+		// perfect 8 byte struct no padding gigachad sigma
 		struct bfsState {
-			uint16_t dist;
-			uint16_t time;
-			uint8_t battery;
+			uint16_t groupIndex{}; // next group to go to or the group returning from if isReturning is true
+			uint16_t dist{};        // distance from previous group
+			uint16_t time{};         // time passed since start
+			uint8_t battery{};        // battery percentage
+			bool isReturning = false;  // true if this state is currently returning to the starting position
 		};
 
 		// variables
@@ -359,62 +365,85 @@ class Pathfinder {
 		map_t map{};
 		std::vector<OreGroup> oreGroups;
 		std::vector<Path> paths;
+		uint16_t maxDistPerSegment = 0;
 
 		// functions
+		// genetic algorythm functions
 		void GeneticAlgorithm() const;
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
 		uint32_t fitness(const Genome* genome) const;
 
+		// helper functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
 
-		/** Explanation:
+		/**
+		 * Returns the path's index between 2 groups
+		 *
+		 * @par Explanation
+		 * @verbatim
 		 *    [0][1][2][3]
 		 * [0]    .  .  .
 		 * [1]       .  .
 		 * [2]          .
-		 * [3]
-		 * The path1 and path2 arguments would be the indeces of this 2D lookup table, but half of the table is not in the flattened array, so we have to ensure that those wont be accessed that is why we create the x and y variables.
-		 * To get the index in the 1D array we need two things:
-		 *  - The index where the nth line starts in the 1D array
-		 *  - The offset from that line to the desired element (basically the x coordinate in the 2D array
-		 * We will have to add together these two values to get the index in the 1D array
+		 * [3] @endverbatim
+		 * The path1 and path2 arguments would be the x, y of an imaginary 2D lookup table, but half of the table is not in the flattened array.
+		 * To get the index in the 1D array, we need two things:
+		 *  - The index where the Nth line starts in the 1D array.
+		 *  - The offset from that line to the desired element (basically the x coordinate).
+		 *
+		 * We will have to add these two values together to get the index in the 1D array.
 		 * The offset:
 		 * We can get the offset pretty easily. It is just x-y-1 because:
+		 * @verbatim
 		 *    [0][1][2]
 		 * [0]    .  .
 		 * [1]       .
-		 * [2]
-		 * In each row, the elements start at column y+1, so to get the offset we just need to subtract y+1 from x
+		 * [2] @endverbatim
+		 * In each row, the elements start at column y+1, so to get the offset we just need to subtract y+1 from x:
 		 * x-(y+1) => x-y-1
-		 * This just ensures that x points to the nht column relative to the starting positions of the elements in that row
-		 *
+		 * This just ensures that x points to the nht column relative to the starting positions of the elements in that row.
 		 * The index of the row in the 1D array:
-		 * We know that from the back to the front, the amount of elements in a row will just be the natural numbers and 0: 0,1,2,3,4,5
-		 * (The nth row (from the back) will have n elements)
+		 * We know that from the back to the front, the amount of elements in a row will just be the natural numbers and 0.
+		 * (The Nth row (from the back) will have n elements.)
 		 * So the offset from the back to that row's first element is just the sum of all integers up to that point (inclusive)
 		 * Which we can get with this formula:
-		 * endpt*(endpt+1)/2
-		 * and to make it count from the start not the end, we just need to subtract it from the number of elemenrs in the list, which is already stored in  the pathsSize variable
-		 * (I added the bitshift for speed)
+		 * endpoint * (endpoint + 1) / 2
+		 * and to make it count from the start, not the end, we just need to subtract it from the number of elements in the list, which is already stored in  the pathsSize variable.
+		 * (I added the bitshift for speed.)
 		 *
-		 * https://www.desmos.com/calculator/ktpkbeylkv
+		 * @par Additional information (from HiAndris)
+		 * This project turned out to have so much more complex math equations than this one, but I had no affinity to explain them beautifully like here.
+		 * I also made a desmos graph about this problem earlier on, so <a href="https://www.desmos.com/calculator/ktpkbeylkv">here it is</a>.
+		 *
+		 * @param a Index of a group in the oreGroups vector
+		 * @param b Index of a group in the oreGroups vector
+		 * @return Index of a path in the paths vector
+		 * @authors FF-Flori, HiAndris
 		 */
-		[[nodiscard]] static uint32_t max(const uint32_t a, const uint32_t b){return a > b ? a : b;}
-		[[nodiscard]] static uint32_t min(const uint32_t a, const uint32_t b){return a < b ? a : b;}
 		[[nodiscard]] uint32_t getPathIndex(const uint32_t a, const uint32_t b) const {
 			assert(a != b);
 			assert(oreGroups.size() > 0);
 			assert(paths.size() > 0);
 			assert(a < oreGroups.size() && b < oreGroups.size());
-			const uint32_t g1 = min(a, b);
-			const uint32_t g2 = max(a, b);
+			const uint32_t g1 = std::min(a, b);
+			const uint32_t g2 = std::max(a, b);
 			const uint32_t n = oreGroups.size() - g1;
 			return paths.size() - ((n*(n-1)) >> 1) + g2 - g1 - 1;
 		}
 
+		// ore group functions
+		/**
+		 * Groups neighbouring ores on the map
+		 * @author FF-Flori
+		 */
 		void groupOres();
+
+		/**
+		 * Creates an ore group starting from the x, y coords
+		 * @author FF-Flori
+		 */
 		void createGroup(uint8_t x, uint8_t y);
 
 		/**
@@ -424,7 +453,7 @@ class Pathfinder {
 		 * @param oreType The type of ore the checked point needs to be
 		 * @param group The group to append the ore to
 		 */
-		void checkCoord(uint8_t x, uint8_t y, tile_t oreType, OreGroup& group);
+		void checkCoord(int16_t x, int16_t y, tile_t oreType, OreGroup& group);
 };
 
 #endif // VD26_PATHFINDER_HPP
