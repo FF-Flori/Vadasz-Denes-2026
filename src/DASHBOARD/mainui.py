@@ -609,11 +609,15 @@ class DashboardUI:
 
         self.main.bind("<Configure>", self.on_resize)
 
+        self.last_width = self.main.winfo_width()
+        self.last_height = self.main.winfo_height()
+
         self.refleshprg(True)
 
     def on_resize(self, event):
-
         if event.widget != self.main:
+            return
+        if (event.width, event.height) == (self.last_width, self.last_height):
             return
 
         if not self.is_resizing:
@@ -622,6 +626,9 @@ class DashboardUI:
 
         if self.resize_timer:
             self.main.after_cancel(self.resize_timer)
+        
+        self.last_width = event.width
+        self.last_height = event.height
 
         self.resize_timer = self.main.after(300, self.resize_finished)
     

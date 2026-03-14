@@ -8,7 +8,7 @@ import csv
 class FullGraphWindow:
     def __init__(self, main, title, xdata, ydata, ylabel, xlabel, mode="line", ticks=None, ticklabels=None):
         self.win = CTkToplevel(main)
-        self.win.title(title)
+        self.win.title("Dashboard - " + title)
         self.win.geometry("900x600")
         self.win.resizable(True, True)
 
