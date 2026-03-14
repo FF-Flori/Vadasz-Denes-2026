@@ -25,7 +25,7 @@ class Pathfinder {
 
 		// genetic algorithm settings
 		static constexpr uint16_t GENETIC_ITERS   = 600; // number of generations
-		static constexpr uint16_t GENERATION_SIZE = 400; // number of genomes in a generation
+		static constexpr uint16_t GENERATION_SIZE = 120; // number of genomes in a generation
 
 		static constexpr uint16_t ELITISM         = GENERATION_SIZE *  5 / 100; // number of elements to be passed along by elitism
 

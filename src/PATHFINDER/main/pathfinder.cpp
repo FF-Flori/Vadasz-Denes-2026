@@ -9,6 +9,7 @@
 #include <string>
 #include <stdexcept>
 #include <unordered_map>
+#include <execution>
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file
@@ -279,9 +280,13 @@ void Pathfinder::GeneticAlgorithm() const {
 		generation.emplace_back();
 		generation.back().dna = dnaOrder;
 		std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
-		generation.back().getFitness();
 	}
 	std::cout << "Genomes generated\n";
+
+	// multithreading
+	std::for_each(std::execution::par, generation.begin(), generation.end(), [](Genome& g) {
+		g.getFitness();
+	});
 
 	// sort the elements for the next generation
 	std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
@@ -315,8 +320,6 @@ void Pathfinder::GeneticAlgorithm() const {
 				} else {
 					generation.back().inversion();
 				}
-
-				generation.back().getFitness();
 			}
 			for (; i < BREEDING; i++) {
 				// tournament selection of 2 parents
@@ -324,8 +327,6 @@ void Pathfinder::GeneticAlgorithm() const {
 				Genome& father = oldGeneration[fatherIndex];
 				Genome& mother = oldGeneration[tournamentSelect(oldGeneration, fatherIndex)];
 				generation.emplace_back(father + mother);
-
-				generation.back().getFitness();
 			}
 
 			// cloning
@@ -341,8 +342,6 @@ void Pathfinder::GeneticAlgorithm() const {
 				} else {
 					generation.back().inversion();
 				}
-
-				generation.back().getFitness();
 			}
 
 			// fill up with random new genomes
@@ -350,9 +349,12 @@ void Pathfinder::GeneticAlgorithm() const {
 				generation.emplace_back();
 				generation.back().dna = dnaOrder;
 				std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
-
-				generation.back().getFitness();
 			}
+
+			// multithreading
+			std::for_each(std::execution::par, generation.begin() + ELITISM, generation.end(), [](Genome& g) {
+				g.getFitness();
+			});
 
 			// sort the created generation
 			std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
