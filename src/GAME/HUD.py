@@ -14,6 +14,8 @@ class HUD:
         self.greenmaterial:int = 0
         self.yellowmaterial:int = 0
         self.time:int = 0 #half hours
+        self.rtime:int = 60 #IDK It dummy
+        
     def show(self, screen:pygame.Surface)->None:
         # Aspect ratio is handled already so we dont need to check the height
         screen.blit(self.img,(0,0))
@@ -46,7 +48,14 @@ class HUD:
         screen.blit(yellowmaterialtxt, ((self.leftmargin+20)+65, (self.topmargin+120)+15))
 
         #Time
-        pygame.draw.rect(screen, panelcolors, pygame.Rect(self.leftmargin+150, self.topmargin+5, self.width-300, 40), border_radius=5)
+        pygame.draw.rect(screen, panelcolors, pygame.Rect(self.leftmargin+150, self.topmargin+5, self.width-260, 40), border_radius=5)
 
         timetxt = font.render(f"{self.time//60:02d}:{self.time%60:02d}", True, fontcolor)
         screen.blit(timetxt, ((self.leftmargin+150)+10, (self.topmargin+5)+10))
+
+        #Remaining
+        pygame.draw.rect(screen, (40,40,40), pygame.Rect((self.leftmargin+150)+self.width-490, self.topmargin+5, 5, 40), border_radius=5)
+
+        #IT'S DUMMY
+        rtimetxt = font.render(f"Hátralévő: {self.rtime//60:02d}:{self.time%60:02d}", True, fontcolor)
+        screen.blit(rtimetxt, (((self.leftmargin+150)+self.width-490)+10, (self.topmargin+5)+10))
