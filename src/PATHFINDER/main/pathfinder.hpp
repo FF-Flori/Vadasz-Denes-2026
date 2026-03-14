@@ -338,12 +338,7 @@ class Pathfinder {
 			void insertion();
 			void inversion();
 		};
-
-		struct state_t{
-			uint64_t timeUsage;
-			uint8_t energyUsage;
-			uint8_t usedSpeed;
-		};
+	
 
 		struct bfsState {
 			uint16_t dist;
@@ -362,20 +357,10 @@ class Pathfinder {
 		std::vector<Path> paths;
 
 		// functions
-		// if these return true the values are what will remain after the rover takes that path, if this returns false, then the var with value 0 is the resource that ran out
-		// when the simulation starts starttime is 0 by default, but that cant cause logical errors, because when the sim is starting out it will start at night anyway, and the program only checks if startTime is 0 at night
-		bool calculateBatteryAndTimeUsage(const Path* pathToCheck, uint8_t& startBattery, uint64_t& startTime, uint8_t speed) const;
-		bool calculateGroupBatteryAndTimeUsage(const OreGroup* pOreGroup, uint8_t& startBattery, uint64_t& startTime) const;
 		void GeneticAlgorithm() const;
-		void generatePath(std::vector<uint16_t>& path);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
-		[[nodiscard]] bfsState runFastBFS(uint16_t targetDist, uint16_t startTime, uint8_t startBattery) const;
 		uint32_t fitness(const Genome* genome) const;
-		void simulate(std::vector<uint16_t> path,uint64_t *usedTime,uint32_t *gateredOreValue,uint16_t*groupCount);
-
-		// void calculateRoute(route_t& toRoute, const Genome& genome) const;
-		// TODO: do sth with this
 
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
 		[[nodiscard]] static int getIndex(const coord_t coords) {return coords.x + MAP_WIDTH * coords.y;}
