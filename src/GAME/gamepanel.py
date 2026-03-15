@@ -1,20 +1,18 @@
 import pygame
 from src.GAME.gamelogic import *
+from math import ceil
 
 class GamePanel:
-    def __init__(self) -> None:
-        self.margin:int = 20
-        self.width = 300
-        self.height = 300
-        self.aspectRatio = self.width/self.height
-        self.texture:pygame.Surface = pygame.Surface((self.width,self.height))
-        self.texture.fill((235,131,52))
-        self.logicModule:GameLogic = GameLogic(self.width,self.height)
+    def __init__(self,windowsize:tuple[int,int])->None:
+        # the panel sprite has a margin of 20 and a width of 340
+        # 20/340 = margin/windowsize[0]
+        self.margin:float = ceil(windowsize[0]/17)
+        self.width:int = ceil(windowsize[0]-2*self.margin)
+        self.margin = ceil(self.margin)
+        self.texture:pygame.Surface = pygame.Surface((self.width,self.width))
+        self.logicModule:GameLogic = GameLogic(self.width,self.width)
+        print(self.width)
     def updatePanel(self, deltaTime:float)->None:
-        self.texture.fill((235,131,52))
         self.logicModule.Update(deltaTime,self.texture)
     def showPanel(self, screen:pygame.Surface)->None:
-        screenwidth:int = screen.get_width()
-        newwidth:int = screenwidth-2*self.margin
-        newheight:int = int(newwidth/self.aspectRatio)
-        screen.blit(pygame.transform.scale(self.texture,(newwidth,newheight)),((screenwidth-newwidth)/2,self.margin))
+        screen.blit(self.texture,(self.margin,self.margin))

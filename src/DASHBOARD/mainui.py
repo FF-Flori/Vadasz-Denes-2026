@@ -18,6 +18,7 @@ time:list = []
 battery:list = []
 positionY:int = 0
 positionX:int = 0
+positionList:list = []
 speed:list = []
 distance:list = []
 materialB:int = 0
@@ -81,6 +82,7 @@ class DashboardUI:
 
         self.fullgraph_battery = None
         self.fullgraph_speed = None
+        self.fullgraph_position = None
 
         def open_full_graph(self, graph_type):
             if graph_type == 'battery':
@@ -90,7 +92,7 @@ class DashboardUI:
                 self.fullgraph_speed = FullGraphWindow(self.main, "Sebesség", time, speed, "Sebesség", "Idő (óra:perc)", mode="line", ticks=[0,1,2,3], ticklabels=["Áll","Lassú","Normál","Gyors"])
 
             elif graph_type == "coords":
-                self.fullgraph_coords = FullGraphWindow(self.main, "Rover poziciója", positionX, positionY, "Y", "X", mode="coords")
+                self.fullgraph_position = FullGraphWindow(self.main, "Rover poziciója", positionX, positionY, "Y", "X", mode="coords", alldata=positionList)
 
         def create_panel(parent, title, row, col, colspan=1, rfbtn=False, BG=BG2, typein=""):
             outer = CTkFrame(
@@ -557,6 +559,21 @@ class DashboardUI:
                 extent=(0,50,50,0)
             )
 
+            traveled_coords = ax.scatter(
+                    start_x,
+                    start_y,
+                    color="white",
+                    alpha=0.3,
+                    s=40
+                )
+
+            traveled_coords_line = ax.plot(
+                    start_x,
+                    start_y,
+                    color="white",
+                    alpha=0.3
+                )
+
             rover_coords = ax.scatter(start_x, start_y, color="red", s=40)
 
             rover_coordstxt = ax.annotate("Rover", (start_x, start_y))
@@ -570,12 +587,12 @@ class DashboardUI:
 
             ax.set_aspect("auto")
             ax.invert_yaxis()
-            return fg, ax, canvas, rover_coords, rover_coordstxt, start_x, start_y
+            return fg, ax, canvas, rover_coords, rover_coordstxt, traveled_coords, traveled_coords_line, start_x, start_y
 
         self.batteryfg, self.batteryax, self.batterycanvas, self.batterybar = createbardiagram("Töltöttség (%)", "Idő (óra:perc)", self.batteryframe)
         self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra:perc)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
         self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
-        self.positionfg, self.positionax, self.positioncanvas, self.rover_coords, self.rover_coordstxt, self.start_x, self.start_y = createcoordinatesdiagram(self.positionframe)
+        self.positionfg, self.positionax, self.positioncanvas, self.rover_coords, self.rover_coordstxt, self.traveled_coords, self.traveled_coords_line, self.start_x, self.start_y = createcoordinatesdiagram(self.positionframe)
         
         self.logframe2 = CTkFrame(
             self.logframe,
@@ -609,11 +626,15 @@ class DashboardUI:
 
         self.main.bind("<Configure>", self.on_resize)
 
+        self.last_width = self.main.winfo_width()
+        self.last_height = self.main.winfo_height()
+
         self.refleshprg(True)
 
     def on_resize(self, event):
-
         if event.widget != self.main:
+            return
+        if (event.width, event.height) == (self.last_width, self.last_height):
             return
 
         if not self.is_resizing:
@@ -622,6 +643,9 @@ class DashboardUI:
 
         if self.resize_timer:
             self.main.after_cancel(self.resize_timer)
+        
+        self.last_width = event.width
+        self.last_height = event.height
 
         self.resize_timer = self.main.after(300, self.resize_finished)
     
@@ -638,21 +662,22 @@ class DashboardUI:
         self.positioncanvas.draw_idle()
 
     def refleshprg(self, refles):
-        global logline, logsize, battery, time, materialB, materialG, materialY, speed, events, positionX, positionY, distance
+        global logline, logsize, battery, time, materialB, materialG, materialY, speed, events, positionX, positionY, positionList, distance
         refleshtime:int = 5
 
         if self.is_resizing:
             return
 
         if logsize < os.path.getsize(self.selectedmainlogfile):
-            logsize, logline, time, battery, positionY, positionX, speed, distance, materialB, materialY, materialG, events = logread(
+            logsize, logline, time, battery, positionY, positionX, positionList, speed, distance, materialB, materialY, materialG, events = logread(
                     logfile=self.selectedmainlogfile, 
                     logsize=logsize, 
                     logline=logline, 
                     time=time, 
                     battery=battery, 
                     positionY=positionY, 
-                    positionX=positionX, 
+                    positionX=positionX,
+                    positionList=positionList, 
                     speed=speed, 
                     distance=distance, 
                     materialB=materialB, 
@@ -789,11 +814,50 @@ class DashboardUI:
                 self.fullgraph_speed.xdata = time
                 self.fullgraph_speed.ydata = speed
                 self.fullgraph_speed.update_graph()
+            
+            if self.fullgraph_position is not None:
+                self.fullgraph_position.xdata = positionX
+                self.fullgraph_position.ydata = positionY
+                self.fullgraph_position.alldata = positionList
+                self.fullgraph_position.update_graph()
 
             piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
             self.positionvar.set(value=f"X: {positionX} | Y: {positionY}")
             self.rover_coords.set_offsets([positionX, positionY])
             self.rover_coordstxt.set_position([positionX, positionY])
+
+            alldatax = [self.start_x]
+            alldatay = [self.start_y]
+            alldata = [(self.start_x, self.start_y)]
+                
+            for i in positionList:
+                alldata.append(i)
+
+                
+            for i in range(len(alldata)):
+                self.traveled_coords = self.positionax.scatter(
+                    alldata[i][0],
+                    alldata[i][1],
+                    color="white",
+                    alpha=0.3,
+                    s=40
+                )
+
+                alldatax.append(
+                    alldata[i][0]
+                )
+
+                alldatay.append(
+                     alldata[i][1]
+                )
+
+            self.traveled_coords_line = self.positionax.plot(
+                    alldatax,
+                    alldatay,
+                    color="white",
+                    alpha=0.3
+                )
+            
             self.positioncanvas.draw_idle()
             self.timevar.set(value=f"{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}")
 

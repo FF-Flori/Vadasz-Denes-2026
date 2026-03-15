@@ -7,7 +7,7 @@ class GameWindow:
         self.width:int = width
         self.height:int = height
         self.aspectRatio:float = width/height
-        self.gameHandler:Game = Game()
+        self.gameHandler:Game = Game((width,height))
     def showScreen(self,screen:pygame.Surface,deltaTime:float)->None:
         screenwidth:int = screen.get_width()
         screenheight:int = screen.get_height()

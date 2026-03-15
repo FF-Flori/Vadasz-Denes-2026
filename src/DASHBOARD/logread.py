@@ -1,6 +1,6 @@
 import os
 
-def logread(logfile, logsize:int, logline:int, time:list, battery:list, positionY:int, positionX:int, speed:list, distance:list, materialB:int, materialY:int, materialG:int, events:list):
+def logread(logfile, logsize:int, logline:int, time:list, battery:list, positionY:int, positionX:int, positionList:list, speed:list, distance:list, materialB:int, materialY:int, materialG:int, events:list):
     if logfile != None and len(logfile) > 0 and logsize < os.path.getsize(logfile):
         with open(logfile, "r") as fullog:
             lines = fullog.readlines()
@@ -13,6 +13,7 @@ def logread(logfile, logsize:int, logline:int, time:list, battery:list, position
 
                 positionX = int(fullline[0].split(",")[0])
                 positionY = int(fullline[0].split(",")[1])
+                positionList.append((int(fullline[0].split(",")[0]), int(fullline[0].split(",")[1])))
                 battery.append(int(fullline[1]))
                 speed.append(int(fullline[2]))
                 distance.append(int(fullline[2]))
@@ -53,4 +54,4 @@ def logread(logfile, logsize:int, logline:int, time:list, battery:list, position
             logline = len(lines)
             logsize = os.path.getsize(logfile)
 
-    return logsize, logline, time, battery, positionY, positionX, speed, distance, materialB, materialY, materialG, events
+    return logsize, logline, time, battery, positionY, positionX, positionList, speed, distance, materialB, materialY, materialG, events
