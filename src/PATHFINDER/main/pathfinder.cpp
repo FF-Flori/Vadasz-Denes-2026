@@ -780,7 +780,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 				}
 
 				// CONTINUING BRANCH
-				if (groupIndex + 1 < genome->dna.size()) {
+				if (groupIndex + 1 < static_cast<uint16_t>(genome->dna.size())) {
 					targetActions = groupPaths[groupIndex].size();
 
 					// iterate over the actions in the group
