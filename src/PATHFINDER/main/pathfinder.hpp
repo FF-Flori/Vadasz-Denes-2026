@@ -106,7 +106,7 @@ class Pathfinder {
 		};
 
 		/**
-		 * Direction type
+		 * Direction type vector{x, y}
 		 */
 		struct direction_t{
 			int8_t x;
@@ -129,15 +129,15 @@ class Pathfinder {
 		 * Direction names
 		 */
 		struct Directions {
-			static constexpr direction_t UP_LEFT     {-1, -1};
-			static constexpr direction_t UP          { 0, -1};
-			static constexpr direction_t UP_RIGHT    { 1, -1};
-			static constexpr direction_t RIGHT       { 1,  0};
-			static constexpr direction_t DOWN_RIGHT  { 1,  1};
-			static constexpr direction_t DOWN        { 0,  1};
-			static constexpr direction_t DOWN_LEFT   {-1,  1};
-			static constexpr direction_t LEFT        {-1,  0};
-			static constexpr direction_t NODIRECTION { 0,  0};
+			static constexpr direction_t UP_LEFT      {-1, -1};
+			static constexpr direction_t UP           { 0, -1};
+			static constexpr direction_t UP_RIGHT     { 1, -1};
+			static constexpr direction_t RIGHT        { 1,  0};
+			static constexpr direction_t DOWN_RIGHT   { 1,  1};
+			static constexpr direction_t DOWN         { 0,  1};
+			static constexpr direction_t DOWN_LEFT    {-1,  1};
+			static constexpr direction_t LEFT         {-1,  0};
+			static constexpr direction_t NO_DIRECTION { 0,  0};
 
 			static constexpr std::array<direction_t, 8> ALL = {
 				UP_LEFT, UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT
@@ -148,6 +148,26 @@ class Pathfinder {
 		 * Map type
 		 */
 		using map_t = std::array<tile_t, MAP_WIDTH * MAP_WIDTH>;
+
+		/**
+		 * instructions type (half bytes)
+		 */
+		enum class instruction_t : uint8_t {
+			up_left         = 0b0000,
+			up              = 0b0001,
+			up_right        = 0b0010,
+			right           = 0b0011,
+			down_right      = 0b0100,
+			down            = 0b0101,
+			down_left       = 0b0110,
+			left            = 0b0111,
+			set_speed_0     = 0b1000,
+			set_speed_1     = 0b1001,
+			set_speed_2     = 0b1010,
+			set_speed_3     = 0b1011,
+			mine            = 0b1100,
+			no_instruction  = 0b1111  // padding instruction, does not take time or resources in the simulation
+		};
 
 		/**
 		 * Coordinates type {x, y}
@@ -164,8 +184,17 @@ class Pathfinder {
 				return x != other.x || y != other.y;
 			}
 
-			[[nodiscard]] coord_t operator+(const direction_t & direction) const {
+			[[nodiscard]] coord_t operator+(const direction_t& direction) const {
 				return {static_cast<uint8_t>(x + direction.x), static_cast<uint8_t>(y + direction.y)};
+			}
+
+			/**
+			 * Returns the Chebyshev distance between coordinates
+			 * @param other Other coordinates
+			 * @return Chebyshev distance
+			 */
+			[[nodiscard]] constexpr uint8_t operator-(const coord_t& other) const {
+				return std::max(std::abs(x - other.x), std::abs(y - other.y));
 			}
 
 			/**
@@ -181,25 +210,18 @@ class Pathfinder {
 				}
 				return false;
 			}
-		};
 
-		/**
-		 * instructions type (half bytes)
-		 */
-		enum class instruction_t : uint8_t {
-			up_left     = 0b0000,
-		 	up          = 0b0001,
-		 	up_right    = 0b0010,
-		 	right       = 0b0011,
-		 	down_right  = 0b0100,
-		 	down        = 0b0101,
-		 	down_left   = 0b0110,
-		 	left        = 0b0111,
-		 	set_speed_0 = 0b1000,
-		 	set_speed_1 = 0b1001,
-		 	set_speed_2 = 0b1010,
-		 	set_speed_3 = 0b1011,
-		 	mine        = 0b1100
+			[[nodiscard]] instruction_t getInstructionTo(const coord_t other) const {
+				if (other.x == x - 1 && other.y == y - 1) {return instruction_t::up_left;}
+				if (other.x == x     && other.y == y - 1) {return instruction_t::up;}
+				if (other.x == x + 1 && other.y == y - 1) {return instruction_t::up_right;}
+				if (other.x == x + 1 && other.y == y    ) {return instruction_t::right;}
+				if (other.x == x + 1 && other.y == y + 1) {return instruction_t::down_right;}
+				if (other.x == x     && other.y == y + 1) {return instruction_t::down;}
+				if (other.x == x - 1 && other.y == y + 1) {return instruction_t::down_left;}
+				if (other.x == x - 1 && other.y == y    ) {return instruction_t::left;}
+				return instruction_t::no_instruction;
+			}
 		};
 
 		/**
@@ -301,12 +323,13 @@ class Pathfinder {
 				coord_t endPos{};
 				std::vector<coord_t> path; // stays empty after constructor if no path found
 
-				explicit Path(size_t a, size_t b);
+				Path(size_t a, size_t b);
+				Path(coord_t a, coord_t b);
 			private:
-				[[nodiscard]] static uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
-					return std::max(std::abs(coordA.x - coordB.x), std::abs(coordA.y - coordB.y));
+				[[nodiscard]] static constexpr uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
+					return coordA - coordB;
 				}
-				[[nodiscard]] static uint16_t getSquaredDiagonal(const coord_t coordA, const coord_t coordB) {
+				[[nodiscard]] static constexpr uint16_t getSquaredDiagonal(const coord_t coordA, const coord_t coordB) {
 					const uint8_t x = std::abs(coordA.x - coordB.x);
 					const uint8_t y = std::abs(coordA.y - coordB.y);
 					return x * x + y * y;
@@ -321,7 +344,7 @@ class Pathfinder {
 					direction_t parent{}; // direction to parent node
 
 					Node(const coord_t coords, const uint16_t g, const coord_t endPos,
-					const direction_t parent = Directions::NODIRECTION) {
+					const direction_t parent = Directions::NO_DIRECTION) {
 						this->coords = coords;
 						this->g = g;
 						this->parent = parent;
@@ -392,6 +415,7 @@ class Pathfinder {
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
 		uint32_t fitness(const Genome* genome) const;
+		void calculateInstructions(const Genome* genome, route_t& toRoute);
 
 		// helper functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
@@ -473,6 +497,15 @@ class Pathfinder {
 		 * @param group The group to append the ore to
 		 */
 		void checkCoord(int16_t x, int16_t y, tile_t oreType, OreGroup& group);
+
+		/**
+		 * Makes a route inside an ore group from a starting position to an end position
+		 * @param group oreGroup
+		 * @param entry start position
+		 * @param exit end position
+		 * @param toRoute the container to put the path into
+		 */
+		static void traceGroup(const OreGroup& group, coord_t entry, coord_t exit, route_t& toRoute);
 };
 
 #endif // VD26_PATHFINDER_HPP
