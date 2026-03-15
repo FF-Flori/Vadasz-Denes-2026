@@ -15,7 +15,7 @@ class HUD:
         self.greenmaterial:int = 0
         self.yellowmaterial:int = 0
         self.time:int = 0 #half hours
-        self.rtime:int = 60 #IDK It dummy
+        self.rtime:int = 0 #IDK It dummy
         self.battery:int = 100 #without %
         self.font = pygame.font.Font(None, 36)
 
@@ -23,6 +23,7 @@ class HUD:
         self.time = logicmodule.simulationTime
         self.battery = logicmodule.rover.battery
         self.rtime = 100000-self.time
+
     def show(self, screen:pygame.Surface)->None:
         # Aspect ratio is handled already so we dont need to check the height
         oresimg = pygame.image.load("./src/img/ores.png").convert_alpha()
