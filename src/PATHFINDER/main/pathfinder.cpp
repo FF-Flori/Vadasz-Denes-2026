@@ -56,11 +56,18 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 	file.close();
 }
 
-void Pathfinder::calculate() {
+Pathfinder::route_t Pathfinder::calculate() {
 	std::cout<<"Starting calc\n";
 	groupOres();
 	std::cout<<"Grouped\n";
 
+	// if no ore groups found
+	if (oreGroups.size() < 2) {
+		std::cout << "No ores on map, aborting pathfind.\n";
+		return route_t{}; // empty route
+	}
+
+	// get paths
 	std::cout<<"Calculating paths..\n";
 	paths.reserve(oreGroups.size() * (oreGroups.size() - 1) / 2);
 	for(size_t a = 0; a < oreGroups.size(); a++){
@@ -74,10 +81,19 @@ void Pathfinder::calculate() {
 		}
 	}
 	paths.shrink_to_fit();
+
+
 	std::cout<<"Starting genetic algorithm...\n";
-	// start Genetic
-	GeneticAlgorithm();
+	// Genetic
+	const Genome winner = GeneticAlgorithm();
+
+	// Calculate route from genetic winner
+	route_t route;
+	calculateInstructions(&winner, route);
 	std::cout << "Done" << std::endl;
+
+	// W finally
+	return route;
 }
 
 Pathfinder::OreGroup::OreGroup(const tile_t ore, const uint8_t oreValue) : ore(ore), oreValue(oreValue) {
@@ -93,6 +109,12 @@ Pathfinder::Path::Path(const size_t a, const size_t b) : groupA(a), groupB(b) {
 Pathfinder::Path::Path(const coord_t a, const coord_t b) : groupA(-1), groupB(-1) {
 	startPos = a;
 	endPos = b;
+
+	if (a == b) {
+		path.push_back(a);
+		return;
+	}
+
 	aStar();
 }
 
@@ -245,27 +267,27 @@ void Pathfinder::createGroup(const uint8_t x, const uint8_t y){
 		coord_t tilePos = newGroup.tiles.at(i);
 
 		//left
-		checkCoord(tilePos.x-1, tilePos.y,   newGroup.ore, newGroup);
+		checkCoord(static_cast<int16_t>(tilePos.x-1), tilePos.y,   newGroup.ore, newGroup);
 		//topleft
-		checkCoord(tilePos.x-1, tilePos.y-1, newGroup.ore, newGroup);
+		checkCoord(static_cast<int16_t>(tilePos.x-1), static_cast<int16_t>(tilePos.y-1), newGroup.ore, newGroup);
 		//top
-		checkCoord(tilePos.x,   tilePos.y-1, newGroup.ore, newGroup);
+		checkCoord(tilePos.x, static_cast<int16_t>(tilePos.y-1), newGroup.ore, newGroup);
 		//topright
-		checkCoord(tilePos.x+1, tilePos.y-1, newGroup.ore, newGroup);
+		checkCoord(static_cast<int16_t>(tilePos.x+1), static_cast<int16_t>(tilePos.y-1), newGroup.ore, newGroup);
 		//right
-		checkCoord(tilePos.x+1, tilePos.y,   newGroup.ore, newGroup);
+		checkCoord(static_cast<int16_t>(tilePos.x+1), tilePos.y,   newGroup.ore, newGroup);
 		//bottomright
-		checkCoord(tilePos.x+1, tilePos.y+1, newGroup.ore, newGroup);
+		checkCoord(static_cast<int16_t>(tilePos.x+1), static_cast<int16_t>(tilePos.y+1), newGroup.ore, newGroup);
 		//bottom
-		checkCoord(tilePos.x,   tilePos.y+1, newGroup.ore, newGroup);
+		checkCoord(tilePos.x, static_cast<int16_t>(tilePos.y+1), newGroup.ore, newGroup);
 		//bottomleft
-		checkCoord(tilePos.x-1, tilePos.y+1, newGroup.ore, newGroup);
+		checkCoord(static_cast<int16_t>(tilePos.x-1), static_cast<int16_t>(tilePos.y+1), newGroup.ore, newGroup);
 	}
 	newGroup.tiles.shrink_to_fit();
 	oreGroups.push_back(newGroup);
 }
 
-void Pathfinder::GeneticAlgorithm() const {
+Pathfinder::Genome Pathfinder::GeneticAlgorithm() const {
 	// oreGroups size without start tile
 	const uint16_t dnaSize = oreGroups.size() - 1;
 
@@ -373,7 +395,8 @@ void Pathfinder::GeneticAlgorithm() const {
 	for (const uint16_t gr : generation[0].dna) {
 		std::cout << gr << " (" << static_cast<int>(oreGroups[gr].tiles[0].x) << "; " << static_cast<int>(oreGroups[gr].tiles[0].y) << ")" << std::endl;
 	}
-	// TODO: simulate the best genome and save it (and remove test couts above and everywhere else)
+
+	return generation[0];
 }
 
 uint16_t Pathfinder::tournamentSelect(const std::vector<Genome>& generation) {
@@ -495,8 +518,8 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
     for (size_t g = 0; g < genome->dna.size(); g++) {
 	    // distance to next group
     	uint16_t dist = g == 0 ?
-						paths[getPathIndex(oreGroups.size() - 1, genome->dna[0])].path.size() - 1 :
-						paths[getPathIndex(genome->dna[g - 1], genome->dna[g])].path.size() - 1;
+    		paths[getPathIndex(oreGroups.size() - 1, genome->dna[0])].path.size() - 1 :
+    		paths[getPathIndex(genome->dna[g - 1], genome->dna[g])].path.size() - 1;
 
     	// estimate travel time
     	float travelTime = 0.0;
@@ -506,26 +529,26 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
     	if (currentlyDay) {
     		const uint8_t currentDist = std::min(static_cast<uint16_t>(32 - currentTime), dist);
     		dist -= currentDist;
-    		travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+    		travelTime += static_cast<float>(currentDist) * TIME_PER_TILE_DAY;
 		} else {
 			const uint8_t currentDist = std::min(static_cast<uint16_t>(48 - currentTime), dist);
 			dist -= currentDist;
-			travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+			travelTime += static_cast<float>(currentDist) * TIME_PER_TILE_NIGHT;
     	}
 
     	while (dist) {
     		if (currentlyDay) {
     			const uint8_t currentDist = std::min(static_cast<uint16_t>(32), dist);
     			dist -= currentDist;
-    			travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+    			travelTime += static_cast<float>(currentDist) * TIME_PER_TILE_DAY;
     		} else {
     			const uint8_t currentDist = std::min(static_cast<uint16_t>(16), dist);
     			dist -= currentDist;
-    			travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+    			travelTime += static_cast<float>(currentDist) * TIME_PER_TILE_NIGHT;
     		}
     		currentlyDay = !currentlyDay;
     	}
-    	std::floor(travelTime);
+    	travelTime = std::floor(travelTime);
 
     	// estimate mining time by slightly overthrowing for unusual groups
         const uint32_t miningTime = oreGroups[genome->dna[g]].tiles.size() * 11 / 5; // *2.2
@@ -533,38 +556,38 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
         // estimate return time
         uint16_t returnDist = paths[getPathIndex(oreGroups.size() - 1, genome->dna[g])].path.size() - 1;
     	float returnTime = 0.0;
-    	currentTime = static_cast<int>(time + travelTime + miningTime) % 48;
+    	currentTime = time + static_cast<int>(travelTime) + miningTime % 48;
     	currentlyDay = currentTime % 48 < 32;
 
     	if (currentlyDay) {
     		const uint8_t currentDist = std::min(static_cast<uint16_t>(32 - currentTime), returnDist);
     		returnDist -= currentDist;
-    		returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+    		returnTime += static_cast<float>(currentDist) * TIME_PER_TILE_DAY;
     	} else {
     		const uint8_t currentDist = std::min(static_cast<uint16_t>(48 - currentTime), returnDist);
     		returnDist -= currentDist;
-    		returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+    		returnTime += static_cast<float>(currentDist) * TIME_PER_TILE_NIGHT;
     	}
 
     	while (returnDist) {
     		if (currentlyDay) {
     			const uint8_t currentDist = std::min(static_cast<uint16_t>(32), returnDist);
     			returnDist -= currentDist;
-    			returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+    			returnTime += static_cast<float>(currentDist) * TIME_PER_TILE_DAY;
     		} else {
     			const uint8_t currentDist = std::min(static_cast<uint16_t>(16), returnDist);
     			returnDist -= currentDist;
-    			returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+    			returnTime += static_cast<float>(currentDist) * TIME_PER_TILE_NIGHT;
     		}
     		currentlyDay = !currentlyDay;
     	}
-    	std::floor(returnTime);
+    	returnTime = std::floor(returnTime);
 
         // if next group is possible
-        if (time + travelTime + miningTime + returnTime <= timeLimit) {
+        if (static_cast<float>(time) + travelTime + static_cast<float>(miningTime) + returnTime <= static_cast<float>(timeLimit)) {
             // add mined ores' value and passed time
             returnedValue += oreGroups[genome->dna[g]].tiles.size() * oreGroups[genome->dna[g]].oreValue;
-            time += travelTime + miningTime;
+            time += static_cast<uint32_t>(travelTime) + miningTime;
         } else {
             break;
         }
@@ -573,7 +596,7 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
     return returnedValue;
 }
 
-void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
+void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) const {
 	// helper tables
 	std::vector<uint8_t> memoTable;    // best battery for a state
 	std::vector<uint32_t> parentTable; // there is no chance, that we need an uint64_t table for this (that much
@@ -609,27 +632,29 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
 	returnGroupPaths.reserve(genome->dna.size());
 
 	groupPaths.push_back({});
-	if (genome->dna[0] < genome->dna[1]) {
-		traceGroup(
-			oreGroups[genome->dna[0]],
-			paths[getPathIndex(genome->dna[0], paths.size() - 1)].path.front(),
-			paths[getPathIndex(genome->dna[0], genome->dna[1])].path.back(),
-			groupPaths[0]
-		);
-	} else {
-		traceGroup(
-			oreGroups[genome->dna[0]],
-			paths[getPathIndex(genome->dna[0], paths.size() - 1)].path.front(),
-			paths[getPathIndex(genome->dna[0], genome->dna[1])].path.front(),
-			groupPaths[0]
-		);
+	if (genome->dna.size() > 1) {
+		if (genome->dna[0] < genome->dna[1]) {
+			traceGroup(
+				oreGroups[genome->dna[0]],
+				paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
+				paths[getPathIndex(genome->dna[0], genome->dna[1])].path.back(),
+				groupPaths[0]
+			);
+		} else {
+			traceGroup(
+				oreGroups[genome->dna[0]],
+				paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
+				paths[getPathIndex(genome->dna[0], genome->dna[1])].path.front(),
+				groupPaths[0]
+			);
+		}
 	}
 
 	returnGroupPaths.push_back({});
 	traceGroup(
 		oreGroups[genome->dna[0]],
-		paths[getPathIndex(genome->dna[0], paths.size() - 1)].path.front(),
-		paths[getPathIndex(genome->dna[0], paths.size() - 1)].path.front(),
+		paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
+		paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
 		returnGroupPaths[0]
 	);
 
@@ -639,8 +664,8 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
 		returnDistances.push_back(paths[getPathIndex(oreGroups.size() - 1, genome->dna[g])].path.size() - 1);
 
 		if (g + 1 < genome->dna.size()) {
-			coord_t j;
-			coord_t k;
+			coord_t j{};
+			coord_t k{};
 			if (genome->dna[g - 1] < genome->dna[g]) {
 				j = paths[getPathIndex(std::min(genome->dna[g - 1], genome->dna[g]), std::max(genome->dna[g - 1], genome->dna[g]))].path.back();
 			} else {
@@ -655,7 +680,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
 			traceGroup(oreGroups[genome->dna[g]], j, k, groupPaths[g]);
 		}
 
-		coord_t j;
+		coord_t j{};
 		if (genome->dna[g - 1] < genome->dna[g]) {
 			j = paths[getPathIndex(std::min(genome->dna[g - 1], genome->dna[g]), std::max(genome->dna[g - 1], genome->dna[g]))].path.back();
 		} else {
@@ -665,7 +690,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
 		traceGroup(
 			oreGroups[genome->dna[g]],
 			j,
-			paths[getPathIndex(genome->dna[g], paths.size() - 1)].path.front(),
+			paths[getPathIndex(genome->dna[g], oreGroups.size() - 1)].path.front(),
 			returnGroupPaths[g]
 		);
 	}
@@ -884,7 +909,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
 	instruction_t speed = instruction_t::set_speed_0;
 
 	// get back state from index
-	for (int64_t i = parents.size() - 2; i >= 0; i--) {
+	for (int64_t i = static_cast<int64_t>(parents.size()) - 2; i >= 0; i--) {
 		size_t previousIndex = parents[i + 1];
 		size_t currentIndex = parents[i];
 
@@ -906,6 +931,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
 		if (pGroup == cGroup && pIsReturning == cIsReturning) {
 			uint16_t distDiff = cDist - pDist;
 
+			// if no movement
 			if (distDiff == 0) {
 				if (speed != instruction_t::set_speed_0) {
 					toRoute.push_back(instruction_t::set_speed_0);
@@ -913,16 +939,54 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) {
 				}
 				toRoute.push_back(instruction_t::up_left);
 			} else {
+				// set speed mode
 				if (const auto speedMode = static_cast<instruction_t>(static_cast<uint8_t>(instruction_t::set_speed_0) + distDiff); speed != speedMode) {
 					toRoute.push_back(speedMode);
 					speed = speedMode;
 				}
-				getPathIndex(std::min(pGroup, cGroup), )
+
+				uint32_t cPathIndex;
+				bool pathForward;
+
+				if (cIsReturning) {
+					// to start
+					uint16_t startGroupIndex = oreGroups.size() - 1;
+					cPathIndex = getPathIndex(genome->dna[cGroup], startGroupIndex);
+					// start tile has the max index in groups, read forward
+					pathForward = true;
+				} else {
+					// to next group
+					uint16_t pSegmentGroup = (cGroup == 0) ? (oreGroups.size() - 1) : genome->dna[cGroup - 1];
+					cPathIndex = getPathIndex(genome->dna[cGroup], pSegmentGroup);
+					// direction to read path
+					pathForward = pSegmentGroup < genome->dna[cGroup];
+				}
+
+				const auto& currentPath = paths[cPathIndex].path;
+				size_t L = currentPath.size();
+
+				// calculate steps
+				for (uint16_t s = distDiff; s > 0; s--) {
+					if (pathForward) {
+						// read forward
+						toRoute.push_back(currentPath[cDist - s].getInstructionTo(currentPath[cDist - s + 1]));
+					} else {
+						// read backward
+						size_t fromIndex = L - 1 - (cDist - s);
+						size_t toIndex   = L - 1 - (cDist - s + 1);
+						toRoute.push_back(currentPath[fromIndex].getInstructionTo(currentPath[toIndex]));
+					}
+				}
+			}
+			// in group movement
+		} else {
+			if (cIsReturning) {
+				toRoute = toRoute + returnGroupPaths[cGroup];
+			} else {
+				toRoute = toRoute + groupPaths[pGroup];
 			}
 		}
 	}
-}
-	// TODO::::::
 	// my life got 12 hours, 38 minutes and 44 seconds shorter because of this single function
 }
 
@@ -936,7 +1000,7 @@ void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const co
 
 	// exclude entry and exit
 	std::vector<coord_t> unmined = group.tiles;
-	for (int16_t i = unmined.size() - 1; i >= 0; i--) {
+	for (auto i = static_cast<int16_t>(unmined.size() - 1); i >= 0; i--) {
 		if (unmined[i] == exit || unmined[i] == entry) {
 			std::swap(unmined[i], unmined.back());
 			unmined.pop_back();
@@ -950,10 +1014,10 @@ void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const co
 		uint8_t nextHop = -1;
 		uint8_t minDistance = -1;
 		uint8_t minNeighbours = -1;
-		for (uint8_t i = 0; i < unmined.size(); i++) {
+		for (uint8_t i = 0; i < static_cast<uint8_t>(unmined.size()); i++) {
 
 			if (const uint8_t distance = currentPos - unmined[i]; distance == minDistance) {
-				// get neighbours
+				// get neighbors
 				uint8_t neighbours = 0;
 				for (coord_t neighbourTile : unmined) {
 					if (unmined[i] - neighbourTile == 1) {
@@ -961,7 +1025,7 @@ void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const co
 					}
 				}
 
-				// if a node with less neighbours found
+				// if a node with fewer neighbors found
 				if (neighbours < minNeighbours) {
 					minNeighbours = neighbours;
 					nextHop = i;
@@ -990,7 +1054,7 @@ void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const co
 		// get the path there with A*
 		} else {
 			auto path = Path(currentPos, unmined[nextHop]);
-			for (uint16_t i = 1; i < path.path.size(); i++) {
+			for (uint16_t i = 1; i < static_cast<uint16_t>(path.path.size()); i++) {
 				toRoute.push_back(path.path[i - 1].getInstructionTo(path.path[i]));
 			}
 			toRoute.push_back(instruction_t::mine);
@@ -1007,7 +1071,7 @@ void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const co
 	// go to and with A*
 	} else {
 		const auto path = Path(currentPos, exit);
-		for (uint16_t i = 1; i < path.path.size(); i++) {
+		for (uint16_t i = 1; i < static_cast<uint16_t>(path.path.size()); i++) {
 			toRoute.push_back(path.path[i - 1].getInstructionTo(path.path[i]));
 		}
 	}

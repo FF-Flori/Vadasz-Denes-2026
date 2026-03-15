@@ -88,11 +88,6 @@ class Pathfinder {
 		}
 
 		/**
-		 * Calculates an optimal path for the rover
-		 */
-		void calculate();
-
-		/**
 		 * Map tile names
 		 */
 		enum class tile_t : uint8_t {
@@ -278,7 +273,6 @@ class Pathfinder {
 				result.instructions = instructions;
 
 				if (floatingInstruction & 1) {
-					result.push_back(static_cast<instruction_t>(floatingInstruction >> 4));
 					result.push_back(instruction_t::no_instruction);
 				}
 
@@ -289,6 +283,11 @@ class Pathfinder {
 				return result;
 			}
 		};
+
+		/**
+		 * Calculates an optimal path for the rover and returns instructions
+		 */
+		route_t calculate();
 
 		// no copying tuff
 		Pathfinder(const Pathfinder&) = delete;
@@ -411,11 +410,11 @@ class Pathfinder {
 
 		// functions
 		// genetic algorythm functions
-		void GeneticAlgorithm() const;
+		[[nodiscard]] Genome GeneticAlgorithm() const;
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation);
 		static uint16_t tournamentSelect(const std::vector<Genome>& generation, uint16_t unwantedParticipant);
 		uint32_t fitness(const Genome* genome) const;
-		void calculateInstructions(const Genome* genome, route_t& toRoute);
+		void calculateInstructions(const Genome* genome, route_t& toRoute) const;
 
 		// helper functions
 		[[nodiscard]] static int getIndex(const int x, const int y) {return y * MAP_WIDTH + x;}
@@ -478,7 +477,7 @@ class Pathfinder {
 
 		// ore group functions
 		/**
-		 * Groups neighbouring ores on the map
+		 * Groups neighboring ores on the map
 		 * @author FF-Flori
 		 */
 		void groupOres();
