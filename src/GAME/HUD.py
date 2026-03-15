@@ -17,6 +17,7 @@ class HUD:
         self.time:int = 0 #half hours
         self.rtime:int = 0 #IDK It dummy
         self.battery:int = 100 #without %
+        self.speed:int = 0 #0,1,2,3
         self.font = pygame.font.Font(None, 36)
 
     def update(self, logicmodule:GameLogic)->None:
@@ -76,3 +77,18 @@ class HUD:
         screen.blit(batteryimg, (self.width-45, self.topmargin+10), pygame.Rect(0,0, 60, self.height-50))
         batterytxt = self.font.render(f"{self.battery}%", True, fontcolor)
         screen.blit(batterytxt, (self.width-45, (self.topmargin+10)+145))
+
+        #Speed
+
+        pygame.draw.rect(screen, panelcolors, pygame.Rect(self.leftmargin+150, self.topmargin+70, self.width-245, 40), border_radius=5)
+
+        speed = ["Áll", "Lassú", "Normál", "Gyors"]
+        speedtxt = self.font.render(f"{speed[self.speed]}", True, fontcolor)
+        screen.blit(speedtxt, ((self.leftmargin+150)+10, (self.topmargin+70)+10))
+
+        #Mining
+        pygame.draw.rect(screen, (40,40,40), pygame.Rect((self.leftmargin+150)+self.width-490, self.topmargin+70, 5, 40), border_radius=5)
+
+        #IT'S DUMMY
+        mingingtxt = self.font.render("--", True, fontcolor)
+        screen.blit(mingingtxt, (((self.leftmargin+150)+self.width-490)+10, (self.topmargin+70)+10))
