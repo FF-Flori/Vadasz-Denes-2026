@@ -249,6 +249,23 @@ class Pathfinder {
 
 				return static_cast<instruction_t>(floatingInstruction >> 4);
 			}
+
+			[[nodiscard]] route_t operator+(const route_t& other) const {
+				route_t result;
+				result.instructions.reserve(size() + other.size() + (floatingInstruction & 1));
+				result.instructions = instructions;
+
+				if (floatingInstruction & 1) {
+					result.push_back(static_cast<instruction_t>(floatingInstruction >> 4));
+					result.push_back(instruction_t::no_instruction);
+				}
+
+				result.instructions.insert(result.instructions.end(), other.instructions.begin(), other.instructions.end());
+
+				result.floatingInstruction = other.floatingInstruction;
+
+				return result;
+			}
 		};
 
 		// no copying tuff
