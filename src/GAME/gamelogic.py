@@ -22,6 +22,7 @@ class GameLogic:
         self.zoom:float = 0.5
         self.createBG()
         self.scaledBG:pygame.Surface = self.background
+        self.simulationTime:int = 0
         self.scale()
     def createBG(self)->None:
         source:pygame.Surface = pygame.image.load("./src/img/bg.png").convert_alpha()
@@ -98,7 +99,7 @@ class GameLogic:
 
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
-        self.rover.update(deltaTime)
+        # Input stuff
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.moveCamera(-self.speed/1000*deltaTime,0)
@@ -110,6 +111,14 @@ class GameLogic:
             self.moveCamera(self.speed/1000*deltaTime,0)
         if keys[pygame.K_p]:
             print(self.zoom)
+
+        # Logic stuff
+        self.rover.update(deltaTime)
+        if self.rover.target[0] < 0 and self.rover.target[1] < 0:
+            self.rover.moveTo(randint(-1,1),randint(-1,1))
+            self.simulationTime += 30
+
+        #Drawing stuff
 
         screen.blit(self.scaledBG,(0,0),(self.viewed[0]*self.orewidth,self.viewed[1]*self.orewidth,self.width,self.height))
 
