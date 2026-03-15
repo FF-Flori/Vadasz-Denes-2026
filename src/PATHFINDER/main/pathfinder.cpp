@@ -291,10 +291,10 @@ void Pathfinder::GeneticAlgorithm() const {
 	// sort the elements for the next generation
 	std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
 
-	std::cout << "Starting generations\n";
+	std::cout << "Starting generations" << std::endl;
 	try {
 		for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
-			std::cout << "Generation " << static_cast<int>(generationIndex) << "/" << static_cast<int>(GENETIC_ITERS) << std::endl;
+			std::cout << std::endl << "Generation " << static_cast<int>(generationIndex) << "/" << static_cast<int>(GENETIC_ITERS) << std::endl;
 
 			oldGeneration = generation;
 
@@ -483,6 +483,94 @@ void Pathfinder::Genome::inversion() {
 }
 
 uint32_t Pathfinder::fitness(const Genome* genome) const {
+    uint32_t returnedValue = 0;
+    uint32_t time = 0;
+
+    for (size_t g = 0; g < genome->dna.size(); g++) {
+	    // distance to next group
+    	uint16_t dist = g == 0 ?
+						paths[getPathIndex(oreGroups.size() - 1, genome->dna[0])].path.size() - 1 :
+						paths[getPathIndex(genome->dna[g - 1], genome->dna[g])].path.size() - 1;
+
+    	// estimate travel time
+    	float travelTime = 0.0;
+    	uint16_t currentTime = time % 48;
+    	bool currentlyDay = currentTime % 48 < 32;
+
+    	if (currentlyDay) {
+    		const uint8_t currentDist = std::min(static_cast<uint16_t>(32 - currentTime), dist);
+    		dist -= currentDist;
+    		travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+		} else {
+			const uint8_t currentDist = std::min(static_cast<uint16_t>(48 - currentTime), dist);
+			dist -= currentDist;
+			travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+    	}
+
+    	while (dist) {
+    		if (currentlyDay) {
+    			const uint8_t currentDist = std::min(static_cast<uint16_t>(32), dist);
+    			dist -= currentDist;
+    			travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+    		} else {
+    			const uint8_t currentDist = std::min(static_cast<uint16_t>(16), dist);
+    			dist -= currentDist;
+    			travelTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+    		}
+    		currentlyDay = !currentlyDay;
+    	}
+    	std::floor(travelTime);
+
+    	// estimate mining time by slightly overthrowing for unusual groups
+        const uint32_t miningTime = oreGroups[genome->dna[g]].tiles.size() * 11 / 5; // *2.2
+
+        // estimate return time
+        uint16_t returnDist = paths[getPathIndex(oreGroups.size() - 1, genome->dna[g])].path.size() - 1;
+    	float returnTime = 0.0;
+    	currentTime = static_cast<int>(time + travelTime + miningTime) % 48;
+    	currentlyDay = currentTime % 48 < 32;
+
+    	if (currentlyDay) {
+    		const uint8_t currentDist = std::min(static_cast<uint16_t>(32 - currentTime), returnDist);
+    		returnDist -= currentDist;
+    		returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+    	} else {
+    		const uint8_t currentDist = std::min(static_cast<uint16_t>(48 - currentTime), returnDist);
+    		returnDist -= currentDist;
+    		returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+    	}
+
+    	while (returnDist) {
+    		if (currentlyDay) {
+    			const uint8_t currentDist = std::min(static_cast<uint16_t>(32), returnDist);
+    			returnDist -= currentDist;
+    			returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_DAY);
+    		} else {
+    			const uint8_t currentDist = std::min(static_cast<uint16_t>(16), returnDist);
+    			returnDist -= currentDist;
+    			returnTime += static_cast<uint32_t>(currentDist * TIME_PER_TILE_NIGHT);
+    		}
+    		currentlyDay = !currentlyDay;
+    	}
+    	std::floor(returnTime);
+
+        // if next group is possible
+        if (time + travelTime + miningTime + returnTime <= timeLimit) {
+            // add mined ores' value and passed time
+            returnedValue += oreGroups[genome->dna[g]].tiles.size() * oreGroups[genome->dna[g]].oreValue;
+            time += travelTime + miningTime;
+        } else {
+            break;
+        }
+    }
+
+    return returnedValue;
+}
+
+/*
+uint32_t Pathfinder::fitness(const Genome* genome) const {
+	std::cout << ".";
+
 	// helper tables in local thread
 	thread_local std::vector<uint8_t> memoTable;    // best battery for a state
 	thread_local std::vector<uint32_t> versionTable; // version of the state stored in memoTable (helps to skip clearing memoTable)
@@ -667,3 +755,4 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
 	// my life got 12 hours, 38 minutes and 44 seconds shorter because of this single function
 	return returnedValue;
 }
+*/

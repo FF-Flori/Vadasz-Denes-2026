@@ -24,8 +24,8 @@ class Pathfinder {
 		static constexpr uint8_t START_BATTERY = 100; // battery percentage at start
 
 		// genetic algorithm settings
-		static constexpr uint16_t GENETIC_ITERS   = 600; // number of generations
-		static constexpr uint16_t GENERATION_SIZE = 120; // number of genomes in a generation
+		static constexpr uint16_t GENETIC_ITERS   = 1600; // number of generations
+		static constexpr uint16_t GENERATION_SIZE = 900; // number of genomes in a generation
 
 		static constexpr uint16_t ELITISM         = GENERATION_SIZE *  5 / 100; // number of elements to be passed along by elitism
 
@@ -49,6 +49,8 @@ class Pathfinder {
 		static constexpr uint8_t  INDEX_COLLISION_RETRIES = 5; // amount of retries to select a unique member from the generation compared to a pair
 
 		// simulation settings
+		static constexpr float TIME_PER_TILE_DAY   = 0.451f; // estimated time to pass for a step during the day
+		static constexpr float TIME_PER_TILE_NIGHT = 0.727f; // estimated time to pass for a step at night
 		static constexpr int8_t STEP_COSTS[2][4] = { // cost of steps per one time unit, the first is 0 steps, should be in ascending order
 			{-9, -8, -2,  8}, // daytime
 			{ 1,  2,  8, 18} // nighttime
