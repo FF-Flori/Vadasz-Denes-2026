@@ -14,6 +14,7 @@ class Rover:
         self.scaled:pygame.Surface = self.sprite
         self.map:list[list[str]] = mapin
         self.battery:int = 100
+        self.animtype:int = 0 #Which way it will go
         for y in range(len(mapin)):
             for x in range(len(mapin[y])):
                 if mapin[y][x] == 'S':
@@ -28,6 +29,16 @@ class Rover:
     def moveTo(self,xdisp:int, ydisp:int)->None:
         self.target[0] = int(self.pos[0]+xdisp)
         self.target[1] = int(self.pos[1]+ydisp)
+        if ydisp < 0:
+            self.animtype = 1
+        elif ydisp > 0:
+            self.animtype = 3
+
+        if xdisp > 0:
+            self.animtype = 0
+        elif xdisp < 0:
+            self.animtype = 2
+
         assert(self.target[0] > -1)
         assert(self.target[1] > -1)
         assert(self.target[0] < len(self.map[0]))
@@ -61,4 +72,4 @@ class Rover:
     def draw(self, screen:pygame.Surface, orewidth:float, viewstart:list[float], viewwidth:int) -> None:
         if self.pos[0]-viewstart[0] > viewwidth or self.pos[1]-viewstart[1] > viewwidth:
             return
-        screen.blit(self.scaled,((self.pos[0]-viewstart[0])*orewidth,(self.pos[1]-viewstart[1])*orewidth),(self.framenum*self.scaledwidth,0,self.scaledwidth,self.scaledwidth))
+        screen.blit(self.scaled,((self.pos[0]-viewstart[0])*orewidth,(self.pos[1]-viewstart[1])*orewidth),(self.framenum*self.scaledwidth,self.animtype*self.scaledwidth,self.scaledwidth,self.scaledwidth))
