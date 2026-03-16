@@ -284,11 +284,32 @@ class Pathfinder {
 				return result;
 			}
 
+			void operator+=(const route_t& other) {
+				if (floatingInstruction & 1) {
+					push_back(instruction_t::no_instruction);
+				}
+
+				instructions.insert(instructions.end(), other.instructions.begin(), other.instructions.end());
+
+				floatingInstruction = other.floatingInstruction;
+			}
+
 			void reverse() {
 				if (floatingInstruction & 1) {
 					push_back(instruction_t::no_instruction);
 				}
 				std::reverse(instructions.begin(), instructions.end());
+			}
+
+			route_t reversed() const {
+				route_t result = *this;
+
+				if (floatingInstruction & 1) {
+					result.push_back(instruction_t::no_instruction);
+				}
+				std::reverse(result.instructions.begin(), result.instructions.end());
+
+				return result;
 			}
 		};
 
