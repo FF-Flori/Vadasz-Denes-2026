@@ -299,6 +299,10 @@ class Pathfinder {
 					push_back(instruction_t::no_instruction);
 				}
 				std::reverse(instructions.begin(), instructions.end());
+
+				for (auto& byte : instructions) {
+					byte = ((byte << 4) & 0xf0) || (byte >> 4);
+				}
 			}
 
 			route_t reversed() const {
@@ -308,6 +312,10 @@ class Pathfinder {
 					result.push_back(instruction_t::no_instruction);
 				}
 				std::reverse(result.instructions.begin(), result.instructions.end());
+
+				for (auto& byte : result.instructions) {
+					byte = ((byte << 4) & 0xf0) || (byte >> 4);
+				}
 
 				return result;
 			}
@@ -425,13 +433,13 @@ class Pathfinder {
 			uint8_t battery{};        // battery percentage
 			uint8_t isReturning = 0;  // 1 if this state is currently returning to the starting position, 0 if not, any other number if this whole state has invalid data
 
-			// difference of states in
+			// difference of states in distance
 			uint16_t operator-(const bfsState& other) const {
 				// states are incomparable
 				if (groupIndex != other.groupIndex || isReturning != other.isReturning) {
 					return UINT16_MAX;
 				}
-				return dist - other.dist;
+				return abs(dist - other.dist);
 			}
 		};
 
