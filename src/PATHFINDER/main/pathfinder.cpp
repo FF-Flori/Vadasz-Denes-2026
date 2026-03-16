@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <execution>
+#include <strings.h>
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file
@@ -80,6 +81,7 @@ Pathfinder::route_t Pathfinder::calculate() {
 			}
 		}
 	}
+	maxDistPerSegment += 5;
 	paths.shrink_to_fit();
 
 	std::cout<<"Starting genetic algorithm...\n";
@@ -596,15 +598,21 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
 }
 
 void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) const {
-	// helper tables
-	std::vector<uint8_t> memoTable;    // best battery for a state
-	std::vector<uint32_t> parentTable; // there is no chance, that we need an uint64_t table for this (that much
-
 	// count of every possible bfsState (without isReturning)
 	static const size_t stateSize = genome->dna.size() * maxDistPerSegment * (timeLimit + 1);
 
+	// get index function
+	auto getStateIndex = [&](const bfsState& state) -> uint32_t {
+		return (state.isReturning ? stateSize : 0) +
+			   (state.groupIndex * maxDistPerSegment + state.dist) * (timeLimit + 1) +
+			   state.time;
+	};
+
+	// helper tables
+	std::vector<uint8_t> memoTable;    // best battery for a state
+
 	uint16_t returnedOres = 0; // number of returned ores
-	uint32_t bestStateIndex = 0; // index of the current best state
+	bfsState bestState; // best state
 	uint16_t lastReachableGroupIndex = genome->dna.size() - 1; // last reachable group (decreases if a dead segment is found)
 
 	// fill up helper tables with starter values
@@ -612,17 +620,22 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	if (requiredSize > UINT32_MAX) {
 		throw std::overflow_error("calculateInstructions error: requiredSize exceeded uint32_t limits! Running this task would have taken gigabytes of memory!");
 	}
+
+	// start state
+	static constexpr bfsState startState = {0, 0, 0, START_BATTERY};
+
 	memoTable.resize(requiredSize, 0);
-	parentTable.resize(requiredSize, -1);
+	memoTable[getStateIndex(startState)] = START_BATTERY;
+
+	bfsState emptyState;
+	emptyState.isReturning = UINT8_MAX;
+	std::vector<bfsState> parentTable(requiredSize, emptyState); // store parents for traceback (fill with invalid states first)
 
 	// get group-group and group-start distances
 	std::vector<uint16_t> distances;
-	distances.reserve(genome->dna.size());
-	distances.push_back(paths[getPathIndex(oreGroups.size() - 1, genome->dna[0])].path.size() - 1);
-
 	std::vector<uint16_t> returnDistances;
+	distances.reserve(genome->dna.size());
 	returnDistances.reserve(genome->dna.size());
-	returnDistances.push_back(distances[0]);
 
 	// get paths inside groups
 	std::vector<route_t> groupPaths;
@@ -647,8 +660,13 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		uint16_t currentGroup = genome->dna[g];
 		uint16_t prevGroup = (g == 0) ? baseIndex : genome->dna[g - 1];
 
+		// fill up distances
+		distances.push_back(paths[getPathIndex(currentGroup, prevGroup)].path.size() - 1);
+		returnDistances.push_back(paths[getPathIndex(currentGroup, baseIndex)].path.size() - 1);
+
 		coord_t entryTile = getTileInGroup(currentGroup, prevGroup);
 
+		// fill up paths inside groups
 		if (g + 1 < genome->dna.size()) {
 			uint16_t nextGroup = genome->dna[g + 1];
 			coord_t exitTile = getTileInGroup(currentGroup, nextGroup);
@@ -664,10 +682,11 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 
 	// bfs queue with start pos
 	std::queue<bfsState> q;
-	q.push({0, 0, 0, START_BATTERY});
+	q.push(startState);
 
 	while(!q.empty()) {
 		auto [groupIndex, dist, time, battery, isReturning] = q.front();
+		bfsState currentStateUntouched = q.front();
 		q.pop();
 
 		// throw out solved returning segments
@@ -690,7 +709,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			// reached start
 			if (isReturning) {
 				returnedOres = groupIndex + 1;
-				bestStateIndex = thisIndex;
+				bestState = currentStateUntouched;
 
 				// if all groups collected
 				if (returnedOres == genome->dna.size()) [[unlikely]] {break;}
@@ -738,11 +757,15 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 				}
 
 				if (groupIndex + 1 > returnedOres) {
-					if (const size_t index = stateSize + groupIndex * maxDistPerSegment * (timeLimit + 1) + time + elapsedTime;
-						memoTable[index] < newBattery) {
-						parentTable[index] = thisIndex;
-						memoTable[index] = newBattery;
-						q.push({groupIndex, 0, static_cast<uint16_t>(time + elapsedTime), newBattery, true});
+					bfsState newState = {groupIndex, 0, static_cast<uint16_t>(time + elapsedTime), newBattery, true};
+					if (const size_t childIndex = getStateIndex(newState);
+						memoTable[childIndex] < newBattery) {
+
+						// store current state in parent table
+						parentTable[childIndex] = currentStateUntouched;
+
+						memoTable[childIndex] = newBattery;
+						q.push(newState);
 					}
 				}
 
@@ -789,11 +812,15 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 					time += elapsedTime;
 
 					if (groupIndex < lastReachableGroupIndex) {
-						if (const size_t index = groupIndex * maxDistPerSegment * (timeLimit + 1) + time;
-							memoTable[index] < battery) {
-							parentTable[index] = thisIndex;
-							memoTable[index] = battery;
-							q.push({static_cast<uint16_t>(groupIndex + 1), 0, time, battery});
+						bfsState newState = {static_cast<uint16_t>(groupIndex + 1), 0, time, battery};
+						if (const size_t childIndex = getStateIndex(newState);
+							memoTable[childIndex] < battery) {
+
+							// store current state in parent table
+							parentTable[childIndex] = currentStateUntouched;
+
+							memoTable[childIndex] = battery;
+							q.push(newState);
 						}
 					}
 				}
@@ -829,11 +856,14 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 
 				// calculate index in memoTable
 				// if found new or better state than saved
-				if (const size_t index = returningOffset + (groupIndex * maxDistPerSegment + nextDist) * (timeLimit + 1) + nextTime;
-				memoTable[index] < nextBattery) {
-					parentTable[index] = thisIndex;
-					memoTable[index] = nextBattery;
-					q.push({groupIndex, nextDist, nextTime, nextBattery, isReturning});
+				bfsState newState = {groupIndex, nextDist, nextTime, nextBattery, isReturning};
+				if (const size_t childIndex = getStateIndex(newState);
+				memoTable[childIndex] < nextBattery) {
+
+					parentTable[childIndex] = currentStateUntouched;
+
+					memoTable[childIndex] = nextBattery;
+					q.push(newState);
 				}
 			}
 
@@ -849,11 +879,14 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 
 				// calculate index in memoTable
 				// if found new or better state than saved
-				if (const size_t index = returningOffset + (groupIndex * maxDistPerSegment + nextDist) * (timeLimit + 1) + nextTime;
-				memoTable[index] < nextBattery) {
-					parentTable[index] = thisIndex;
-					memoTable[index] = nextBattery;
-					q.push({groupIndex, nextDist, nextTime, nextBattery, isReturning});
+				bfsState newState = {groupIndex, nextDist, nextTime, nextBattery, isReturning};
+				if (const size_t childIndex = getStateIndex(newState);
+				memoTable[childIndex] < nextBattery) {
+
+					parentTable[childIndex] = currentStateUntouched;
+
+					memoTable[childIndex] = nextBattery;
+					q.push(newState);
 				}
 			}
 		}
@@ -867,14 +900,83 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		return;
 	}
 
+	/*
 	std::vector<uint32_t> parents;
 	uint32_t current = bestStateIndex;
-
+	int a = 0;
 	while (current < static_cast<uint32_t>(-1) && current > 0) {
 		parents.push_back(current);
 		current = parentTable[current];
+
+		bool cIsReturning = current >= stateSize;
+		size_t cBase = cIsReturning ? current - stateSize : current;
+		size_t cDistGroup = cBase / (timeLimit + 1);
+		uint16_t cDist = cDistGroup % maxDistPerSegment;
+		uint16_t cGroup = cDistGroup / maxDistPerSegment;
+		std::cout << "isReturning: " << cIsReturning << std::endl;
+		std::cout << "dist: " << cDist << std::endl;
+		std::cout << "group: " << cGroup << std::endl;
+		std::cout << "parent index: " << ++a << std::endl << std::endl;
 	}
 	parents.push_back(0);
+
+	std::cout << "maxDistPerSegment: " << maxDistPerSegment << std::endl;
+	*/
+
+	bfsState currentState = bestState;
+	bfsState parentState;
+	uint16_t currentIndex;
+
+	while (currentState.time > START_TIME) {
+		currentIndex = getStateIndex(currentState);
+		parentState = parentTable[currentIndex];
+
+		// something strange happened
+		if (parentState.isReturning == UINT8_MAX) [[unlikely]] {
+			throw std::logic_error("");
+		}
+
+		// mining
+		if (currentState.groupIndex != parentState.groupIndex) {
+			// mine and return
+			if (currentState.isReturning) {
+
+			}
+			// mine and continue
+			else {
+
+			}
+		}
+
+		// normal movement
+		else {
+
+		}
+		currentState = parentState;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//std::vector<uint32_t> parents;
+	//uint32_t current = bestStateIndex;
 
 	instruction_t speed = instruction_t::set_speed_0;
 

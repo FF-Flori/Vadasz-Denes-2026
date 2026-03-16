@@ -1,6 +1,7 @@
 #ifndef VD26_PATHFINDER_HPP
 #define VD26_PATHFINDER_HPP
 
+#include <algorithm>
 #include <cassert>
 #include <vector>
 #include <cstdint>
@@ -282,6 +283,13 @@ class Pathfinder {
 
 				return result;
 			}
+
+			void reverse() {
+				if (floatingInstruction & 1) {
+					push_back(instruction_t::no_instruction);
+				}
+				std::reverse(instructions.begin(), instructions.end());
+			}
 		};
 
 		/**
@@ -390,11 +398,20 @@ class Pathfinder {
 
 		// perfect 8 byte struct no padding gigachad sigma
 		struct bfsState {
-			uint16_t groupIndex{}; // next group to go to or the group returning from if isReturning is true
+			uint16_t groupIndex{}; // next group to go to or the group returning from if isReturning is 1 (WARNING: a genome's dna index, not an index from oreGroups)
 			uint16_t dist{};        // distance from previous group
 			uint16_t time{};         // time passed since start
 			uint8_t battery{};        // battery percentage
-			bool isReturning = false;  // true if this state is currently returning to the starting position
+			uint8_t isReturning = 0;  // 1 if this state is currently returning to the starting position, 0 if not, any other number if this whole state has invalid data
+
+			// difference of states in
+			uint16_t operator-(const bfsState& other) const {
+				// states are incomparable
+				if (groupIndex != other.groupIndex || isReturning != other.isReturning) {
+					return UINT16_MAX;
+				}
+				return dist - other.dist;
+			}
 		};
 
 		// variables
