@@ -2,7 +2,7 @@ import pygame
 from math import ceil
 from random import randint
 from src.GAME.rover import *
-from src.PATHFINDER.pathfinder import *
+#from src.PATHFINDER.pathfinder import *
 
 class GameLogic:
     def __init__(self, scrwidth, scrheight) -> None:
@@ -20,20 +20,21 @@ class GameLogic:
                 self.map.append(row.strip().split(','))
         self.viewedWidth:int = self.width//self.orewidth
         self.rover:Rover = Rover(self.map)
+        self.rover.setGear(1)
         self.zoom:float = 0.5
         self.createBG()
         self.scaledBG:pygame.Surface = self.background
         self.simulationTime:int = 0
         self.scale()
 
-        Pathfinder.create(500,"./src/PATHFINDER/mars_map_50x50.csv")
-        pf = Pathfinder.get_instance()
-        self.route = pf.calculate()
-        Pathfinder.destroy()
+        #Pathfinder.create(500,"./src/PATHFINDER/mars_map_50x50.csv")
+        #pf = Pathfinder.get_instance()
+        #self.route = pf.calculate()
+        #Pathfinder.destroy()
 
-        print(f"Route len: {len(self.route)}")
-        for i in range(len(self.route)):
-            print(self.route[i])
+        #print(f"Route len: {len(self.route)}")
+        #for i in range(len(self.route)):
+        #    print(self.route[i])
 
     def createBG(self)->None:
         source:pygame.Surface = pygame.image.load("./src/img/bg.png").convert_alpha()
