@@ -82,7 +82,6 @@ Pathfinder::route_t Pathfinder::calculate() {
 	}
 	paths.shrink_to_fit();
 
-
 	std::cout<<"Starting genetic algorithm...\n";
 	// Genetic
 	const Genome winner = GeneticAlgorithm();
@@ -631,68 +630,36 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	groupPaths.reserve(genome->dna.size() - 1);
 	returnGroupPaths.reserve(genome->dna.size());
 
-	groupPaths.push_back({});
-	if (genome->dna.size() > 1) {
-		if (genome->dna[0] < genome->dna[1]) {
-			traceGroup(
-				oreGroups[genome->dna[0]],
-				paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
-				paths[getPathIndex(genome->dna[0], genome->dna[1])].path.back(),
-				groupPaths[0]
-			);
+	// helper function to get the reading direction of a path
+	auto getTileInGroup = [&](uint16_t targetGroup, uint16_t otherGroup) {
+		const uint32_t pIdx = getPathIndex(targetGroup, otherGroup);
+		// every path goes from higher group index to lower
+		if (targetGroup > otherGroup) {
+			return paths[pIdx].path.front();
 		} else {
-			traceGroup(
-				oreGroups[genome->dna[0]],
-				paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
-				paths[getPathIndex(genome->dna[0], genome->dna[1])].path.front(),
-				groupPaths[0]
-			);
+			return paths[pIdx].path.back();
 		}
-	}
+	};
 
-	returnGroupPaths.push_back({});
-	traceGroup(
-		oreGroups[genome->dna[0]],
-		paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
-		paths[getPathIndex(genome->dna[0], oreGroups.size() - 1)].path.front(),
-		returnGroupPaths[0]
-	);
+	uint16_t baseIndex = oreGroups.size() - 1;
 
-	for (size_t g = 1; g < genome->dna.size(); g++) {
-		distances.push_back(paths[getPathIndex(genome->dna[g - 1], genome->dna[g])].path.size() - 1);
+	for (size_t g = 0; g < genome->dna.size(); g++) {
+		uint16_t currentGroup = genome->dna[g];
+		uint16_t prevGroup = (g == 0) ? baseIndex : genome->dna[g - 1];
 
-		returnDistances.push_back(paths[getPathIndex(oreGroups.size() - 1, genome->dna[g])].path.size() - 1);
+		coord_t entryTile = getTileInGroup(currentGroup, prevGroup);
 
 		if (g + 1 < genome->dna.size()) {
-			coord_t j{};
-			coord_t k{};
-			if (genome->dna[g - 1] < genome->dna[g]) {
-				j = paths[getPathIndex(std::min(genome->dna[g - 1], genome->dna[g]), std::max(genome->dna[g - 1], genome->dna[g]))].path.back();
-			} else {
-				j = paths[getPathIndex(std::min(genome->dna[g - 1], genome->dna[g]), std::max(genome->dna[g - 1], genome->dna[g]))].path.front();
-			}
-			if (genome->dna[g] < genome->dna[g + 1]) {
-				k = paths[getPathIndex(std::min(genome->dna[g], genome->dna[g + 1]), std::max(genome->dna[g], genome->dna[g + 1]))].path.front();
-			} else {
-				k = paths[getPathIndex(std::min(genome->dna[g], genome->dna[g + 1]), std::max(genome->dna[g], genome->dna[g + 1]))].path.back();
-			}
+			uint16_t nextGroup = genome->dna[g + 1];
+			coord_t exitTile = getTileInGroup(currentGroup, nextGroup);
+
 			groupPaths.push_back({});
-			traceGroup(oreGroups[genome->dna[g]], j, k, groupPaths[g]);
+			traceGroup(oreGroups[currentGroup], entryTile, exitTile, groupPaths[g]);
 		}
 
-		coord_t j{};
-		if (genome->dna[g - 1] < genome->dna[g]) {
-			j = paths[getPathIndex(std::min(genome->dna[g - 1], genome->dna[g]), std::max(genome->dna[g - 1], genome->dna[g]))].path.back();
-		} else {
-			j = paths[getPathIndex(std::min(genome->dna[g - 1], genome->dna[g]), std::max(genome->dna[g - 1], genome->dna[g]))].path.front();
-		}
+		coord_t returnExitTile = getTileInGroup(currentGroup, baseIndex);
 		returnGroupPaths.push_back({});
-		traceGroup(
-			oreGroups[genome->dna[g]],
-			j,
-			paths[getPathIndex(genome->dna[g], oreGroups.size() - 1)].path.front(),
-			returnGroupPaths[g]
-		);
+		traceGroup(oreGroups[currentGroup], entryTile, returnExitTile, returnGroupPaths[g]);
 	}
 
 	// bfs queue with start pos
@@ -892,6 +859,9 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		}
 	}
 
+	std::cout << "Returned ores:" << std::endl;
+	std::cout << static_cast<int>(returnedOres) << std::endl;
+
 	// trace back the best state
 	if (returnedOres == 0) {
 		return;
@@ -953,13 +923,13 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 					uint16_t startGroupIndex = oreGroups.size() - 1;
 					cPathIndex = getPathIndex(genome->dna[cGroup], startGroupIndex);
 					// start tile has the max index in groups, read forward
-					pathForward = true;
+					pathForward = false;
 				} else {
 					// to next group
 					uint16_t pSegmentGroup = (cGroup == 0) ? (oreGroups.size() - 1) : genome->dna[cGroup - 1];
 					cPathIndex = getPathIndex(genome->dna[cGroup], pSegmentGroup);
 					// direction to read path
-					pathForward = pSegmentGroup < genome->dna[cGroup];
+					pathForward = pSegmentGroup > genome->dna[cGroup];
 				}
 
 				const auto& currentPath = paths[cPathIndex].path;
@@ -980,6 +950,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			}
 			// in group movement
 		} else {
+			speed = instruction_t::set_speed_1;
 			if (cIsReturning) {
 				toRoute = toRoute + returnGroupPaths[cGroup];
 			} else {
@@ -993,6 +964,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const coord_t exit, route_t& toRoute) {
 	toRoute.instructions.resize(0);
 	toRoute.floatingInstruction = 0;
+	toRoute.push_back(instruction_t::set_speed_1);
 
 	if (entry != exit) {
 		toRoute.push_back(instruction_t::mine);
