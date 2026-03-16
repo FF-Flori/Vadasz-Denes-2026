@@ -2,6 +2,7 @@ import pygame
 from math import ceil
 from random import randint
 from src.GAME.rover import *
+from src.PATHFINDER.pathfinder import *
 
 class GameLogic:
     def __init__(self, scrwidth, scrheight) -> None:
@@ -24,6 +25,16 @@ class GameLogic:
         self.scaledBG:pygame.Surface = self.background
         self.simulationTime:int = 0
         self.scale()
+
+        Pathfinder.create(500,"./src/PATHFINDER/mars_map_50x50.csv")
+        pf = Pathfinder.get_instance()
+        self.route = pf.calculate()
+        Pathfinder.destroy()
+
+        print(f"Route len: {len(self.route)}")
+        for i in range(len(self.route)):
+            print(self.route[i])
+
     def createBG(self)->None:
         source:pygame.Surface = pygame.image.load("./src/img/bg.png").convert_alpha()
         tilesize:int = 64
@@ -97,6 +108,10 @@ class GameLogic:
             elif ceil(self.viewed[1]+self.viewedWidth) > len(self.map):
                 self.viewed[1] = len(self.map)-self.viewedWidth-0.3
 
+    def traversePath(self)->None:
+        if self.rover.target[0] < 0 and self.rover.target[1] < 0:
+            self.rover.moveTo(randint(-1,1),randint(-1,1))
+            self.simulationTime += 30
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         # Input stuff
@@ -114,9 +129,7 @@ class GameLogic:
 
         # Logic stuff
         self.rover.update(deltaTime)
-        if self.rover.target[0] < 0 and self.rover.target[1] < 0:
-            self.rover.moveTo(randint(-1,1),randint(-1,1))
-            self.simulationTime += 30
+        self.traversePath()
 
         #Drawing stuff
 
