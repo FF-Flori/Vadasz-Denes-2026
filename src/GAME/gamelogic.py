@@ -1,5 +1,5 @@
 import pygame
-from math import floor, ceil
+from math import ceil
 from random import randint
 from src.GAME.rover import *
 

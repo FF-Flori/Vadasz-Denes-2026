@@ -11,7 +11,6 @@ class GamePanel:
         self.margin = ceil(self.margin)
         self.texture:pygame.Surface = pygame.Surface((self.width,self.width))
         self.logicModule:GameLogic = GameLogic(self.width,self.width)
-        print(self.width)
     def updatePanel(self, deltaTime:float)->None:
         self.logicModule.Update(deltaTime,self.texture)
     def showPanel(self, screen:pygame.Surface)->None:
