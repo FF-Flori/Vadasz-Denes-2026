@@ -149,10 +149,14 @@ class FullGraphWindow:
             labels = []
 
             for i in range(len(self.xdata)):
-                if i % 4  == 0:
-                    labels.append(f"{int(self.xdata[i])//60}:{int(self.xdata[i])%60:02d}")                
+                if len(self.xdata) >= 32:
+                    if i % 4  == 0:
+                        labels.append(f"{int(self.xdata[i])//60}:{int(self.xdata[i])%60:02d}")                
+                    else:
+                        labels.append("")
                 else:
-                    labels.append("")
+                    labels.append(f"{int(self.xdata[i])//60}:{int(self.xdata[i])%60:02d}")
+
             
             self.ax.set_xticklabels(labels)
             self.ax.tick_params("x", rotation=90)
