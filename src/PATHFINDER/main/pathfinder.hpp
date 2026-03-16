@@ -305,7 +305,7 @@ class Pathfinder {
 				}
 			}
 
-			route_t reversed() const {
+			[[nodiscard]] route_t reversed() const {
 				route_t result = *this;
 
 				if (floatingInstruction & 1) {
@@ -353,8 +353,8 @@ class Pathfinder {
 
 		class Path {
 			public:
-				const size_t groupA; // group A index
-				const size_t groupB; // group B index
+				size_t groupA; // group A index
+				size_t groupB; // group B index
 				coord_t startPos{};
 				coord_t endPos{};
 				std::vector<coord_t> path; // stays empty after constructor if no path found

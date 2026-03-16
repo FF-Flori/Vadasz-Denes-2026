@@ -84,8 +84,8 @@ Pathfinder::route_t Pathfinder::calculate() {
 	maxDistPerSegment += 5;
 	paths.shrink_to_fit();
 
-	std::cout<<"Starting genetic algorithm...\n";
 	// Genetic
+	std::cout<<"Starting genetic algorithm...\n";
 	const Genome winner = GeneticAlgorithm();
 
 	// Calculate route from genetic winner
@@ -599,7 +599,7 @@ uint32_t Pathfinder::fitness(const Genome* genome) const {
 
 void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) const {
 	// count of every possible bfsState (without isReturning)
-	static const size_t stateSize = genome->dna.size() * maxDistPerSegment * (timeLimit + 1);
+	const size_t stateSize = genome->dna.size() * maxDistPerSegment * (timeLimit + 1);
 
 	// get index function
 	auto getStateIndex = [&](const bfsState& state) -> uint32_t {
@@ -611,8 +611,11 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	// helper tables
 	std::vector<uint8_t> memoTable;    // best battery for a state
 
+	// start state
+	constexpr bfsState startState = {0, 0, 0, START_BATTERY};
+
 	uint16_t returnedOres = 0; // number of returned ores
-	bfsState bestState; // best state
+	bfsState bestState = startState; // best state
 	uint16_t lastReachableGroupIndex = genome->dna.size() - 1; // last reachable group (decreases if a dead segment is found)
 
 	// fill up helper tables with starter values
@@ -620,9 +623,6 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	if (requiredSize > UINT32_MAX) {
 		throw std::overflow_error("calculateInstructions error: requiredSize exceeded uint32_t limits! Running this task would have taken gigabytes of memory!");
 	}
-
-	// start state
-	static constexpr bfsState startState = {0, 0, 0, START_BATTERY};
 
 	memoTable.resize(requiredSize, 0);
 	memoTable[getStateIndex(startState)] = START_BATTERY;
@@ -701,8 +701,6 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 
 		// get current state's values
 		const uint16_t currentSegmentLength = isReturning ? returnDistances[groupIndex] : distances[groupIndex];
-		const size_t returningOffset = isReturning ? stateSize : 0;
-		const size_t thisIndex = returningOffset + (groupIndex * maxDistPerSegment + dist) * (timeLimit + 1) + time;
 
 		// if the segment is finished
 		if (dist >= currentSegmentLength) {
@@ -900,169 +898,97 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		return;
 	}
 
-	/*
-	std::vector<uint32_t> parents;
-	uint32_t current = bestStateIndex;
-	int a = 0;
-	while (current < static_cast<uint32_t>(-1) && current > 0) {
-		parents.push_back(current);
-		current = parentTable[current];
-
-		bool cIsReturning = current >= stateSize;
-		size_t cBase = cIsReturning ? current - stateSize : current;
-		size_t cDistGroup = cBase / (timeLimit + 1);
-		uint16_t cDist = cDistGroup % maxDistPerSegment;
-		uint16_t cGroup = cDistGroup / maxDistPerSegment;
-		std::cout << "isReturning: " << cIsReturning << std::endl;
-		std::cout << "dist: " << cDist << std::endl;
-		std::cout << "group: " << cGroup << std::endl;
-		std::cout << "parent index: " << ++a << std::endl << std::endl;
-	}
-	parents.push_back(0);
-
-	std::cout << "maxDistPerSegment: " << maxDistPerSegment << std::endl;
-	*/
-
 	bfsState currentState = bestState;
 	bfsState parentState;
 	uint16_t currentIndex;
+	auto currentSpeed = instruction_t::no_instruction;
+	Path currentPath = paths[getPathIndex(oreGroups.size() - 1, genome->dna[currentState.groupIndex])];
+	std::reverse(currentPath.path.begin(), currentPath.path.end()); // reason: path always starts at the higher group index and goes towards the smaller one
 
+	uint i = 0;
 	while (currentState.time > START_TIME) {
+		i++;
 		currentIndex = getStateIndex(currentState);
 		parentState = parentTable[currentIndex];
 
-		// something strange happened
-		if (parentState.isReturning == UINT8_MAX) [[unlikely]] {
-			throw std::logic_error("");
+		// something strange happened (something is probably fucked up in the first part of this function) TODO: this is unused on an ideal run
+		if (parentState.isReturning > 1) [[unlikely]] {
+			throw std::logic_error("Something went wrong while tracing back the path in Pathfinder::calculateInstructions! (invalid isReturning state) : traceback iter. " + std::to_string(i));
 		}
 
-		// mining
-		if (currentState.groupIndex != parentState.groupIndex) {
-			// mine and return
-			if (currentState.isReturning) {
+		// mine and continue
+		if (parentState.groupIndex != currentState.groupIndex) {
+			// reset speed
+			currentSpeed = instruction_t::no_instruction;
 
-			}
-			// mine and continue
-			else {
+			toRoute += groupPaths[parentState.groupIndex].reversed();
 
+			// get next path
+			if (parentState.groupIndex > 0) {
+				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
+				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
+					std::reverse(currentPath.path.begin(), currentPath.path.end());
+				}
+			} else {
+				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
 			}
+
+			currentState = parentState;
+			continue;
+		}
+
+		// mine and return
+		if (parentState.isReturning != currentState.isReturning) [[unlikely]] {
+			// reset speed
+			currentSpeed = instruction_t::no_instruction;
+
+			toRoute += returnGroupPaths[parentState.groupIndex].reversed();
+
+			// get next path
+			if (parentState.groupIndex > 0) {
+				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
+				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
+					std::reverse(currentPath.path.begin(), currentPath.path.end());
+				}
+			} else {
+				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
+			}
+
+			currentState = parentState;
+			continue;
 		}
 
 		// normal movement
-		else {
+		uint16_t difference = currentState - parentState;
 
+		// if the difference between states is higher than 3, it's impossible to do in one step TODO: this is unused on an ideal run
+		if (difference > 3) [[unlikely]] {
+			throw std::logic_error("Something went wrong while tracing back the path in Pathfinder::calculateInstructions! (difference bigger than 3) : traceback iter. " + std::to_string(i));
 		}
+
+		// add new instructions
+		for (uint16_t d = difference; d > 0; d--) {
+			auto fromCoord = currentPath.path[parentState.dist + d - 1];
+			auto toCoord = currentPath.path[parentState.dist + d];
+			toRoute.push_back(fromCoord.getInstructionTo(toCoord));
+		}
+
+		if (difference == 0) {
+			toRoute.push_back(instruction_t::right);
+		}
+
+		// set speed if changed
+		const auto newSpeed = static_cast<instruction_t>(static_cast<uint8_t>(instruction_t::set_speed_0) + difference);
+		if (currentSpeed != newSpeed) {
+			toRoute.push_back(newSpeed);
+		}
+
 		currentState = parentState;
 	}
-	// TODO: this is not finished yet
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//std::vector<uint32_t> parents;
-	//uint32_t current = bestStateIndex;
-
-	instruction_t speed = instruction_t::set_speed_0;
-
-	// get back state from index
-	for (int64_t i = static_cast<int64_t>(parents.size()) - 2; i >= 0; i--) {
-		size_t previousIndex = parents[i + 1];
-		size_t currentIndex = parents[i];
-
-		// previous state
-		bool pIsReturning = previousIndex >= stateSize;
-		size_t pBase = pIsReturning ? previousIndex - stateSize : previousIndex;
-		size_t pDistGroup = pBase / (timeLimit + 1);
-		uint16_t pDist = pDistGroup % maxDistPerSegment;
-		uint16_t pGroup = pDistGroup / maxDistPerSegment;
-
-		// current state
-		bool cIsReturning = currentIndex >= stateSize;
-		size_t cBase = cIsReturning ? currentIndex - stateSize : currentIndex;
-		size_t cDistGroup = cBase / (timeLimit + 1);
-		uint16_t cDist = cDistGroup % maxDistPerSegment;
-		uint16_t cGroup = cDistGroup / maxDistPerSegment;
-
-		// regular movement
-		if (pGroup == cGroup && pIsReturning == cIsReturning) {
-			uint16_t distDiff = cDist - pDist;
-
-			// if no movement
-			if (distDiff == 0) {
-				if (speed != instruction_t::set_speed_0) {
-					toRoute.push_back(instruction_t::set_speed_0);
-					speed = instruction_t::set_speed_0;
-				}
-				toRoute.push_back(instruction_t::up_left);
-			} else {
-				// set speed mode
-				if (const auto speedMode = static_cast<instruction_t>(static_cast<uint8_t>(instruction_t::set_speed_0) + distDiff); speed != speedMode) {
-					toRoute.push_back(speedMode);
-					speed = speedMode;
-				}
-
-				uint32_t cPathIndex;
-				bool pathForward;
-
-				if (cIsReturning) {
-					// to start
-					uint16_t startGroupIndex = oreGroups.size() - 1;
-					cPathIndex = getPathIndex(genome->dna[cGroup], startGroupIndex);
-					// start tile has the max index in groups, read forward
-					pathForward = false;
-				} else {
-					// to next group
-					uint16_t pSegmentGroup = (cGroup == 0) ? (oreGroups.size() - 1) : genome->dna[cGroup - 1];
-					cPathIndex = getPathIndex(genome->dna[cGroup], pSegmentGroup);
-					// direction to read path
-					pathForward = pSegmentGroup > genome->dna[cGroup];
-				}
-
-				const auto& currentPath = paths[cPathIndex].path;
-				size_t L = currentPath.size();
-
-				// calculate steps
-				for (uint16_t s = distDiff; s > 0; s--) {
-					if (pathForward) {
-						// read forward
-						toRoute.push_back(currentPath[cDist - s].getInstructionTo(currentPath[cDist - s + 1]));
-					} else {
-						// read backward
-						size_t fromIndex = L - 1 - (cDist - s);
-						size_t toIndex   = L - 1 - (cDist - s + 1);
-						toRoute.push_back(currentPath[fromIndex].getInstructionTo(currentPath[toIndex]));
-					}
-				}
-			}
-			// in group movement
-		} else {
-			speed = instruction_t::set_speed_1;
-			if (cIsReturning) {
-				toRoute = toRoute + returnGroupPaths[cGroup];
-			} else {
-				toRoute = toRoute + groupPaths[pGroup];
-			}
-		}
-	}
-	// my life got 12 hours, 38 minutes and 44 seconds shorter because of this single function
-}
+	// reverse the route to have it in the right order
+	toRoute.reverse();
+} // my life got 12 hours, 38 minutes and 44 seconds shorter because of this single function
 
 void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const coord_t exit, route_t& toRoute) {
 	toRoute.instructions.resize(0);
