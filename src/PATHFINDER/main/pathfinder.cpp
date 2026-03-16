@@ -900,7 +900,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 
 	bfsState currentState = bestState;
 	bfsState parentState;
-	uint16_t currentIndex;
+	size_t currentIndex; // this variable made me sitting in front of the screen for hours (instead of size_t, it was falsely made uint16_t and cut the whole index in half, holy idiot)
 	auto currentSpeed = instruction_t::no_instruction;
 	Path currentPath = paths[getPathIndex(oreGroups.size() - 1, genome->dna[currentState.groupIndex])];
 	std::reverse(currentPath.path.begin(), currentPath.path.end()); // reason: path always starts at the higher group index and goes towards the smaller one
@@ -988,7 +988,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 
 	// reverse the route to have it in the right order
 	toRoute.reverse();
-} // my life got 12 hours, 38 minutes and 44 seconds shorter because of this single function
+} // my life got so much more than 12 hours, 38 minutes and 44 seconds shorter because of this single function
 
 void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const coord_t exit, route_t& toRoute) {
 	toRoute.instructions.resize(0);

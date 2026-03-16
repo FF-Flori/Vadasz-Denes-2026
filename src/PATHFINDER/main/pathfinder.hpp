@@ -301,7 +301,7 @@ class Pathfinder {
 				std::reverse(instructions.begin(), instructions.end());
 
 				for (auto& byte : instructions) {
-					byte = ((byte << 4) & 0xf0) || (byte >> 4);
+					byte = ((byte << 4) & 0xf0) | (byte >> 4);
 				}
 			}
 
@@ -314,7 +314,7 @@ class Pathfinder {
 				std::reverse(result.instructions.begin(), result.instructions.end());
 
 				for (auto& byte : result.instructions) {
-					byte = ((byte << 4) & 0xf0) || (byte >> 4);
+					byte = ((byte << 4) & 0xf0) | (byte >> 4);
 				}
 
 				return result;
