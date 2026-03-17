@@ -7,9 +7,12 @@ Feladatot beküldő csapat adatai:
 Programfejlesztői környezet leírása:
     Visual Studio Code:
         Verziója: 1.11.0
-
+    Neovim:
+        Verziója: 0.11.5
     Python:
         Verziója: 3.13.7
+    cmake:
+        Verziója: 4.2.3
 
 Használt külső Python csomagok:
     Dashboard:
