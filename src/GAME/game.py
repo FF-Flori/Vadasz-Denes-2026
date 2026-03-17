@@ -9,9 +9,9 @@ class Game:
         self.gameHandler:GamePanel = GamePanel(windowsize)
         self.HUDHandler:HUD = HUD(windowsize)
         self.MenuHandler:MainMenu = MainMenu(windowsize)
-    def drawGame(self, screen:pygame.Surface, deltaTime:float) -> None:
+    def drawGame(self, screen:pygame.Surface, deltaTime:float,windowDimensions:tuple[int,int,int,int]) -> None:
         if self.inMenu:
-            self.MenuHandler.update(self)
+            self.MenuHandler.update(self,windowDimensions)
             self.MenuHandler.show(screen)
         else:
             self.gameHandler.updatePanel(deltaTime)
