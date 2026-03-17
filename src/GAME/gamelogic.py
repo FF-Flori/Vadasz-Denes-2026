@@ -2,11 +2,11 @@ import pygame
 from math import ceil
 from random import randint
 from src.GAME.rover import *
-#from src.PATHFINDER.pathfinder import *
+from datetime import datetime
+#import src.GAME.pathfinder
 
 class GameLogic:
     def __init__(self, scrwidth, scrheight) -> None:
-        # This is the equivalent of the Start function from unity
         self.width = scrwidth
         self.height = scrheight
         self.speed:float = 20
@@ -27,16 +27,25 @@ class GameLogic:
         self.simulationTime:int = 0
         self.setTime:int = 0
         self.scale()
+        self.mined:str = ''
 
-        #Pathfinder.create(500,"./src/PATHFINDER/mars_map_50x50.csv")
-        #pf = Pathfinder.get_instance()
+        now = datetime.now()
+        self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
+        with open("./log/"+self.logname+".log","w") as file:
+            file.write("<pozició (x,y)>;<akkumlátor töltöttség (%)>;<sebbesség és megtett távolság>;<gyűjtött anyagok>")
+
+        #pathfinder.Pathfinder.create(500,"~/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv")
+        #pf = pathfinder.Pathfinder.get_instance()
         #self.route = pf.calculate()
-        #Pathfinder.destroy()
+        #pathfinder.Pathfinder.destroy()
 
         #print(f"Route len: {len(self.route)}")
         #for i in range(len(self.route)):
         #    print(self.route[i])
 
+    def writeToLog(self)->None:
+        with open("./log/"+self.logname+".log","a") as file:
+            file.write("\n("+str(int(self.rover.pos[0]))+","+str(int(self.rover.pos[1]))+");"+str(self.rover.battery)+";"+str(self.rover.gear)+";"+self.mined)
     def createBG(self)->None:
         source:pygame.Surface = pygame.image.load("./src/img/bg.png").convert_alpha()
         tilesize:int = 64
@@ -114,6 +123,21 @@ class GameLogic:
         if self.rover.target[0] < 0 and self.rover.target[1] < 0:
             self.rover.moveTo(randint(-1,1),randint(-1,1))
             self.simulationTime += 30
+            isday:bool = (self.simulationTime//30)%48<41
+            if self.rover.gear > 0:
+                self.rover.battery += 2*self.rover.gear*self.rover.gear
+            else:
+                self.rover.battery -= 1
+                if self.mined != '':
+                    self.rover.battery -= 1
+            if isday:
+                self.rover.battery+=10
+            if self.rover.battery>100:
+                self.rover.battery = 100
+            elif self.rover.battery < 0:
+                self.rover.battery = 0
+            self.writeToLog()
+            self.mined = ''
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         # Input stuff
