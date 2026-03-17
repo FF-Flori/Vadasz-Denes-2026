@@ -927,13 +927,14 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			// get next path
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
-				isCurrentPathReversed = false;
+				isCurrentPathReversed = true;
 				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
-					isCurrentPathReversed = true;
+					isCurrentPathReversed = false;
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
+				isCurrentPathReversed = false;
 			}
 
 			currentState = parentState;
@@ -950,13 +951,14 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			// get next path
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
-				isCurrentPathReversed = false;
+				isCurrentPathReversed = true;
 				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
-					isCurrentPathReversed = true;
+					isCurrentPathReversed = false;
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
+				isCurrentPathReversed = false;
 			}
 
 			currentState = parentState;
