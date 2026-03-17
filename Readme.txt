@@ -3,6 +3,7 @@ Feladatot beküldő csapat adatai:
     Iskolája: Irinyi János Református Oktatási Központ
     Felkészítő tanár neve: Borsodi Csaba
     Email cím: filkohaziflorian@irinyi-ref.hu
+    Tagok nevei: Filkóházi Flórián, Bondár-Oláh Bence, Hegedűs István András
 
 Programfejlesztői környezet leírása:
     Visual Studio Code:
@@ -20,6 +21,7 @@ Használt külső csomagok:
             - customtkinter
             - CTkListbox
             - matplotlib
+
         Vizualizáció:
             - pygame
     C++:

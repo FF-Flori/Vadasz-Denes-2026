@@ -11,6 +11,7 @@ class FullGraphWindow:
         self.win.title("Dashboard - " + title)
         self.win.geometry("900x600")
         self.win.resizable(True, True)
+        self.win.iconbitmap("src/img/dashboardicon.ico")
 
         self.fg, self.ax = plt.subplots(figsize=(4, 3), dpi=100)
 
