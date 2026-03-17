@@ -19,7 +19,7 @@ class MainMenu:
         buttontext:pygame.Surface = pygame.font.Font(None,50).render("Indítás",True,(255, 207, 161))
         self.button.blit(buttontext,((self.buttonwidth-buttontext.get_width())//2,(self.buttonheight-buttontext.get_height())//2))
 
-    def update(self,gameHandler,windowDimensions:tuple[int,int,int,int])->None:
+    def update(self,windowDimensions:tuple[int,int,int,int])->int:
         if pygame.mouse.get_pressed(3)[0]:
             pos = pygame.mouse.get_pos()
             pos = (pos[0]-windowDimensions[0],pos[1]-windowDimensions[1])
@@ -28,7 +28,8 @@ class MainMenu:
                normalized[0] <= self.normButton[0]+self.normButton[2] and \
                normalized[1] >= self.normButton[1] and \
                normalized[1] <= self.normButton[1]+self.normButton[3]:
-                gameHandler.inMenu = False
+                   return 1
+        return 0
     def show(self,screen:pygame.Surface)->None:
         screen.blit(self.texture,(0,0))
         screen.blit(self.button,(self.buttonPos[0],self.buttonPos[1]))

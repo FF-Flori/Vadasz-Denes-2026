@@ -24,6 +24,7 @@ class HUD:
         self.epress = False
         self.actlog = "2026.02.27 12.48.01" #It's 
         self.proc = None
+        self.setTime:int = 0
 
         #Panels
         panelcolors = (50, 50, 50)
@@ -63,7 +64,7 @@ class HUD:
     def update(self, logicmodule:GameLogic)->None:
         self.time = logicmodule.simulationTime
         self.battery = logicmodule.rover.battery
-        self.rtime = 100000-self.time
+        self.rtime = self.setTime-self.time
 
         if pygame.key.get_pressed()[pygame.K_e] and self.epress == False:
             self.proc = subprocess.Popen([

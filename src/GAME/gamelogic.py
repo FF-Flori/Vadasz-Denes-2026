@@ -25,6 +25,7 @@ class GameLogic:
         self.createBG()
         self.scaledBG:pygame.Surface = self.background
         self.simulationTime:int = 0
+        self.setTime:int = 0
         self.scale()
 
         #Pathfinder.create(500,"./src/PATHFINDER/mars_map_50x50.csv")
@@ -129,8 +130,9 @@ class GameLogic:
             print(self.zoom)
 
         # Logic stuff
-        self.rover.update(deltaTime)
-        self.traversePath()
+        if self.setTime - self.simulationTime > 0:
+            self.rover.update(deltaTime)
+            self.traversePath()
 
         #Drawing stuff
 
