@@ -1,9 +1,10 @@
 import pygame
+import os
 from math import ceil
 from random import randint
 from src.GAME.rover import *
 from datetime import datetime
-#import src.GAME.pathfinder
+from src.GAME.pathfinder import *
 
 class GameLogic:
     def __init__(self, scrwidth, scrheight) -> None:
@@ -28,21 +29,25 @@ class GameLogic:
         self.setTime:int = 0
         self.scale()
         self.mined:str = ''
+        self.blueorenum:int = 0
+        self.yelloworenum:int = 0
+        self.greenorenum:int = 0
 
         now = datetime.now()
         self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
         with open("./log/"+self.logname+".log","w",encoding="utf-8") as file:
             file.write("<pozició (x,y)>;<akkumlátor töltöttség (%)>;<sebbesség és megtett távolság>;<gyűjtött anyagok>")
 
-        #pathfinder.Pathfinder.create(500,"~/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv")
-        #pf = pathfinder.Pathfinder.get_instance()
-        #self.route = pf.calculate()
-        #pathfinder.Pathfinder.destroy()
-
-        #print(f"Route len: {len(self.route)}")
-        #for i in range(len(self.route)):
-        #    print(self.route[i])
-
+    def SetTimeValue(self, simtime:int)->None:
+        self.setTime = simtime
+        Pathfinder.create(simtime//30,os.path.join("/home/florian/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv"))
+        pf = Pathfinder.get_instance()
+        self.route = pf.calculate()
+        self.impossible:bool = False
+        if len(self.route) == 0:
+            self.impossible = True
+        Pathfinder.destroy()
+        self.posinRoute:int = 0
     def writeToLog(self)->None:
         with open("./log/"+self.logname+".log","a") as file:
             file.write("\n"+str(int(self.rover.pos[0]))+","+str(int(self.rover.pos[1]))+";"+str(self.rover.battery)+";"+str(self.rover.gear)+";"+self.mined)
@@ -121,7 +126,49 @@ class GameLogic:
 
     def traversePath(self)->None:
         if self.rover.target[0] < 0 and self.rover.target[1] < 0:
-            self.rover.moveTo(randint(-1,1),randint(-1,1))
+            iterations:int = 1
+            while iterations > 0:
+                intvalue:int = int(self.route[self.posinRoute])
+                value = self.route[self.posinRoute]
+                if intvalue >= 0 and intvalue < 8:
+                    if value == Instruction.UP_LEFT:
+                        self.rover.moveTo(-1,-1)
+                    elif value == Instruction.UP:
+                        self.rover.moveTo(0,-1)
+                    elif value == Instruction.UP_RIGHT:
+                        self.rover.moveTo(1,-1)
+                    elif value == Instruction.RIGHT:
+                        self.rover.moveTo(1,0)
+                    elif value == Instruction.DOWN_RIGHT:
+                        self.rover.moveTo(1,1)
+                    elif value == Instruction.DOWN:
+                        self.rover.moveTo(0,1)
+                    elif value == Instruction.DOWN_LEFT:
+                        self.rover.moveTo(-1,1)
+                    elif value == Instruction.LEFT:
+                        self.rover.moveTo(-1,0)
+                elif intvalue < 12:
+                    if value == Instruction.SET_SPEED_1:
+                        self.rover.setGear(1)
+                        iterations+=1
+                    elif value == Instruction.SET_SPEED_2:
+                        self.rover.setGear(2)
+                        iterations+=2
+                    elif value == Instruction.SET_SPEED_3:
+                        self.rover.setGear(3)
+                        iterations+=3
+                    else:
+                        print("Error")
+                    self.posinRoute+=1
+                elif value == Instruction.MINE:
+                    pos:list[int] = [int(self.rover.pos[0]),int(self.rover.pos[1])]
+                    #THIS SHALL BE HANDLED LATER
+
+                elif value == Instruction.NO_INSTRUCTION:
+                    sleep(0.5)
+                iterations-=1
+
+            self.posinRoute+=1
             self.simulationTime += 30
             isday:bool = (self.simulationTime//30)%48<41
             if self.rover.gear > 0:

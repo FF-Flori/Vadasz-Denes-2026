@@ -18,7 +18,7 @@ class Game:
         elif self.menu == 1:
             if self.entryHandler.update(windowDimensions):
                 self.menu += 1
-                self.gameHandler.logicModule.setTime = self.entryHandler.simtime*30
+                self.gameHandler.logicModule.SetTimeValue(self.entryHandler.simtime*30)
                 self.HUDHandler.setTime = self.entryHandler.simtime*30
             self.entryHandler.show(screen)
         else:
