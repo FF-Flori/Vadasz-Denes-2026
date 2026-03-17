@@ -981,6 +981,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		const auto newSpeed = static_cast<instruction_t>(static_cast<uint8_t>(instruction_t::set_speed_0) + difference);
 		if (currentSpeed != newSpeed) {
 			toRoute.push_back(newSpeed);
+			currentSpeed = newSpeed;
 		}
 
 		currentState = parentState;
