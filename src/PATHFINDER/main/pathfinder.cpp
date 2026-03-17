@@ -920,7 +920,8 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		// mine and continue
 		if (parentState.groupIndex != currentState.groupIndex) {
 			// reset speed
-			currentSpeed = instruction_t::set_speed_1;
+			toRoute.push_back(currentSpeed);
+			currentSpeed = instruction_t::no_instruction;
 
 			toRoute += groupPaths[parentState.groupIndex].reversed();
 
@@ -944,7 +945,8 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		// mine and return
 		if (parentState.isReturning != currentState.isReturning) [[unlikely]] {
 			// reset speed
-			currentSpeed = instruction_t::set_speed_1;
+			toRoute.push_back(currentSpeed);
+			currentSpeed = instruction_t::no_instruction;
 
 			toRoute += returnGroupPaths[parentState.groupIndex].reversed();
 
@@ -975,10 +977,10 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 
 		// set speed if changed
 		const auto newSpeed = static_cast<instruction_t>(static_cast<uint8_t>(instruction_t::set_speed_0) + difference);
-		if (currentSpeed != newSpeed) {
+		if (currentSpeed != newSpeed && currentSpeed != instruction_t::no_instruction) {
 			toRoute.push_back(currentSpeed);
-			currentSpeed = newSpeed;
 		}
+		currentSpeed = newSpeed;
 
 		// add new instructions
 		for (uint16_t d = difference; d > 0; d--) {
@@ -1010,8 +1012,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const coord_t exit, route_t& toRoute) {
 	toRoute.instructions.resize(0);
 	toRoute.floatingInstruction = 0;
-	// this is not used because calculateInstructions puts it in the instructions
-	// toRoute.push_back(instruction_t::set_speed_1);
+	toRoute.push_back(instruction_t::set_speed_1);
 
 	if (entry != exit) {
 		toRoute.push_back(instruction_t::mine);
