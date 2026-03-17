@@ -323,7 +323,7 @@ Pathfinder::Genome Pathfinder::GeneticAlgorithm() const {
 	std::cout << "Starting generations" << std::endl;
 	try {
 		for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
-			std::cout << std::endl << "Generation " << static_cast<int>(generationIndex) << "/" << static_cast<int>(GENETIC_ITERS) << std::endl;
+			std::cout << ".";
 
 			oldGeneration = generation;
 
@@ -890,7 +890,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		}
 	}
 
-	std::cout << "Returned ores:" << std::endl;
+	std::cout << std::endl << "Returned ores:" << std::endl;
 	std::cout << static_cast<int>(returnedOres) << std::endl;
 
 	// trace back the best state
@@ -904,6 +904,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	auto currentSpeed = instruction_t::no_instruction;
 	Path currentPath = paths[getPathIndex(oreGroups.size() - 1, genome->dna[currentState.groupIndex])];
 	std::reverse(currentPath.path.begin(), currentPath.path.end()); // reason: path always starts at the higher group index and goes towards the smaller one
+	bool isCurrentPathReversed = true;
 
 	uint i = 0;
 	while (currentState.time > START_TIME) {
@@ -926,8 +927,10 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			// get next path
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
+				isCurrentPathReversed = false;
 				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
+					isCurrentPathReversed = true;
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
@@ -947,8 +950,10 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			// get next path
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
+				isCurrentPathReversed = false;
 				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
+					isCurrentPathReversed = true;
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
@@ -970,7 +975,13 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		for (uint16_t d = difference; d > 0; d--) {
 			auto fromCoord = currentPath.path[parentState.dist + d - 1];
 			auto toCoord = currentPath.path[parentState.dist + d];
-			toRoute.push_back(fromCoord.getInstructionTo(toCoord));
+
+			// instruction is reversed if the current path is reversed
+			if (isCurrentPathReversed) {
+				toRoute.push_back(toCoord.getInstructionTo(fromCoord));
+			} else {
+				toRoute.push_back(fromCoord.getInstructionTo(toCoord));
+			}
 		}
 
 		if (difference == 0) {

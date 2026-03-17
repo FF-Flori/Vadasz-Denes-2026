@@ -294,6 +294,43 @@ class Pathfinder {
 				floatingInstruction = other.floatingInstruction;
 			}
 
+			void invert() {
+				// invert means up-left -> down-right, up -> down ...etc.
+				for (auto& byte : instructions) {
+					if ((byte & 0b10001000) > 0) {
+						byte ^= 0b01000100;
+					} else {
+						if ((byte & 0b00001000) == 0) {
+							byte ^= 0b00000100;
+						}
+						if ((byte & 0b10000000) == 0) {
+							byte ^= 0b01000000;
+						}
+					}
+				}
+			}
+
+			[[nodiscard]] route_t inverted() const {
+				// invert means up-left -> down-right, up -> down ...etc.
+
+				route_t result = *this;
+
+				for (auto& byte : result.instructions) {
+					if ((byte & 0b10001000) > 0) {
+						byte ^= 0b01000100;
+					} else {
+						if ((byte & 0b00001000) == 0) {
+							byte ^= 0b00000100;
+						}
+						if ((byte & 0b10000000) == 0) {
+							byte ^= 0b01000000;
+						}
+					}
+				}
+
+				return result;
+			}
+
 			void reverse() {
 				if (floatingInstruction & 1) {
 					push_back(instruction_t::no_instruction);
