@@ -16,7 +16,7 @@ class HUD:
         self.greenmaterial:int = 0
         self.yellowmaterial:int = 0
         self.time:int = 0 #half hours
-        self.rtime:int = 0 #IDK It dummy
+        self.rtime:int = 0 #half hours
         self.battery:int = 100 #without %
         self.speed:int = 0 #0,1,2,3
         self.font = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 13)
@@ -25,9 +25,14 @@ class HUD:
         self.actlog = ""
         self.proc = None
         self.setTime:int = 0
+        self.strtime:list[str,str] = ["NAPPAL", "ÉJSZAKA"]
 
         #Panels
         panelcolors = (50, 50, 50)
+        #STR Time panel
+        pygame.draw.rect(self.img, (70, 70, 70), pygame.Rect(250, 0, 200, 50), border_radius=5)
+        #STR Time Padding panel
+        pygame.draw.rect(self.img, panelcolors, pygame.Rect(255, 5, 190, 33), border_radius=5)
         #Main panel
         pygame.draw.rect(self.img, (70, 70, 70), pygame.Rect(self.leftmargin, self.topmargin, self.width, self.height), border_radius=5)
         #Material panel
@@ -102,7 +107,6 @@ class HUD:
         screen.blit(timetxt, ((self.leftmargin+150)+10, (self.topmargin+5)+15))
 
         #Remaining
-        #IT'S DUMMY
         rtimetxt = self.font.render(f"Hátralévő: {self.rtime//60:02d}:{self.time%60:02d}", True, fontcolor)
         screen.blit(rtimetxt, (((self.leftmargin+150)+self.width-490)+10, (self.topmargin+5)+15))
 
@@ -122,6 +126,16 @@ class HUD:
         #IT'S DUMMY
         mingingtxt = self.font.render("--", True, fontcolor)
         screen.blit(mingingtxt, (((self.leftmargin+150)+self.width-490)+10, (self.topmargin+70)+15))
+
+        #STR Time
+        strtime = self.strtime[0]
+        if (self.time % 1440) < 960:
+            strtime = self.strtime[0]
+        else:
+            strtime = self.strtime[1]
+
+        strtimetxt = self.font.render(strtime, True, fontcolor)
+        screen.blit(strtimetxt, (310, 17))
 
         #Dashboard text
         Dashtxt = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 10).render("A dashboard megnyitásához nyomd meg az E-t!", False, (255, 255, 255))
