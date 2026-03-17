@@ -19,6 +19,7 @@ class HUD:
         self.battery:int = 100 #without %
         self.speed:int = 0 #0,1,2,3
         self.font = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 13)
+        self.setTime:int = 0
 
         #Panels
         panelcolors = (50, 50, 50)
@@ -58,7 +59,7 @@ class HUD:
     def update(self, logicmodule:GameLogic)->None:
         self.time = logicmodule.simulationTime
         self.battery = logicmodule.rover.battery
-        self.rtime = 100000-self.time
+        self.rtime = self.setTime-self.time
 
     def show(self, screen:pygame.Surface)->None:
         # Aspect ratio is handled already so we dont need to check the height
