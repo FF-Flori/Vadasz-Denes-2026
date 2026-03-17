@@ -6,6 +6,7 @@ class MainWindow:
         self.width = width
         self.height = height
         pygame.init()
+        pygame.font.init()
         self.screen = pygame.display.set_mode((width,height),pygame.RESIZABLE)
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()

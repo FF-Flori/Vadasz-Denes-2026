@@ -987,6 +987,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		currentState = parentState;
 	}
 
+	toRoute.push_back(currentSpeed);
 	// reverse the route to have it in the right order
 	toRoute.reverse();
 } // my life got so much more than 12 hours, 38 minutes and 44 seconds shorter because of this single function
