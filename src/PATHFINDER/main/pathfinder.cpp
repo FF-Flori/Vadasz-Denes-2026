@@ -52,7 +52,7 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 		}
 		y++;
 	}
-	std::cout<<"\nDone opening file\n";
+	std::cout<<"\nRead file\n";
 
 	file.close();
 }
@@ -904,7 +904,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	auto currentSpeed = instruction_t::no_instruction;
 	Path currentPath = paths[getPathIndex(oreGroups.size() - 1, genome->dna[currentState.groupIndex])];
 	std::reverse(currentPath.path.begin(), currentPath.path.end()); // reason: path always starts at the higher group index and goes towards the smaller one
-	bool isCurrentPathReversed = true;
+	bool isCurrentPathReversed = false;
 
 	uint i = 0;
 	while (currentState.time > START_TIME) {
@@ -920,7 +920,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		// mine and continue
 		if (parentState.groupIndex != currentState.groupIndex) {
 			// reset speed
-			currentSpeed = instruction_t::no_instruction;
+			currentSpeed = instruction_t::set_speed_1;
 
 			toRoute += groupPaths[parentState.groupIndex].reversed();
 
@@ -944,7 +944,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		// mine and return
 		if (parentState.isReturning != currentState.isReturning) [[unlikely]] {
 			// reset speed
-			currentSpeed = instruction_t::no_instruction;
+			currentSpeed = instruction_t::set_speed_1;
 
 			toRoute += returnGroupPaths[parentState.groupIndex].reversed();
 
@@ -973,6 +973,13 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			throw std::logic_error("Something went wrong while tracing back the path in Pathfinder::calculateInstructions! (difference bigger than 3) : traceback iter. " + std::to_string(i));
 		}
 
+		// set speed if changed
+		const auto newSpeed = static_cast<instruction_t>(static_cast<uint8_t>(instruction_t::set_speed_0) + difference);
+		if (currentSpeed != newSpeed) {
+			toRoute.push_back(currentSpeed);
+			currentSpeed = newSpeed;
+		}
+
 		// add new instructions
 		for (uint16_t d = difference; d > 0; d--) {
 			auto fromCoord = currentPath.path[parentState.dist + d - 1];
@@ -990,17 +997,12 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			toRoute.push_back(instruction_t::right);
 		}
 
-		// set speed if changed
-		const auto newSpeed = static_cast<instruction_t>(static_cast<uint8_t>(instruction_t::set_speed_0) + difference);
-		if (currentSpeed != newSpeed) {
-			toRoute.push_back(newSpeed);
-			currentSpeed = newSpeed;
-		}
-
 		currentState = parentState;
 	}
 
+	// put starting speed
 	toRoute.push_back(currentSpeed);
+
 	// reverse the route to have it in the right order
 	toRoute.reverse();
 } // my life got so much more than 12 hours, 38 minutes and 44 seconds shorter because of this single function
@@ -1008,7 +1010,8 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const coord_t exit, route_t& toRoute) {
 	toRoute.instructions.resize(0);
 	toRoute.floatingInstruction = 0;
-	toRoute.push_back(instruction_t::set_speed_1);
+	// this is not used because calculateInstructions puts it in the instructions
+	// toRoute.push_back(instruction_t::set_speed_1);
 
 	if (entry != exit) {
 		toRoute.push_back(instruction_t::mine);

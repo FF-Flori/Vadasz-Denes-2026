@@ -487,9 +487,9 @@ class Pathfinder {
 		coord_t startPos{};
 		const uint16_t timeLimit;
 		map_t map{};
-		std::vector<OreGroup> oreGroups;
-		std::vector<Path> paths;
-		uint16_t maxDistPerSegment = 0;
+		std::vector<OreGroup> oreGroups{};
+		std::vector<Path> paths{};
+		uint16_t maxDistPerSegment{};
 
 		// functions
 		// genetic algorythm functions
