@@ -14,6 +14,7 @@ class Rover:
         self.scaled:pygame.Surface = self.sprite
         self.map:list[list[str]] = mapin
         self.battery:int = 100
+        self.gear:int = 0
         self.animtype:int = 0 #Which way it will go
         for y in range(len(mapin)):
             for x in range(len(mapin[y])):
@@ -24,7 +25,8 @@ class Rover:
     def setGear(self,gear:int)->None:
         if gear == 0:
             self.speed = 0
-        self.speed = 1+(gear-1)*0.5
+        self.speed = gear*0.5
+        self.gear = gear
     # This will throw an error if its impossible
     def moveTo(self,xdisp:int, ydisp:int)->None:
         self.target[0] = int(self.pos[0]+xdisp)

@@ -1,5 +1,6 @@
 import pygame
 from src.GAME.gamelogic import *
+import subprocess
 
 
 class HUD:
@@ -19,6 +20,11 @@ class HUD:
         self.battery:int = 100 #without %
         self.speed:int = 0 #0,1,2,3
         self.font = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 13)
+        self.fontcolor = (150, 150, 150)
+        self.epress = False
+        self.actlog = ""
+        self.proc = None
+        self.setTime:int = 0
 
         #Panels
         panelcolors = (50, 50, 50)
@@ -58,12 +64,21 @@ class HUD:
     def update(self, logicmodule:GameLogic)->None:
         self.time = logicmodule.simulationTime
         self.battery = logicmodule.rover.battery
-        self.rtime = 100000-self.time
+        self.rtime = self.setTime-self.time
+        self.actlog = logicmodule.logname
+
+        if pygame.key.get_pressed()[pygame.K_e] and self.epress == False:
+            self.proc = subprocess.Popen([
+                "Dashboard.exe",
+                self.actlog
+                ])
+        
+        self.epress = pygame.key.get_pressed()[pygame.K_e]
 
     def show(self, screen:pygame.Surface)->None:
         # Aspect ratio is handled already so we dont need to check the height
         screen.blit(self.img,(0,0))
-        fontcolor = (150, 150, 150)
+        fontcolor = self.fontcolor
         self.batteryimgs = [
             pygame.image.load(f"./src/img/battery/battery{i}.png").convert_alpha()
             for i in range(8)
@@ -107,3 +122,11 @@ class HUD:
         #IT'S DUMMY
         mingingtxt = self.font.render("--", True, fontcolor)
         screen.blit(mingingtxt, (((self.leftmargin+150)+self.width-490)+10, (self.topmargin+70)+15))
+
+        #Dashboard text
+        Dashtxt = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 10).render("A dashboard megnyitásához nyomd meg az E-t!", False, (255, 255, 255))
+        screen.blit(Dashtxt, ((self.leftmargin+150)-10, (self.topmargin+70)+70))
+
+        if self.proc != None and self.proc.poll() == None:
+            Dashstxt = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 8).render("Már fut! Csak eltarthat egy ideig az índítás.", True, (200, 200, 200))
+            screen.blit(Dashstxt, ((self.leftmargin+150)-10, (self.topmargin+70)+90))
