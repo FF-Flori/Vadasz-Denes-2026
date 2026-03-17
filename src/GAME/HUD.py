@@ -22,7 +22,7 @@ class HUD:
         self.font = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 13)
         self.fontcolor = (150, 150, 150)
         self.epress = False
-        self.actlog = "2026.02.27 12.48.01" #It's a log without .log
+        self.actlog = ""
         self.proc = None
         self.setTime:int = 0
 
@@ -65,6 +65,7 @@ class HUD:
         self.time = logicmodule.simulationTime
         self.battery = logicmodule.rover.battery
         self.rtime = self.setTime-self.time
+        self.actlog = logicmodule.logname
 
         if pygame.key.get_pressed()[pygame.K_e] and self.epress == False:
             self.proc = subprocess.Popen([

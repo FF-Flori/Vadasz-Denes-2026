@@ -31,7 +31,7 @@ class GameLogic:
 
         now = datetime.now()
         self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
-        with open("./log/"+self.logname+".log","w") as file:
+        with open("./log/"+self.logname+".log","w",encoding="utf-8") as file:
             file.write("<pozició (x,y)>;<akkumlátor töltöttség (%)>;<sebbesség és megtett távolság>;<gyűjtött anyagok>")
 
         #pathfinder.Pathfinder.create(500,"~/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv")
@@ -45,7 +45,7 @@ class GameLogic:
 
     def writeToLog(self)->None:
         with open("./log/"+self.logname+".log","a") as file:
-            file.write("\n("+str(int(self.rover.pos[0]))+","+str(int(self.rover.pos[1]))+");"+str(self.rover.battery)+";"+str(self.rover.gear)+";"+self.mined)
+            file.write("\n"+str(int(self.rover.pos[0]))+","+str(int(self.rover.pos[1]))+";"+str(self.rover.battery)+";"+str(self.rover.gear)+";"+self.mined)
     def createBG(self)->None:
         source:pygame.Surface = pygame.image.load("./src/img/bg.png").convert_alpha()
         tilesize:int = 64
