@@ -30,6 +30,7 @@ class DashboardUI:
     def __init__(self, main:Ctk.CTk, selectedlogfile:str):
         self.main:Ctk.CTk = main
         self.selectedmainlogfile:str = "log/" + selectedlogfile + ".log"
+        self.main.iconbitmap("src/img/dashboardicon.ico")
         
         clearwidget(self.main)
 
