@@ -14,11 +14,13 @@ Programfejlesztői környezet leírása:
     cmake:
         Verziója: 4.2.3
 
-Használt külső Python csomagok:
-    Dashboard:
-        - customtkinter
-        - CTkListbox
-        - matplotlib
-    
-    Vizualizáció:
-        - pygame
+Használt külső csomagok:
+    Python:
+        Dashboard:
+            - customtkinter
+            - CTkListbox
+            - matplotlib
+        Vizualizáció:
+            - pygame
+    C++:
+        - pybind11
