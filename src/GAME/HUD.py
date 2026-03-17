@@ -22,7 +22,7 @@ class HUD:
         self.font = pygame.font.Font("src/font/PressStart2P-Regular.ttf", 13)
         self.fontcolor = (150, 150, 150)
         self.epress = False
-        self.actlog = "2026.02.27 12.48.01" #It's 
+        self.actlog = "2026.02.27 12.48.01" #It's a log without .log
         self.proc = None
         self.setTime:int = 0
 
