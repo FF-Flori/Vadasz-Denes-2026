@@ -209,7 +209,7 @@ class GameLogic:
             print("Why the fuck")
             self.rover.battery = 0
 
-        #self.writeToLog()
+        self.writeToLog()
         self.isday = (self.simulationTime//30)%48<32
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
