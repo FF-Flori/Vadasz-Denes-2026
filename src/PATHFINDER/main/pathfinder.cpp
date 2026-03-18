@@ -323,8 +323,6 @@ Pathfinder::Genome Pathfinder::GeneticAlgorithm() const {
 	std::cout << "Starting generations" << std::endl;
 	try {
 		for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
-			std::cout << ".";
-
 			oldGeneration = generation;
 
 			// elitism
@@ -929,9 +927,8 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
 				isCurrentPathReversed = true;
-				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
+				if (genome->dna[parentState.groupIndex] < genome->dna[parentState.groupIndex - 1]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
-					isCurrentPathReversed = false;
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
@@ -954,13 +951,12 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
 				isCurrentPathReversed = true;
-				if (genome->dna[parentState.groupIndex] < genome->dna[currentState.groupIndex]) {
+				if (genome->dna[parentState.groupIndex] < genome->dna[parentState.groupIndex - 1]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
-					isCurrentPathReversed = false;
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
-				isCurrentPathReversed = false;
+				isCurrentPathReversed = true;
 			}
 
 			currentState = parentState;
@@ -1074,9 +1070,11 @@ void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const co
 		// get the path there with A*
 		} else {
 			auto path = Path(currentPos, unmined[nextHop]);
+			route_t aRoute;
 			for (uint16_t i = 1; i < static_cast<uint16_t>(path.path.size()); i++) {
-				toRoute.push_back(path.path[i - 1].getInstructionTo(path.path[i]));
+				aRoute.push_back(path.path[i].getInstructionTo(path.path[i - 1]));
 			}
+			toRoute += aRoute.reversed();
 			toRoute.push_back(instruction_t::mine);
 		}
 		currentPos = unmined[nextHop];
@@ -1088,12 +1086,14 @@ void Pathfinder::traceGroup(const OreGroup& group, const coord_t entry, const co
 	if (const uint8_t endDistance = currentPos - exit; endDistance == 1) {
 		toRoute.push_back(currentPos.getInstructionTo(exit));
 
-	// go to and with A*
+	// go to end with A*
 	} else {
 		const auto path = Path(currentPos, exit);
+		route_t aRoute;
 		for (uint16_t i = 1; i < static_cast<uint16_t>(path.path.size()); i++) {
-			toRoute.push_back(path.path[i - 1].getInstructionTo(path.path[i]));
+			aRoute.push_back(path.path[i].getInstructionTo(path.path[i - 1]));
 		}
+		toRoute += aRoute.reversed();
 	}
 	toRoute.push_back(instruction_t::mine);
 }

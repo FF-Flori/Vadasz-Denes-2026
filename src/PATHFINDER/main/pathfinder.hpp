@@ -297,15 +297,11 @@ class Pathfinder {
 			void invert() {
 				// invert means up-left -> down-right, up -> down ...etc.
 				for (auto& byte : instructions) {
-					if ((byte & 0b10001000) > 0) {
-						byte ^= 0b01000100;
-					} else {
-						if ((byte & 0b00001000) == 0) {
-							byte ^= 0b00000100;
-						}
-						if ((byte & 0b10000000) == 0) {
-							byte ^= 0b01000000;
-						}
+					if ((byte & 0b00001000) == 0) {
+						byte ^= 0b00000100;
+					}
+					if ((byte & 0b10000000) == 0) {
+						byte ^= 0b01000000;
 					}
 				}
 			}
@@ -316,15 +312,11 @@ class Pathfinder {
 				route_t result = *this;
 
 				for (auto& byte : result.instructions) {
-					if ((byte & 0b10001000) > 0) {
-						byte ^= 0b01000100;
-					} else {
-						if ((byte & 0b00001000) == 0) {
-							byte ^= 0b00000100;
-						}
-						if ((byte & 0b10000000) == 0) {
-							byte ^= 0b01000000;
-						}
+					if ((byte & 0b00001000) == 0) {
+						byte ^= 0b00000100;
+					}
+					if ((byte & 0b10000000) == 0) {
+						byte ^= 0b01000000;
 					}
 				}
 
