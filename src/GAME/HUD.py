@@ -1,6 +1,7 @@
 import pygame
 from src.GAME.gamelogic import *
 import subprocess
+import sys
 
 
 class HUD:
@@ -29,9 +30,9 @@ class HUD:
         self.isday:bool = True
         self.mining:dict[str,str] = {
                     '':"---",
-                    'Y':"arany",
-                    'G':"smaragd",
-                    'B':"vízjég"
+                    'Y':"Arany",
+                    'G':"Smaragd",
+                    'B':"Vízjég"
                 }
         self.mined:str = ''
 
@@ -93,7 +94,8 @@ class HUD:
 
         if pygame.key.get_pressed()[pygame.K_e] and self.epress == False:
             self.proc = subprocess.Popen([
-                "Dashboard.py",
+                sys.executable,
+                "dashboard.py",
                 self.actlog
                 ])
         

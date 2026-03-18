@@ -822,7 +822,7 @@ class DashboardUI:
                 self.fullgraph_position.alldata = positionList
                 self.fullgraph_position.update_graph()
 
-            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
+            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Vízjég", "Arany", "Smaragd"])           
             self.positionvar.set(value=f"X: {positionX} | Y: {positionY}")
             self.rover_coords.set_offsets([positionX, positionY])
             self.rover_coordstxt.set_position([positionX, positionY])

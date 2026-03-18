@@ -22,15 +22,15 @@ def logread(logfile, logsize:int, logline:int, time:list, battery:list, position
 
                     if fullline[3].lower() == "y":
                         materialY += 1
-                        materialch = "| ⛏ Sárga ásvány"
+                        materialch = "| ⛏ Arany"
 
                     elif fullline[3].lower() == "b":
                         materialB += 1
-                        materialch = "| ⛏ Kék ásvány"
+                        materialch = "| ⛏ Vízjég"
 
                     elif fullline[3].lower() == "g":
                         materialG += 1
-                        materialch = "| ⛏ Zöld ásvány"
+                        materialch = "| ⛏ Smaragd"
 
                 if len(time) == 0:
                     time.append(0)
@@ -47,7 +47,7 @@ def logread(logfile, logsize:int, logline:int, time:list, battery:list, position
                     speedch = "Áll"
 
                 events.append(
-                    f"[{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}] ⚡{battery[len(battery)-1]}% | 🚀 {speedch} {materialch}"
+                    f"[{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}] ⚡ {battery[len(battery)-1]}% | 🚀 {speedch} {materialch}"
                 )
                 materialch = ""
 
