@@ -52,12 +52,13 @@ class Question:
                normalized[0] <= self.normButton[0]+self.normButton[2] and \
                normalized[1] >= self.normButton[1] and \
                normalized[1] <= self.normButton[1]+self.normButton[3]:
-                   if len(self.enteredsimtime):
+                    if len(self.enteredsimtime) > 0:
                        assert(self.enteredsimtime.isdecimal())
                        self.simtime = int(self.enteredsimtime)
                        if self.simtime > 0:
                            return True
-                   return True
+                    else:
+                        return False
         else:
             self.lastClicked = False
 
