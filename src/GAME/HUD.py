@@ -25,7 +25,20 @@ class HUD:
         self.actlog = ""
         self.proc = None
         self.setTime:int = 0
-        self.strtime:list[str,str] = ["NAPPAL", "ÉJSZAKA"]
+        self.strtime:list[str] = ["NAPPAL", "ÉJSZAKA"]
+        self.isday:bool = True
+        self.mining:dict[str,str] = {
+                    '':"---",
+                    'Y':"arany",
+                    'G':"smaragd",
+                    'B':"vízjég"
+                }
+        self.mined:str = ''
+
+        self.batteryimgs = [
+            pygame.image.load(f"./src/img/battery/battery{i}.png").convert_alpha()
+            for i in range(8)
+        ]
 
         #Panels
         panelcolors = (50, 50, 50)
@@ -71,6 +84,12 @@ class HUD:
         self.battery = logicmodule.rover.battery
         self.rtime = self.setTime-self.time
         self.actlog = logicmodule.logname
+        self.bluematerial = logicmodule.blueorenum
+        self.yellowmaterial = logicmodule.yelloworenum
+        self.greenmaterial = logicmodule.greenorenum
+        self.isday = logicmodule.isday
+        self.speed = logicmodule.rover.gear
+        self.mined = logicmodule.mined
 
         if pygame.key.get_pressed()[pygame.K_e] and self.epress == False:
             self.proc = subprocess.Popen([
@@ -84,10 +103,6 @@ class HUD:
         # Aspect ratio is handled already so we dont need to check the height
         screen.blit(self.img,(0,0))
         fontcolor = self.fontcolor
-        self.batteryimgs = [
-            pygame.image.load(f"./src/img/battery/battery{i}.png").convert_alpha()
-            for i in range(8)
-        ]
 
         
         #Blue material drawing
@@ -123,16 +138,11 @@ class HUD:
         screen.blit(speedtxt, ((self.leftmargin+150)+10, (self.topmargin+70)+15))
 
         #Mining
-        #IT'S DUMMY
-        mingingtxt = self.font.render("--", True, fontcolor)
+        mingingtxt = self.font.render(f"{self.mining[self.mined]}", True, fontcolor)
         screen.blit(mingingtxt, (((self.leftmargin+150)+self.width-490)+10, (self.topmargin+70)+15))
 
         #STR Time
-        strtime = self.strtime[0]
-        if (self.time % 1440) < 960:
-            strtime = self.strtime[0]
-        else:
-            strtime = self.strtime[1]
+        strtime = self.strtime[not self.isday]
 
         strtimetxt = self.font.render(strtime, True, fontcolor)
         screen.blit(strtimetxt, (310, 17))

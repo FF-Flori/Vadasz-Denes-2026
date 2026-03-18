@@ -14,6 +14,8 @@ class GameLogic:
         self.viewed:list[float] = [0,0]
         self.oreSrc:pygame.Surface = pygame.image.load("./src/img/ores.png").convert_alpha()
         self.oreImgs:pygame.Surface = self.oreSrc
+        self.overlay:pygame.Surface = pygame.Surface((scrwidth,scrheight)).convert_alpha()
+        self.overlay.fill((0,0,0,64))
         self.orewidth:float = 64
         self.map:list[list[str]] = []
         with open("./src/PATHFINDER/mars_map_50x50.csv") as file:
@@ -32,6 +34,8 @@ class GameLogic:
         self.blueorenum:int = 0
         self.yelloworenum:int = 0
         self.greenorenum:int = 0
+        self.framesToTimeInc:int = 1
+        self.isday:bool = True
 
         now = datetime.now()
         self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
@@ -125,66 +129,87 @@ class GameLogic:
                 self.viewed[1] = len(self.map)-self.viewedWidth-0.3
 
     def traversePath(self)->None:
-        if self.rover.target[0] < 0 and self.rover.target[1] < 0:
-            iterations:int = 1
-            while iterations > 0:
-                intvalue:int = int(self.route[self.posinRoute])
-                value = self.route[self.posinRoute]
-                if intvalue >= 0 and intvalue < 8:
-                    if value == Instruction.UP_LEFT:
-                        self.rover.moveTo(-1,-1)
-                    elif value == Instruction.UP:
-                        self.rover.moveTo(0,-1)
-                    elif value == Instruction.UP_RIGHT:
-                        self.rover.moveTo(1,-1)
-                    elif value == Instruction.RIGHT:
-                        self.rover.moveTo(1,0)
-                    elif value == Instruction.DOWN_RIGHT:
-                        self.rover.moveTo(1,1)
-                    elif value == Instruction.DOWN:
-                        self.rover.moveTo(0,1)
-                    elif value == Instruction.DOWN_LEFT:
-                        self.rover.moveTo(-1,1)
-                    elif value == Instruction.LEFT:
-                        self.rover.moveTo(-1,0)
-                elif intvalue < 12:
-                    if value == Instruction.SET_SPEED_1:
-                        self.rover.setGear(1)
-                        iterations+=1
-                    elif value == Instruction.SET_SPEED_2:
-                        self.rover.setGear(2)
-                        iterations+=2
-                    elif value == Instruction.SET_SPEED_3:
-                        self.rover.setGear(3)
-                        iterations+=3
-                    else:
-                        print("Error")
-                    self.posinRoute+=1
-                elif value == Instruction.MINE:
-                    pos:list[int] = [int(self.rover.pos[0]),int(self.rover.pos[1])]
-                    #THIS SHALL BE HANDLED LATER
-
-                elif value == Instruction.NO_INSTRUCTION:
-                    sleep(0.5)
-                iterations-=1
-
-            self.posinRoute+=1
-            self.simulationTime += 30
-            isday:bool = (self.simulationTime//30)%48<41
-            if self.rover.gear > 0:
-                self.rover.battery += 2*self.rover.gear*self.rover.gear
+        # Checking instructions
+        self.mined = ''
+        self.isday = (self.simulationTime//30)%48<32
+        moved:bool = False
+        while not moved and self.posinRoute < len(self.route):
+            print(self.route[self.posinRoute])
+            intvalue:int = int(self.route[self.posinRoute])
+            value = self.route[self.posinRoute]
+            if intvalue >= 0 and intvalue < 8:
+                if value == Instruction.UP_LEFT:
+                    self.rover.moveTo(-1,-1)
+                elif value == Instruction.UP:
+                    self.rover.moveTo(0,-1)
+                elif value == Instruction.UP_RIGHT:
+                    self.rover.moveTo(1,-1)
+                elif value == Instruction.RIGHT:
+                    self.rover.moveTo(1,0)
+                elif value == Instruction.DOWN_RIGHT:
+                    self.rover.moveTo(1,1)
+                elif value == Instruction.DOWN:
+                    self.rover.moveTo(0,1)
+                elif value == Instruction.DOWN_LEFT:
+                    self.rover.moveTo(-1,1)
+                elif value == Instruction.LEFT:
+                    self.rover.moveTo(-1,0)
+                if self.rover.gear > 0:
+                    self.rover.battery -= 2*self.rover.gear
+                else:
+                    self.rover.battery -=1
+                moved = True
+            elif intvalue < 12:
+                if value == Instruction.SET_SPEED_1:
+                    self.rover.setGear(1)
+                    self.framesToTimeInc = 1
+                elif value == Instruction.SET_SPEED_2:
+                    self.rover.setGear(2)
+                    self.framesToTimeInc = 2
+                elif value == Instruction.SET_SPEED_3:
+                    self.rover.setGear(3)
+                    self.framesToTimeInc = 3
+                elif value == Instruction.SET_SPEED_0:
+                    self.rover.setGear(0)
+                    self.framesToTimeInc = 1
+                else:
+                    print("Error")
+                moved = False
+            elif value == Instruction.MINE:
+                pos:list[int] = [int(self.rover.pos[0]),int(self.rover.pos[1])]
+                assert(self.map[pos[1]][pos[0]] != ".")
+                assert(self.map[pos[1]][pos[0]] != "#")
+                self.mined = self.map[pos[1]][pos[0]]
+                if self.mined == 'Y':
+                    self.yelloworenum += 1
+                elif self.mined == 'G':
+                    self.greenorenum += 1
+                else:
+                    self.blueorenum += 1
+                self.map[pos[1]][pos[0]] = "."
+                self.rover.startIdling()
+                self.framesToTimeInc = 1
+                moved = True
+                self.rover.battery-=2
             else:
-                self.rover.battery -= 1
-                if self.mined != '':
-                    self.rover.battery -= 1
-            if isday:
-                self.rover.battery+=10
-            if self.rover.battery>100:
-                self.rover.battery = 100
-            elif self.rover.battery < 0:
-                self.rover.battery = 0
-            self.writeToLog()
-            self.mined = ''
+                moved = False
+            self.posinRoute += 1
+
+        # Changing time
+
+        self.framesToTimeInc -= 1
+        if self.framesToTimeInc < 1:
+            if self.isday:
+                self.rover.battery += 10
+            self.framesToTimeInc = 1
+            self.simulationTime += 30
+        if self.rover.battery > 100:
+            self.rover.battery = 100
+        elif self.rover.battery < 0:
+            print("Why the fuck")
+            self.rover.battery = 0
+
+        #self.writeToLog()
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         # Input stuff
@@ -203,7 +228,8 @@ class GameLogic:
         # Logic stuff
         if self.setTime - self.simulationTime > 0:
             self.rover.update(deltaTime)
-            self.traversePath()
+            if self.rover.target[0] == -1 and self.rover.target[1] == -1 and self.posinRoute < len(self.route):
+                self.traversePath()
 
         #Drawing stuff
 
@@ -214,3 +240,5 @@ class GameLogic:
                 self.drawOre(self.map[y][x],(x-self.viewed[0])*self.orewidth,(y-self.viewed[1])*self.orewidth,screen)
 
         self.rover.draw(screen,self.orewidth,self.viewed,self.viewedWidth)
+        if not self.isday:
+            screen.blit(self.overlay,(0,0))

@@ -16,12 +16,21 @@ class Rover:
         self.battery:int = 100
         self.gear:int = 0
         self.animtype:int = 0 #Which way it will go
+
+        self.idleTimer:float = 0
+        self.idleTime:float = 1.5 #Seconds
         for y in range(len(mapin)):
             for x in range(len(mapin[y])):
                 if mapin[y][x] == 'S':
                     self.pos = [x,y]
                     mapin[y][x] = ' '
+                    print(self.pos)
                     return
+
+    def startIdling(self)->None:
+        self.target[0] = -2
+        self.target[1] = -2
+        self.idleTimer = 0
     def setGear(self,gear:int)->None:
         if gear == 0:
             self.speed = 0
@@ -29,6 +38,8 @@ class Rover:
         self.gear = gear
     # This will throw an error if its impossible
     def moveTo(self,xdisp:int, ydisp:int)->None:
+        if self.speed == 0:
+            self.startIdling()
         self.target[0] = int(self.pos[0]+xdisp)
         self.target[1] = int(self.pos[1]+ydisp)
         if ydisp < 0:
@@ -45,6 +56,12 @@ class Rover:
         assert(self.target[1] > -1)
         assert(self.target[0] < len(self.map[0]))
         assert(self.target[1] < len(self.map))
+    def idle(self,deltaTime:float)->None:
+        self.idleTimer+= deltaTime/1000
+        if self.idleTimer >= self.idleTime:
+            self.idleTimer = 0
+            self.target[0] = -1
+            self.target[1] = -1
     #0 is x 1 is y
     def _moveTowards_(self,axis:int,deltaTime:float)->None:
         if self.target[axis] < self.pos[axis]:
@@ -70,6 +87,8 @@ class Rover:
             self._moveTowards_(0,deltaTime/1000)
         if self.target[1] > -1:
             self._moveTowards_(1,deltaTime/1000)
+        if self.target[0] == -2 and self.target[1] == -2:
+            self.idle(deltaTime)
 
     def draw(self, screen:pygame.Surface, orewidth:float, viewstart:list[float], viewwidth:int) -> None:
         if self.pos[0]-viewstart[0] > viewwidth or self.pos[1]-viewstart[1] > viewwidth:
