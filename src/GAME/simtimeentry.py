@@ -20,7 +20,7 @@ class Question:
         self.button.blit(buttontext,((self.buttonwidth-buttontext.get_width())//2,(self.buttonheight-buttontext.get_height())//2))
         self.lastClicked:bool = True
 
-        self.text:pygame.font.Font = pygame.font.Font("src/font/PressStart2P-Regular.ttf",20)
+        self.text:pygame.font.Font = pygame.font.Font("src/font/PressStart2P-Regular.ttf",25)
         self.entryDims:list[int] = [0,int(windowsize[1]*0.2),3*windowsize[0]//4,100]
         self.entryDims[0] = (windowsize[0]-self.entryDims[2])//2
         self.entry:pygame.Surface = pygame.Surface((self.entryDims[2],self.entryDims[3])).convert_alpha()
