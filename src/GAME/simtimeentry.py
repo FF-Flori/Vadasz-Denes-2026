@@ -16,11 +16,11 @@ class Question:
         pygame.draw.rect(self.button,(0, 0, 0),(0,0,self.buttonwidth,self.buttonheight),0,20)
         pygame.draw.rect(self.button,(255, 157, 111),(0,0,self.buttonwidth,self.buttonheight),3,20)
 
-        buttontext:pygame.Surface = pygame.font.Font(None,50).render("Tovább",True,self.textcolor)
+        buttontext:pygame.Surface = pygame.font.Font("src/font/PressStart2P-Regular.ttf",50).render("Tovább",True,self.textcolor)
         self.button.blit(buttontext,((self.buttonwidth-buttontext.get_width())//2,(self.buttonheight-buttontext.get_height())//2))
         self.lastClicked:bool = True
 
-        self.text:pygame.font.Font = pygame.font.Font(None,50)
+        self.text:pygame.font.Font = pygame.font.Font("src/font/PressStart2P-Regular.ttf",50)
         self.entryDims:list[int] = [0,int(windowsize[1]*0.2),3*windowsize[0]//4,100]
         self.entryDims[0] = (windowsize[0]-self.entryDims[2])//2
         self.entry:pygame.Surface = pygame.Surface((self.entryDims[2],self.entryDims[3])).convert_alpha()
@@ -28,7 +28,7 @@ class Question:
         pygame.draw.rect(self.entry,(0, 0, 0),(0,0,self.entryDims[2],self.entryDims[3]),0,20)
         pygame.draw.rect(self.entry,(255, 157, 111),(0,0,self.entryDims[2],self.entryDims[3]),3,20)
 
-        entrytext:pygame.Surface = pygame.font.Font(None,40).render("Szimulációs idő: (x fél óra)",True,self.textcolor)
+        entrytext:pygame.Surface = pygame.font.Font("src/font/PressStart2P-Regular.ttf",40).render("Szimulációs idő: (x fél óra)",True,self.textcolor)
         self.texture.blit(entrytext, (self.entryDims[0]+10,self.entryDims[1]-entrytext.get_height()-10))
 
         self.simtime:int = 0
