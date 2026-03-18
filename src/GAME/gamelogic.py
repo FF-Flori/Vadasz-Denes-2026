@@ -23,18 +23,20 @@ class GameLogic:
         self.viewedWidth:int = self.width//self.orewidth
         self.rover:Rover = Rover(self.map)
         self.rover.setGear(1)
+
         self.zoom:float = 0.5
         self.createBG()
         self.scaledBG:pygame.Surface = self.background
+        
         self.simulationTime:int = 0
         self.setTime:int = 0
-        self.scale()
         self.mined:str = ''
         self.blueorenum:int = 0
         self.yelloworenum:int = 0
         self.greenorenum:int = 0
         self.framesToTimeInc:int = 1
         self.isday:bool = True
+
         self.impossible:bool = False
         self.impossibleOverlay:pygame.Surface = pygame.Surface((scrwidth,scrheight))
         impofont:pygame.font.Font = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",18)
@@ -49,6 +51,10 @@ class GameLogic:
         self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
         with open("./log/"+self.logname+".log","w",encoding="utf-8") as file:
             file.write("<pozició (x,y)>;<akkumlátor töltöttség (%)>;<sebbesség és megtett távolság>;<gyűjtött anyagok>")
+
+        self.paused:bool = False
+        self.pausedonlast:bool = False
+        self.scale()
 
     def SetTimeValue(self, simtime:int)->None:
         self.setTime = simtime
@@ -230,14 +236,16 @@ class GameLogic:
             self.moveCamera(0,self.speed/1000*deltaTime)
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.moveCamera(self.speed/1000*deltaTime,0)
-        if keys[pygame.K_p]:
-            print(self.zoom)
+        if (keys[pygame.K_p] or keys[pygame.K_ESCAPE]) and not self.pausedonlast:
+            self.paused = not self.paused
+        self.pausedonlast = keys[pygame.K_p] or keys[pygame.K_ESCAPE]
 
         # Logic stuff
-        self.rover.update(deltaTime)
-        if self.setTime - self.simulationTime > 0 and not self.impossible:
-            if self.rover.target[0] == -1 and self.rover.target[1] == -1 and self.posinRoute < len(self.route):
-                self.traversePath()
+        if not self.paused:
+            self.rover.update(deltaTime)
+            if self.setTime - self.simulationTime > 0 and not self.impossible:
+                if self.rover.target[0] == -1 and self.rover.target[1] == -1 and self.posinRoute < len(self.route):
+                    self.traversePath()
 
         #Drawing stuff
 
