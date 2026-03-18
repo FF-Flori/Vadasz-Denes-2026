@@ -822,7 +822,7 @@ class DashboardUI:
                 self.fullgraph_position.alldata = positionList
                 self.fullgraph_position.update_graph()
 
-            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Kék Ásvány", "Sárga Ásvány", "Zöld Ásvány"])           
+            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Vízjég", "Arany", "Smaragd"])           
             self.positionvar.set(value=f"X: {positionX} | Y: {positionY}")
             self.rover_coords.set_offsets([positionX, positionY])
             self.rover_coordstxt.set_position([positionX, positionY])
@@ -860,12 +860,16 @@ class DashboardUI:
                 )
             
             self.positioncanvas.draw_idle()
-            self.timevar.set(value=f"{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}")
-
-            if (int(time[-1]) % 1440) < 960:
-                self.subtimevar.set(value="Nappal")
+            if len(time) != 0:
+                self.timevar.set(value=f"{int(time[len(time)-1])//60}:{int(time[len(time)-1])%60:02d}")
             else:
-                self.subtimevar.set(value="Éjszaka")
+                self.timevar.set(value="0:00")
+
+            if len(time) != 0:
+                if (int(time[-1]) % 1440) < 960:
+                    self.subtimevar.set(value="Nappal")
+                else:
+                    self.subtimevar.set(value="Éjszaka")
             
             startdistance = 0
             for i in speed:
@@ -873,8 +877,12 @@ class DashboardUI:
 
             self.distancevar.set(value=str(startdistance) + " blokk")
 
-            minbt = int(battery[0])
-            maxbt = int(battery[0])
+            if len(time) != 0:
+                minbt = int(battery[0])
+                maxbt = int(battery[0])
+            else:
+                minbt = 0
+                maxbt = 0
             atlagbt = 0
             buffer = 0
 
@@ -886,7 +894,10 @@ class DashboardUI:
                 
                 buffer += int(i)
 
-            atlagbt = round(buffer/len(battery))
+            if len(time) != 0:
+                atlagbt = round(buffer/len(battery))
+            else:
+                atlagbt = "--"
             buffer = 0
             usedallbattery = 0
 
@@ -898,7 +909,10 @@ class DashboardUI:
             self.datamindtvar.set(value="Minimum: " + str(minbt) + "%")
             self.dataatlagdtvar.set(value="Átlag: " + str(atlagbt) + "%")
             self.datamaxdtvar.set(value="Maximum: " + str(maxbt) + "%")
-            self.dataaiblokkvar.set(value=round((materialB + materialY + materialG)/startdistance, 16))
+            if len(time) != 0:
+                self.dataaiblokkvar.set(value=round((materialB + materialY + materialG)/startdistance, 16))
+            else:
+                self.dataaiblokkvar.set(value=0)
             self.dataaienergiavar.set(value=usedallbattery)
             
             if refles == True:
