@@ -55,7 +55,7 @@ class Question:
                     if len(self.enteredsimtime) > 0:
                        assert(self.enteredsimtime.isdecimal())
                        self.simtime = int(self.enteredsimtime)
-                       if self.simtime > 23:
+                       if self.simtime > 47:
                            return True
                     else:
                         return False
