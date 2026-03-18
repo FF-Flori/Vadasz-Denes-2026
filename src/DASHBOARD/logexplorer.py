@@ -1,11 +1,16 @@
 import customtkinter as Ctk
 from customtkinter import *
 from CTkListbox import *
+import os
+from pathlib import Path
 
 class Logexplorer:
     def __init__(self, main:Ctk.CTk):
         self.main = main
         self.mainlog = "log"
+        
+        if Path(self.mainlog).is_dir() == False:
+            os.mkdir("log")
 
         self.main.title("Dashboard - Log kiválasztása")
         self.main.geometry("400x400")
