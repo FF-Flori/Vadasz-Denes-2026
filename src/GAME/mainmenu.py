@@ -4,6 +4,8 @@ from src.GAME.game import *
 class MainMenu:
     def __init__(self,windowsize:tuple[int,int])->None:
         self.texture:pygame.Surface = pygame.transform.scale(pygame.image.load("./src/img/menu.png"),windowsize)
+        backgroundtext:pygame.Surface = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",40).render("Visualizáció",True,(255, 207, 161))
+        self.texture.blit(backgroundtext,((windowsize[0]-backgroundtext.get_width())//2,30))
         self.width:int = windowsize[0]
         self.height:int = windowsize[1]
 
@@ -16,7 +18,7 @@ class MainMenu:
         pygame.draw.rect(self.button,(0, 0, 0),(0,0,self.buttonwidth,self.buttonheight),0,20)
         pygame.draw.rect(self.button,(255, 157, 111),(0,0,self.buttonwidth,self.buttonheight),3,20)
 
-        buttontext:pygame.Surface = pygame.font.Font(None,50).render("Indítás",True,(255, 207, 161))
+        buttontext:pygame.Surface = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",25).render("Indítás",True,(255, 207, 161))
         self.button.blit(buttontext,((self.buttonwidth-buttontext.get_width())//2,(self.buttonheight-buttontext.get_height())//2))
 
     def update(self,windowDimensions:tuple[int,int,int,int])->int:

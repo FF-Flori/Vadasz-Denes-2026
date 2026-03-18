@@ -45,7 +45,7 @@ class GameLogic:
 
     def SetTimeValue(self, simtime:int)->None:
         self.setTime = simtime
-        Pathfinder.create(simtime//30,os.path.join("/home/florian/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv"))
+        Pathfinder.create(simtime//30,"/home/florian/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv")
         pf = Pathfinder.get_instance()
         self.route = pf.calculate()
         if len(self.route) == 0:
