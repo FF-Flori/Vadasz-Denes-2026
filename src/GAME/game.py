@@ -6,6 +6,7 @@ from src.GAME.simtimeentry import *
 
 class Game:
     def __init__(self,windowsize:tuple[int,int]) -> None:
+        self.inputtime:int = -2
         self.menu:int = 0
         self.gameHandler:GamePanel = GamePanel(windowsize)
         self.HUDHandler:HUD = HUD(windowsize)
@@ -13,7 +14,13 @@ class Game:
         self.entryHandler:Question = Question(windowsize)
     def drawGame(self, screen:pygame.Surface, deltaTime:float,windowDimensions:tuple[int,int,int,int]) -> None:
         if self.menu == 0:
-            self.menu = self.MenuHandler.update(windowDimensions)
+            if self.MenuHandler.update(windowDimensions):
+                if self.inputtime > 0:
+                    self.gameHandler.logicModule.SetTimeValue(self.inputtime*60)
+                    self.HUDHandler.setTime = self.inputtime*60
+                    self.menu = 2
+                else:
+                    self.menu = 1
             self.MenuHandler.show(screen)
         elif self.menu == 1:
             if self.entryHandler.update(windowDimensions):

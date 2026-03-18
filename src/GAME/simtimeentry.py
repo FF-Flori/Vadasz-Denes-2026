@@ -63,7 +63,7 @@ class Question:
             self.lastClicked = False
 
         keys = pygame.key.get_pressed()
-        if len(self.enteredsimtime) < 21:
+        if len(self.enteredsimtime) < 4:
             for i in range(len(self.keys)):
                 if keys[self.keys[i]]:
                     if self.keypressed[i]:

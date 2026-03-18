@@ -4,7 +4,7 @@ from math import ceil
 from random import randint
 from src.GAME.rover import *
 from datetime import datetime
-from src.GAME.pathfinder import *
+from src.PATHFINDER.build.pathfinder import *
 
 class GameLogic:
     def __init__(self, scrwidth, scrheight) -> None:
@@ -37,6 +37,7 @@ class GameLogic:
         self.framesToTimeInc:int = 1
         self.isday:bool = True
         self.impossible:bool = False
+        self.impossibleText:pygame.Surface = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",18).render("Ennyi idővel lehetetlen bármennyi\nércet összegyűjteni\nPróbálj meg megadni\ntöbb időt",True,'white')
 
         now = datetime.now()
         self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
@@ -243,3 +244,5 @@ class GameLogic:
         self.rover.draw(screen,self.orewidth,self.viewed,self.viewedWidth)
         if not self.isday:
             screen.blit(self.overlay,(0,0))
+        if self.impossible:
+            screen.blit(self.impossibleText,(0,0))
