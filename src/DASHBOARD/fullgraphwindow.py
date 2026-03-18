@@ -43,7 +43,7 @@ class FullGraphWindow:
             self.ax.set_ylim(0, 50)
             mars_map = []
 
-            with open("src/PATHFINDER/mars_map_50x50.csv", "r") as f:
+            with open("./mars_map_50x50.csv", "r") as f:
                 reader = csv.reader(f)
                 for row in reader:
                     mars_map.append(row)

@@ -17,7 +17,7 @@ class GameLogic:
         self.overlay.fill((0,0,0,64))
         self.orewidth:float = 64
         self.map:list[list[str]] = []
-        with open("./src/PATHFINDER/mars_map_50x50.csv") as file:
+        with open("./mars_map_50x50.csv") as file:
             for row in file.readlines():
                 self.map.append(row.strip().split(','))
         self.viewedWidth:int = self.width//self.orewidth
@@ -52,7 +52,7 @@ class GameLogic:
 
     def SetTimeValue(self, simtime:int)->None:
         self.setTime = simtime
-        Pathfinder.create(simtime//30,"/home/florian/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv")
+        Pathfinder.create(simtime//30,"./mars_map_50x50.csv")
         pf = Pathfinder.get_instance()
         self.route = pf.calculate()
         if len(self.route) == 0:
