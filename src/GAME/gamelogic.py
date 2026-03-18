@@ -1,5 +1,4 @@
 import pygame
-import os
 from math import ceil
 from random import randint
 from src.GAME.rover import *
@@ -37,7 +36,14 @@ class GameLogic:
         self.framesToTimeInc:int = 1
         self.isday:bool = True
         self.impossible:bool = False
-        self.impossibleText:pygame.Surface = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",18).render("Ennyi idővel lehetetlen bármennyi\nércet összegyűjteni\nPróbálj meg megadni\ntöbb időt",True,'white')
+        self.impossibleOverlay:pygame.Surface = pygame.Surface((scrwidth,scrheight))
+        impofont:pygame.font.Font = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",18)
+        text:pygame.Surface = impofont.render("Ennyi idővel lehetetlen bármennyi",True,'white')
+        self.impossibleOverlay.blit(text,((scrwidth-text.get_width())//2,20))
+        text = impofont.render("ércet összegyűjteni. Próbálj",True,'white')
+        self.impossibleOverlay.blit(text,((scrwidth-text.get_width())//2,60))
+        text = impofont.render("meg megadni több időt!",True,'white')
+        self.impossibleOverlay.blit(text,((scrwidth-text.get_width())//2,100))
 
         now = datetime.now()
         self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
@@ -245,4 +251,4 @@ class GameLogic:
         if not self.isday:
             screen.blit(self.overlay,(0,0))
         if self.impossible:
-            screen.blit(self.impossibleText,(0,0))
+            screen.blit(self.impossibleOverlay,(0,0))
