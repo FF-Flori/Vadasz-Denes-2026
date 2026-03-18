@@ -36,6 +36,7 @@ class GameLogic:
         self.greenorenum:int = 0
         self.framesToTimeInc:int = 1
         self.isday:bool = True
+        self.impossible:bool = False
 
         now = datetime.now()
         self.logname:str = '.'.join(str(datetime.date(now)).split('-'))+' '+'.'.join(str(datetime.time(now)).split('.')[0].split(':'))
@@ -47,7 +48,6 @@ class GameLogic:
         Pathfinder.create(simtime//30,os.path.join("/home/florian/verseny/Vadasz-Denes-2026/src/PATHFINDER/mars_map_50x50.csv"))
         pf = Pathfinder.get_instance()
         self.route = pf.calculate()
-        self.impossible:bool = False
         if len(self.route) == 0:
             self.impossible = True
         Pathfinder.destroy()
@@ -131,7 +131,7 @@ class GameLogic:
     def traversePath(self)->None:
         # Checking instructions
         self.mined = ''
-        self.isday = (self.simulationTime//30)%48<32
+        isday = (self.simulationTime//30)%48<32
         moved:bool = False
         while not moved and self.posinRoute < len(self.route):
             print(self.route[self.posinRoute])
@@ -199,7 +199,7 @@ class GameLogic:
 
         self.framesToTimeInc -= 1
         if self.framesToTimeInc < 1:
-            if self.isday:
+            if isday:
                 self.rover.battery += 10
             self.framesToTimeInc = 1
             self.simulationTime += 30
@@ -210,6 +210,7 @@ class GameLogic:
             self.rover.battery = 0
 
         #self.writeToLog()
+        self.isday = (self.simulationTime//30)%48<32
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         # Input stuff
@@ -226,8 +227,8 @@ class GameLogic:
             print(self.zoom)
 
         # Logic stuff
-        if self.setTime - self.simulationTime > 0:
-            self.rover.update(deltaTime)
+        self.rover.update(deltaTime)
+        if self.setTime - self.simulationTime > 0 and not self.impossible:
             if self.rover.target[0] == -1 and self.rover.target[1] == -1 and self.posinRoute < len(self.route):
                 self.traversePath()
 
