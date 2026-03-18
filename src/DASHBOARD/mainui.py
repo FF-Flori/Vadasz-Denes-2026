@@ -547,7 +547,7 @@ class DashboardUI:
             cmap = ListedColormap([
                 "#2e3237",
                 "gray",
-                "blue",
+                "cyan",
                 "yellow",
                 "green",
                 "lightgreen"
