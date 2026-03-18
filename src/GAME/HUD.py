@@ -74,7 +74,7 @@ class HUD:
 
         if pygame.key.get_pressed()[pygame.K_e] and self.epress == False:
             self.proc = subprocess.Popen([
-                "Dashboard.exe",
+                "Dashboard.py",
                 self.actlog
                 ])
         
