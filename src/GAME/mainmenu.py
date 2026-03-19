@@ -4,7 +4,7 @@ from src.GAME.game import *
 class MainMenu:
     def __init__(self,windowsize:tuple[int,int])->None:
         self.texture:pygame.Surface = pygame.transform.scale(pygame.image.load("./src/img/menu.png"),windowsize)
-        backgroundtext:pygame.Surface = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",40).render("Visualizáció",True,(255, 207, 161))
+        backgroundtext:pygame.Surface = pygame.font.Font("./src/font/PressStart2P-Regular.ttf",40).render("Szimuláció",True,(255, 207, 161))
         self.texture.blit(backgroundtext,((windowsize[0]-backgroundtext.get_width())//2,30))
         self.width:int = windowsize[0]
         self.height:int = windowsize[1]
