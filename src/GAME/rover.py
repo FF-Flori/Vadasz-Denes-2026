@@ -22,6 +22,7 @@ class Rover:
         for y in range(len(mapin)):
             for x in range(len(mapin[y])):
                 if mapin[y][x] == 'S':
+                    self.startPos = [x,y]
                     self.pos = [x,y]
                     mapin[y][x] = ' '
                     print(self.pos)
@@ -90,7 +91,7 @@ class Rover:
         if self.target[0] == -2 and self.target[1] == -2:
             self.idle(deltaTime)
 
-    def draw(self, screen:pygame.Surface, orewidth:float, viewstart:list[float], viewwidth:int) -> None:
+    def draw(self, screen:pygame.Surface, orewidth:float, viewstart:list[float], viewwidth:float) -> None:
         if self.pos[0]-viewstart[0] > viewwidth or self.pos[1]-viewstart[1] > viewwidth:
             return
         screen.blit(self.scaled,((self.pos[0]-viewstart[0])*orewidth,(self.pos[1]-viewstart[1])*orewidth),(self.framenum*self.scaledwidth,self.animtype*self.scaledwidth,self.scaledwidth,self.scaledwidth))

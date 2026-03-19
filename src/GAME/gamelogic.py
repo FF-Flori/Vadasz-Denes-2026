@@ -58,6 +58,25 @@ class GameLogic:
         # Starts at 0 0, so its just the coords of the rover
         self.moveCamera(self.rover.pos[0]-self.viewedWidth//2,self.rover.pos[1]-self.viewedWidth//2)
 
+    def getDisplacement(self,value)->tuple[int,int]:
+        if value == Instruction.UP_LEFT:
+            return (-1,-1)
+        elif value == Instruction.UP:
+            return (0,-1)
+        elif value == Instruction.UP_RIGHT:
+            return (1,-1)
+        elif value == Instruction.RIGHT:
+            return (1,0)
+        elif value == Instruction.DOWN_RIGHT:
+            return (1,1)
+        elif value == Instruction.DOWN:
+            return (0,1)
+        elif value == Instruction.DOWN_LEFT:
+            return (-1,1)
+        elif value == Instruction.LEFT:
+            return (-1,0)
+        else:
+            return (0,0)
     def SetTimeValue(self, simtime:int)->None:
         self.setTime = simtime
         Pathfinder.create(simtime//30,"./mars_map_50x50.csv")
@@ -142,6 +161,51 @@ class GameLogic:
                 self.viewed[1] = 0
             elif self.viewed[1]+self.viewedWidth > len(self.map):
                 self.viewed[1] = len(self.map)-self.viewedWidth
+    def showPath(self,screen:pygame.Surface)->None:
+        bounds:tuple[float,float] = (-self.orewidth,self.viewedWidth*self.orewidth+self.orewidth)
+        lastpos:list[float] = self.rover.pos
+        pos:list[int] = [0,0]
+        speed:int = self.rover.gear
+        loopstart = self.posinRoute-1
+        if loopstart < 0:
+            loopstart = 0
+        for i in range(self.posinRoute-1,len(self.route)):
+            value = self.route[i]
+            if int(value) < 8:
+                if speed == 0:
+                    continue
+                displacement = [*self.getDisplacement(value)]
+                if displacement[0] < 0:
+                    pos[0] = ceil(lastpos[0]) + displacement[0]
+                else:
+                    pos[0] = int(lastpos[0]) + displacement[0]
+
+                if displacement[1] < 0:
+                    pos[1] = ceil(lastpos[1]) + displacement[1]
+                else:
+                    pos[1] = int(lastpos[1]) + displacement[1]
+
+            elif int(value) < 12:
+                if value == Instruction.SET_SPEED_0:
+                    speed = 0
+                else:
+                    speed = 1
+                continue
+            else:
+                continue
+            start:tuple[int,int] = (int((lastpos[0]-self.viewed[0])*self.orewidth),int((lastpos[1]-self.viewed[1])*self.orewidth))
+            start = (int(start[0]+self.orewidth/2),int(start[1]+self.orewidth/2))
+            end:tuple[int,int] = (int((pos[0]-self.viewed[0])*self.orewidth),int((pos[1]-self.viewed[1])*self.orewidth))
+            end = (int(end[0]+self.orewidth/2),int(end[1]+self.orewidth/2))
+            if (start[0] > bounds[0] and start[0] < bounds[1]) and \
+               (start[1] > bounds[0] and start[1] < bounds[1]) and \
+               (end[0] > bounds[0] and end[0] < bounds[1]) and \
+               (end[1] > bounds[0] and end[1] < bounds[1]):
+                   pygame.draw.line(screen,(255,255,0,128),start,end,4)
+
+            lastpos = [*pos]
+
+
     def traversePath(self)->None:
         # Checking instructions
         self.mined = ''
@@ -152,22 +216,7 @@ class GameLogic:
             intvalue:int = int(self.route[self.posinRoute])
             value = self.route[self.posinRoute]
             if intvalue >= 0 and intvalue < 8:
-                if value == Instruction.UP_LEFT:
-                    self.rover.moveTo(-1,-1)
-                elif value == Instruction.UP:
-                    self.rover.moveTo(0,-1)
-                elif value == Instruction.UP_RIGHT:
-                    self.rover.moveTo(1,-1)
-                elif value == Instruction.RIGHT:
-                    self.rover.moveTo(1,0)
-                elif value == Instruction.DOWN_RIGHT:
-                    self.rover.moveTo(1,1)
-                elif value == Instruction.DOWN:
-                    self.rover.moveTo(0,1)
-                elif value == Instruction.DOWN_LEFT:
-                    self.rover.moveTo(-1,1)
-                elif value == Instruction.LEFT:
-                    self.rover.moveTo(-1,0)
+                self.rover.moveTo(*self.getDisplacement(value))
                 if self.rover.gear > 0:
                     self.rover.battery -= 2*self.rover.gear
                 else:
@@ -256,9 +305,8 @@ class GameLogic:
                     self.traversePath()
 
         #Drawing stuff
-
-        screen.fill("black")
         screen.blit(self.scaledBG,(0,0),(self.viewed[0]*self.orewidth,self.viewed[1]*self.orewidth,self.width,self.height))
+        self.showPath(screen)
 
         for y in range(int(self.viewed[1]),ceil(self.viewed[1]+self.viewedWidth)):
             for x in range(int(self.viewed[0]),ceil(self.viewed[0]+self.viewedWidth)):
