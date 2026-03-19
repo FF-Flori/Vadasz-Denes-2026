@@ -22,7 +22,7 @@ Használt külső csomagok:
             - CTkListbox
             - matplotlib
 
-        Vizualizáció:
+        Szimuláció:
             - pygame
     C++:
         - pybind11
