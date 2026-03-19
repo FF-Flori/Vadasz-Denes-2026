@@ -150,7 +150,7 @@ void Pathfinder::Path::aStar() {
 
 	std::priority_queue<Node, std::vector<Node>, std::greater<>> openSet;
 	std::unordered_map<coord_t, TraceData, CoordHash> tracesToStart;
-	tracesToStart.reserve(3*MAP_WIDTH);
+	tracesToStart.reserve(3 * MAP_WIDTH);
 
 	openSet.emplace(startPos, 0, endPos);
 	tracesToStart[startPos] = {Directions::NO_DIRECTION, 0};
@@ -901,8 +901,6 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	size_t currentIndex; // this variable made me sitting in front of the screen for hours (instead of size_t, it was falsely made uint16_t and cut the whole index in half, holy idiot)
 	auto currentSpeed = instruction_t::no_instruction;
 	Path currentPath = paths[getPathIndex(oreGroups.size() - 1, genome->dna[currentState.groupIndex])];
-	std::reverse(currentPath.path.begin(), currentPath.path.end()); // reason: path always starts at the higher group index and goes towards the smaller one
-	bool isCurrentPathReversed = false;
 
 	uint32_t i = 0;
 	while (currentState.time > START_TIME) {
@@ -910,7 +908,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		currentIndex = getStateIndex(currentState);
 		parentState = parentTable[currentIndex];
 
-		// something strange happened (something is probably fucked up in the first part of this function) TODO: this is unused on an ideal run
+		// something strange happened (something is probably fucked up in the first part of this function)
 		if (parentState.isReturning > 1) [[unlikely]] {
 			throw std::logic_error("Something went wrong while tracing back the path in Pathfinder::calculateInstructions! (invalid isReturning state) : traceback iter. " + std::to_string(i));
 		}
@@ -926,13 +924,11 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			// get next path
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
-				isCurrentPathReversed = true;
-				if (genome->dna[parentState.groupIndex] < genome->dna[parentState.groupIndex - 1]) {
+				if (genome->dna[parentState.groupIndex] > genome->dna[parentState.groupIndex - 1]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
-				isCurrentPathReversed = false;
 			}
 
 			currentState = parentState;
@@ -950,13 +946,11 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			// get next path
 			if (parentState.groupIndex > 0) {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], genome->dna[parentState.groupIndex - 1])];
-				isCurrentPathReversed = true;
-				if (genome->dna[parentState.groupIndex] < genome->dna[parentState.groupIndex - 1]) {
+				if (genome->dna[parentState.groupIndex] > genome->dna[parentState.groupIndex - 1]) {
 					std::reverse(currentPath.path.begin(), currentPath.path.end());
 				}
 			} else {
 				currentPath = paths[getPathIndex(genome->dna[parentState.groupIndex], oreGroups.size() - 1)];
-				isCurrentPathReversed = true;
 			}
 
 			currentState = parentState;
@@ -966,7 +960,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 		// normal movement
 		uint16_t difference = currentState - parentState;
 
-		// if the difference between states is higher than 3, it's impossible to do in one step TODO: this is unused on an ideal run
+		// if the difference between states is higher than 3, it's impossible to do in one step
 		if (difference > 3) [[unlikely]] {
 			throw std::logic_error("Something went wrong while tracing back the path in Pathfinder::calculateInstructions! (difference bigger than 3) : traceback iter. " + std::to_string(i));
 		}
@@ -984,14 +978,11 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			auto toCoord = currentPath.path[parentState.dist + d];
 
 			// instruction is reversed if the current path is reversed
-			if (isCurrentPathReversed) {
-				toRoute.push_back(toCoord.getInstructionTo(fromCoord));
-			} else {
-				toRoute.push_back(fromCoord.getInstructionTo(toCoord));
-			}
+			toRoute.push_back(fromCoord.getInstructionTo(toCoord));
 		}
 
 		if (difference == 0) {
+			// do a dummy instruction when the speed mode is 0 to wait a half hour
 			toRoute.push_back(instruction_t::right);
 		}
 
