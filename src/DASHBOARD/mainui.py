@@ -8,6 +8,7 @@ from src.DASHBOARD.fullgraphwindow import *
 from src.DASHBOARD.logread import *
 import math
 from pathlib import Path
+import sys
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.colors import ListedColormap
@@ -31,7 +32,12 @@ class DashboardUI:
     def __init__(self, main:Ctk.CTk, selectedlogfile:str):
         self.main:Ctk.CTk = main
         self.selectedmainlogfile:str = "log/" + selectedlogfile + ".log"
-        self.main.iconphoto(True, PhotoImage(file="src/img/dashboardicon.png"))
+        
+        if sys.platform.startswith("win"):
+            self.main.iconbitmap("src/img/dashboardicon.ico")
+        else:
+            icon = PhotoImage(file="src/img/dashboardicon.png")
+            self.main.iconphoto(True, icon)
         
         clearwidget(self.main)
 
@@ -541,7 +547,6 @@ class DashboardUI:
                         grid_row.append(4)
 
                     elif tile == "S":
-
                         grid_row.append(5)
 
                         start_x = x
