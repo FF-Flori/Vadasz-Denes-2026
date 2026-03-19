@@ -904,7 +904,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	std::reverse(currentPath.path.begin(), currentPath.path.end()); // reason: path always starts at the higher group index and goes towards the smaller one
 	bool isCurrentPathReversed = false;
 
-	uint i = 0;
+	uint32_t i = 0;
 	while (currentState.time > START_TIME) {
 		i++;
 		currentIndex = getStateIndex(currentState);
