@@ -86,7 +86,9 @@ class Logexplorer:
 
         self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
-        if len(os.listdir(self.mainlog)) <= 0:
+        self.listlog2 = [f for f in os.listdir(self.mainlog) if f.endswith(".log")]
+
+        if len(self.listlog2) <= 0:
             self.listbox.pack_forget()
             self.donebtn.pack_forget()
             self.errorframe.pack(expand=True)
@@ -96,12 +98,18 @@ class Logexplorer:
             self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
             self.listbox.delete(0, END)
-            for file in os.listdir(self.mainlog):
+
+            for file in self.listlog2:
                 self.listbox.insert(END, file[:-4])
 
     def reflesh(self):
+        self.listlog2 = [f for f in os.listdir(self.mainlog) if f.endswith(".log")]
 
-        if len(os.listdir(self.mainlog)) <= 0:
+        for i in range(len(self.listlog2)-1):
+            if self.listlog2[i].endswith(".log") == False:
+                self.listlog2.remove(self.listlog2[i])
+
+        if len(self.listlog2) <= 0:
             self.listbox.pack_forget()
             self.donebtn.pack_forget()
             self.errorframe.pack(expand=True)
@@ -111,7 +119,7 @@ class Logexplorer:
             self.donebtn.pack(side=BOTTOM, fill=X, padx=5, pady=5)
 
             self.listbox.delete(0, END)
-            for file in os.listdir(self.mainlog):
+            for file in self.listlog2:
                 self.listbox.insert(END, file[:-4])
 
     def done(self, logfile):

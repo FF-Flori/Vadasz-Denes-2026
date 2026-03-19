@@ -93,7 +93,7 @@ class FullGraphWindow:
                 "#2e3237",
                 "gray",
                 "cyan",
-                "yellow",
+                "#CCCC00",
                 "green",
                 "lightgreen"
             ])
@@ -106,20 +106,10 @@ class FullGraphWindow:
             )
 
             if alldata != None:
-
-                self.traveled_coords = self.ax.scatter(
-                    self.start_x,
-                    self.start_y,
-                    color="white",
-                    alpha=0.3,
-                    s=40
-                )
-
                 self.traveled_coords_line = self.ax.plot(
                         self.start_x,
                         self.start_y,
-                        color="white",
-                        alpha=0.3
+                        color="yellow"
                     )
                 
             self.rover_coords = self.ax.scatter(self.start_x, self.start_y, color="red", s=40)
@@ -184,14 +174,6 @@ class FullGraphWindow:
 
                 
                 for i in range(len(alldata)):
-                    self.traveled_coords = self.ax.scatter(
-                        alldata[i][0],
-                        alldata[i][1],
-                        color="white",
-                        alpha=0.3,
-                        s=40
-                    )
-
                     alldatax.append(
                         alldata[i][0]
                     )
@@ -203,8 +185,7 @@ class FullGraphWindow:
                 self.traveled_coords_line = self.ax.plot(
                         alldatax,
                         alldatay,
-                        color="white",
-                        alpha=0.3
+                        color="yellow"
                     )
                 
             self.ax.set_ylabel(self.ylabel, color="white")
