@@ -1,0 +1,1 @@
+Ide jönnek a logok pacekba
