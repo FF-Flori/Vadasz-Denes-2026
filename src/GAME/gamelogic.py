@@ -20,11 +20,11 @@ class GameLogic:
         with open("./mars_map_50x50.csv") as file:
             for row in file.readlines():
                 self.map.append(row.strip().split(','))
-        self.viewedWidth:int = self.width//self.orewidth
+        self.viewedWidth:float= self.width/self.orewidth
         self.rover:Rover = Rover(self.map)
         self.rover.setGear(1)
 
-        self.zoom:float = 0.5
+        self.zoom:float = 1
         self.createBG()
         self.scaledBG:pygame.Surface = self.background
         
@@ -55,6 +55,8 @@ class GameLogic:
         self.paused:bool = False
         self.pausedonlast:bool = False
         self.scale()
+        # Starts at 0 0, so its just the coords of the rover
+        self.moveCamera(self.rover.pos[0]-self.viewedWidth//2,self.rover.pos[1]-self.viewedWidth//2)
 
     def SetTimeValue(self, simtime:int)->None:
         self.setTime = simtime
@@ -111,8 +113,8 @@ class GameLogic:
             oreRect.x = 0
             screen.blit(self.oreImgs,(posx,posy), oreRect)
     def scale(self):
-        if self.zoom > 5:
-            self.zoom = 5
+        if self.zoom > 2:
+            self.zoom = 2
         if self.zoom < 0.3:
             self.zoom = 0.3
         center:list[float] = [self.viewed[0]+self.viewedWidth/2,self.viewed[1]+self.viewedWidth/2]
@@ -121,7 +123,7 @@ class GameLogic:
         if ceil(self.width//neworewidth) >= len(self.map):
             self.zoom += 0.1
             return
-        self.viewedWidth = self.width//self.orewidth
+        self.viewedWidth = self.width/self.orewidth
         self.oreImgs = pygame.transform.scale(self.oreSrc,(self.oreSrc.get_width()*self.zoom,self.oreSrc.get_height()*self.zoom))
         self.rover.scaled = pygame.transform.scale(self.rover.sprite,(self.rover.sprite.get_width()*self.zoom,self.rover.sprite.get_height()*self.zoom))
         self.rover.scaledwidth = self.rover.spritewidth*self.zoom
@@ -133,14 +135,13 @@ class GameLogic:
         if dispX != 0:
             if self.viewed[0] < 0:
                 self.viewed[0] = 0
-            elif ceil(self.viewed[0]+self.viewedWidth) > len(self.map[0]):
-                self.viewed[0] = len(self.map[0])-self.viewedWidth-0.3
+            elif self.viewed[0]+self.viewedWidth > len(self.map[0]):
+                self.viewed[0] = len(self.map[0])-self.viewedWidth
         if dispY != 0:
             if self.viewed[1] < 0:
                 self.viewed[1] = 0
-            elif ceil(self.viewed[1]+self.viewedWidth) > len(self.map):
-                self.viewed[1] = len(self.map)-self.viewedWidth-0.3
-
+            elif self.viewed[1]+self.viewedWidth > len(self.map):
+                self.viewed[1] = len(self.map)-self.viewedWidth
     def traversePath(self)->None:
         # Checking instructions
         self.mined = ''
@@ -228,16 +229,23 @@ class GameLogic:
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
         # Input stuff
         keys = pygame.key.get_pressed()
+        xdisp:float = 0
+        ydisp:float = 0
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.moveCamera(-self.speed/1000*deltaTime,0)
+            xdisp -= self.speed/self.zoom/1000*deltaTime
         if keys[pygame.K_w] or keys[pygame.K_UP]:
-            self.moveCamera(0,-self.speed/1000*deltaTime)
+            ydisp -= self.speed/self.zoom/1000*deltaTime
         if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            self.moveCamera(0,self.speed/1000*deltaTime)
+            ydisp += self.speed/self.zoom/1000*deltaTime
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.moveCamera(self.speed/1000*deltaTime,0)
+            xdisp += self.speed/self.zoom/1000*deltaTime
+        if keys[pygame.K_SPACE]:
+            xdisp = self.rover.pos[0]-self.viewedWidth/2-self.viewed[0]
+            ydisp = self.rover.pos[1]-self.viewedWidth/2-self.viewed[1]
+        self.moveCamera(xdisp,ydisp)
         if (keys[pygame.K_p] or keys[pygame.K_ESCAPE]) and not self.pausedonlast:
             self.paused = not self.paused
+            print(self.viewed,self.viewedWidth)
         self.pausedonlast = keys[pygame.K_p] or keys[pygame.K_ESCAPE]
 
         # Logic stuff
@@ -249,6 +257,7 @@ class GameLogic:
 
         #Drawing stuff
 
+        screen.fill("black")
         screen.blit(self.scaledBG,(0,0),(self.viewed[0]*self.orewidth,self.viewed[1]*self.orewidth,self.width,self.height))
 
         for y in range(int(self.viewed[1]),ceil(self.viewed[1]+self.viewedWidth)):
