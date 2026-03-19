@@ -264,7 +264,7 @@ class GameLogic:
         if self.framesToTimeInc < 1:
             if isday:
                 self.rover.battery += 10
-            self.framesToTimeInc = 1
+            self.framesToTimeInc = self.rover.gear
             self.simulationTime += 30
         if self.rover.battery > 100:
             self.rover.battery = 100
