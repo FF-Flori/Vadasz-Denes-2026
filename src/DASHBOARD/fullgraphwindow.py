@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.colors import ListedColormap
 import csv
+import sys
 from tkinter import PhotoImage
 
 class FullGraphWindow:
@@ -12,7 +13,12 @@ class FullGraphWindow:
         self.win.title("Dashboard - " + title)
         self.win.geometry("900x600")
         self.win.resizable(True, True)
-        self.win.iconphoto(True, PhotoImage(file="src/img/dashboardicon.png"))
+        
+        if sys.platform.startswith("win"):
+            self.win.iconbitmap("src/img/dashboardicon.ico")
+        else:
+            icon = PhotoImage(file="src/img/dashboardicon.png")
+            self.win.iconphoto(True, icon)
 
         self.fg, self.ax = plt.subplots(figsize=(4, 3), dpi=100)
 

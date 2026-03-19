@@ -2,6 +2,7 @@ import customtkinter as Ctk
 from customtkinter import *
 from CTkListbox import *
 import os
+import sys
 from pathlib import Path
 from tkinter import PhotoImage
 
@@ -16,7 +17,12 @@ class Logexplorer:
         self.main.title("Dashboard - Log kiválasztása")
         self.main.geometry("400x400")
         self.main.resizable(True, True)
-        self.main.iconphoto(True, PhotoImage(file="src/img/dashboardicon.png"))
+        
+        if sys.platform.startswith("win"):
+            self.main.iconbitmap("src/img/dashboardicon.ico")
+        else:
+            icon = PhotoImage(file="src/img/dashboardicon.png")
+            self.main.iconphoto(True, icon)
 
         self.frame = CTkFrame(self.main, corner_radius=10, fg_color="transparent")
         self.frame.pack(fill=BOTH, expand=True, padx=10, pady=10)
