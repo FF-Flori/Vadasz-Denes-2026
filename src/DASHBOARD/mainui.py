@@ -561,7 +561,7 @@ class DashboardUI:
                 "#2e3237",
                 "gray",
                 "cyan",
-                "yellow",
+                "#CCCC00",
                 "green",
                 "lightgreen"
             ])
@@ -573,19 +573,10 @@ class DashboardUI:
                 extent=(0,50,50,0)
             )
 
-            traveled_coords = ax.scatter(
-                    start_x,
-                    start_y,
-                    color="white",
-                    alpha=0.3,
-                    s=40
-                )
-
             traveled_coords_line = ax.plot(
                     start_x,
                     start_y,
-                    color="white",
-                    alpha=0.3
+                    color="yellow"
                 )
 
             rover_coords = ax.scatter(start_x, start_y, color="red", s=40)
@@ -601,12 +592,12 @@ class DashboardUI:
 
             ax.set_aspect("auto")
             ax.invert_yaxis()
-            return fg, ax, canvas, rover_coords, rover_coordstxt, traveled_coords, traveled_coords_line, start_x, start_y
+            return fg, ax, canvas, rover_coords, rover_coordstxt, traveled_coords_line, start_x, start_y
 
         self.batteryfg, self.batteryax, self.batterycanvas, self.batterybar = createbardiagram("Töltöttség (%)", "Idő (óra:perc)", self.batteryframe)
         self.speedfg, self.speedax, self.speedcanvas = createlinediagram("Sebbesség", "Idő (óra:perc)", ["Áll", "Lassú", "Normál", "Gyors"], [0, 1, 2, 3], self.speedframe)
         self.materialfg, self.materialax, self.materialcanvas = createpiediagram(self.materialframe)
-        self.positionfg, self.positionax, self.positioncanvas, self.rover_coords, self.rover_coordstxt, self.traveled_coords, self.traveled_coords_line, self.start_x, self.start_y = createcoordinatesdiagram(self.positionframe)
+        self.positionfg, self.positionax, self.positioncanvas, self.rover_coords, self.rover_coordstxt, self.traveled_coords_line, self.start_x, self.start_y = createcoordinatesdiagram(self.positionframe)
         
         self.logframe2 = CTkFrame(
             self.logframe,
@@ -841,7 +832,7 @@ class DashboardUI:
                 self.fullgraph_position.alldata = positionList
                 self.fullgraph_position.update_graph()
 
-            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "yellow", "green"], ["Vízjég", "Arany", "Smaragd"])           
+            piediagram(self.materialax, self.materialcanvas, [materialB, materialY, materialG], ["cyan", "#CCCC00", "green"], ["Vízjég", "Arany", "Smaragd"])           
             self.positionvar.set(value=f"X: {positionX} | Y: {positionY}")
             self.rover_coords.set_offsets([positionX, positionY])
             self.rover_coordstxt.set_position([positionX, positionY])
@@ -855,14 +846,6 @@ class DashboardUI:
 
                 
             for i in range(len(alldata)):
-                self.traveled_coords = self.positionax.scatter(
-                    alldata[i][0],
-                    alldata[i][1],
-                    color="white",
-                    alpha=0.3,
-                    s=40
-                )
-
                 alldatax.append(
                     alldata[i][0]
                 )
@@ -874,8 +857,7 @@ class DashboardUI:
             self.traveled_coords_line = self.positionax.plot(
                     alldatax,
                     alldatay,
-                    color="white",
-                    alpha=0.3
+                    color="yellow"
                 )
             
             self.positioncanvas.draw_idle()
