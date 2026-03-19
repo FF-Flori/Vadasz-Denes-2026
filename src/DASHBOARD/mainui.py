@@ -11,6 +11,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.colors import ListedColormap
+from tkinter import PhotoImage
 
 logline:int = 1
 logsize:int = 0
@@ -30,7 +31,7 @@ class DashboardUI:
     def __init__(self, main:Ctk.CTk, selectedlogfile:str):
         self.main:Ctk.CTk = main
         self.selectedmainlogfile:str = "log/" + selectedlogfile + ".log"
-        self.main.iconbitmap("src/img/dashboardicon.ico")
+        self.main.iconphoto(True, PhotoImage(file="src/img/dashboardicon.png"))
         
         clearwidget(self.main)
 
@@ -95,13 +96,21 @@ class DashboardUI:
             elif graph_type == "coords":
                 self.fullgraph_position = FullGraphWindow(self.main, "Rover poziciója", positionX, positionY, "Y", "X", mode="coords", alldata=positionList)
 
-        def create_panel(parent, title, row, col, colspan=1, rfbtn=False, BG=BG2, typein=""):
-            outer = CTkFrame(
-                parent,
-                fg_color=BG,
-                border_width=2,
-                corner_radius=10
-            )
+        def create_panel(parent, title, row, col, colspan=1, rfbtn=False, BG=BG2, typein="", scroll=False):
+            if scroll:
+                outer = CTkScrollableFrame(
+                    parent,
+                    fg_color=BG,
+                    border_width=2,
+                    corner_radius=10
+                )
+            else:
+                outer = CTkFrame(
+                    parent,
+                    fg_color=BG,
+                    border_width=2,
+                    corner_radius=10
+                )
 
             outer.grid(
                 row=row,
@@ -118,7 +127,7 @@ class DashboardUI:
             CTkLabel(
                 outer,
                 text=title,
-                font=CTkFont(family="Courier New", size=18, weight="bold")
+                font=CTkFont(family="Courier New", size=16, weight="bold")
             ).grid(row=0, column=0, sticky="ew", pady=(5, 0), padx=(5,5))
 
             if rfbtn:
@@ -151,7 +160,8 @@ class DashboardUI:
             self.bodyframe,
             "Egyéb Adatok",
             0, 0,
-            BG=BG2
+            BG=BG2,
+            scroll=True
         )
 
         self.batteryframe = create_panel(
@@ -243,8 +253,6 @@ class DashboardUI:
 
         for i in range(2):
             self.dataframe.columnconfigure(i, weight=1)
-            if i < 1:
-                self.dataframe.rowconfigure(i, weight=1)
     
         self.timeframe = create_panel(
             self.dataframe,
@@ -259,13 +267,13 @@ class DashboardUI:
         CTkLabel(
             self.timeframe,
             textvariable=self.timevar,
-            font=CTkFont(family="Courier New", size=25, weight="bold")
+            font=CTkFont(family="Courier New", size=20, weight="bold")
             ).pack()
         
         CTkLabel(
             self.timeframe,
             textvariable=self.subtimevar,
-            font=CTkFont(family="Courier New", size=20, weight="bold")
+            font=CTkFont(family="Courier New", size=15, weight="bold")
         ).pack()
 
         self.datadistanceframe = create_panel(
@@ -280,7 +288,7 @@ class DashboardUI:
         CTkLabel(
             self.datadistanceframe,
             textvariable=self.distancevar,
-            font=CTkFont(family="Courier New", size=25, weight="bold")
+            font=CTkFont(family="Courier New", size=20, weight="bold")
         ).pack()
 
         self.databatteryframe = create_panel(
@@ -297,19 +305,19 @@ class DashboardUI:
         CTkLabel(
             self.databatteryframe,
             textvariable=self.datamindtvar,
-            font=CTkFont(family="Courier New", size=20, weight="bold")
+            font=CTkFont(family="Courier New", size=15, weight="bold")
         ).pack()
 
         CTkLabel(
             self.databatteryframe,
             textvariable=self.dataatlagdtvar,
-            font=CTkFont(family="Courier New", size=20, weight="bold")
+            font=CTkFont(family="Courier New", size=15, weight="bold")
         ).pack()
 
         CTkLabel(
             self.databatteryframe,
             textvariable=self.datamaxdtvar,
-            font=CTkFont(family="Courier New", size=20, weight="bold")
+            font=CTkFont(family="Courier New", size=15, weight="bold")
         ).pack()
 
         self.dataaiframe = create_panel(
@@ -325,25 +333,25 @@ class DashboardUI:
         CTkLabel(
             self.dataaiframe,
             text="Ásvány / blokk:",
-            font=CTkFont(family="Courier New", size=20, weight="bold")
+            font=CTkFont(family="Courier New", size=15, weight="bold")
         ).pack()
 
         CTkLabel(
             self.dataaiframe,
             textvariable=self.dataaiblokkvar,
-            font=CTkFont(family="Courier New", size=17, weight="bold")
+            font=CTkFont(family="Courier New", size=12, weight="bold")
         ).pack()
 
         CTkLabel(
             self.dataaiframe,
             text="Ásvány / energia:",
-            font=CTkFont(family="Courier New", size=20, weight="bold")
+            font=CTkFont(family="Courier New", size=15, weight="bold")
         ).pack()
 
         CTkLabel(
             self.dataaiframe,
             textvariable=self.dataaienergiavar,
-            font=CTkFont(family="Courier New", size=17, weight="bold")
+            font=CTkFont(family="Courier New", size=12, weight="bold")
         ).pack()
 
         def createbardiagram(ylabel:str, xlabel:str, frame:CTkFrame):
@@ -755,6 +763,13 @@ class DashboardUI:
 
                 return bar
             
+            def make_autopct(values):
+                def my_autopct(pct):
+                    total = sum(values)
+                    val = int(round(pct * total / 100.0))
+                    return f"{pct:.1f}%\n({val})"
+                return my_autopct
+
             def piediagram(ax, canvas, datas:list, datascolor:list, legendtitles:list):
                 ax.clear()
 
@@ -763,7 +778,7 @@ class DashboardUI:
                     [1,1,1],
                     colors=datascolor,
                     shadow=True,
-                    autopct="%1.1f%%",
+                    autopct=make_autopct(datas),
                     startangle=90,
                     radius=1.2
                     )
@@ -773,13 +788,12 @@ class DashboardUI:
                         datas,
                         colors=datascolor,
                         shadow=True,
-                        autopct="%1.1f%%",
+                        autopct=make_autopct(datas),
                         startangle=90,
                         radius=1.2
                     )
 
                 for autotext in autotexts:
-
                     autotext.set_color('black')
                     autotext.set_fontweight('bold')
 
