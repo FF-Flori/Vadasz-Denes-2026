@@ -901,6 +901,7 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 	size_t currentIndex; // this variable made me sitting in front of the screen for hours (instead of size_t, it was falsely made uint16_t and cut the whole index in half, holy idiot)
 	auto currentSpeed = instruction_t::no_instruction;
 	Path currentPath = paths[getPathIndex(oreGroups.size() - 1, genome->dna[currentState.groupIndex])];
+	std::reverse(currentPath.path.begin(), currentPath.path.end());
 
 	uint32_t i = 0;
 	while (currentState.time > START_TIME) {
