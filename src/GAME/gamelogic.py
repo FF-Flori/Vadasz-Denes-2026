@@ -266,13 +266,13 @@ class GameLogic:
                 self.rover.battery += 10
             self.framesToTimeInc = self.rover.gear
             self.simulationTime += 30
+            self.writeToLog()
         if self.rover.battery > 100:
             self.rover.battery = 100
         elif self.rover.battery < 0:
             print("Why the fuck")
             self.rover.battery = 0
 
-        self.writeToLog()
         self.isday = (self.simulationTime//30)%48<32
     # deltaTime is in miliseconds
     def Update(self,deltaTime:float,screen:pygame.Surface) -> None:
