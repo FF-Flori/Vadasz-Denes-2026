@@ -274,7 +274,7 @@ class GameLogic:
         if self.framesToTimeInc < 1:
             if self.rover.gear > 0:
                 if self.mined != '':
-                    self.rover.battery += 2*self.rover.gear*self.rover.gear
+                    self.rover.battery -= 2*self.rover.gear*self.rover.gear
                 else:
                     self.rover.battery -= 2
             else:
