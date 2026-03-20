@@ -49,9 +49,8 @@ jobs:
         shell: bash
         run: |
           ZIP_NAME="${{ matrix.os }}-python${{ matrix.python-version }}.zip"
-          echo "TO=$ZIP_NAME" >> $GITHUB_ENV
           
-          zip -r "$ZIP_NAME" *
+          zip -r $ZIP_NAME . -x "*.git*"
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
