@@ -24,9 +24,9 @@ set(SOURCES
 pybind11_add_module(pathfinder ${SOURCES})
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(pathfinder PRIVATE -O3 -march=native -Wall -Wextra -DNDEBUG)
+    target_compile_options(pathfinder PRIVATE -O3 -march=native -Wall -Wextra)
 elseif(MSVC)
-    target_compile_options(pathfinder PRIVATE /O2 /arch:AVX2 /W4 /DNDEBUG)
+    target_compile_options(pathfinder PRIVATE /O2 /arch:AVX2 /W4)
 endif()
 
 include(CheckIPOSupported)
