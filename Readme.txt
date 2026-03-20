@@ -5,15 +5,21 @@ Feladatot beküldő csapat adatai:
     Email cím: filkohaziflorian@irinyi-ref.hu
     Tagok nevei: Filkóházi Flórián, Bondár-Oláh Bence, Hegedűs István András
 
-Programfejlesztői környezet leírása:
+Programfejlesztői környezetek és használt nyelvek/eszközök verziója:
     Visual Studio Code:
         Verziója: 1.11.0
     Neovim:
         Verziója: 0.11.5
+    CLion:
+        Verziója: 2025.2.2
     Python:
         Verziója: 3.13.7
-    cmake:
+    C++:
+        Verziója: 17
+    CMake:
         Verziója: 4.2.3
+    Pybind11:
+        Verziója: 3.0.2
 
 Használt külső csomagok:
     Python:
@@ -32,8 +38,8 @@ Rövid használati útmutató:
 		Dashboardot lehet külön is indítani, nem kell kötelezően a programból indítani.
 
 		Első indítás előtt:
-			Kötelezően telepíteni kell a fent felsorolt dolgokat (a külső csomagoknál a dashboard résznél). 
-			Windowsban elég elíndítani az "install.bat" fájlt, ami letölti a szükséges Python csomagokat. Ehhez szükséges a telepített Python.
+			Érdemes telepíteni a fent felsorolt dolgokat (a külső csomagoknál a dashboard és szimuláció résznél).
+			Release-ként letöltött programfájlok esetén a szükséges python csomagok már le vannak töltve az adott rendszerhez.
 
 		Indítás:
 			Lehet 2 féleképpen indítani:
@@ -70,7 +76,7 @@ Rövid használati útmutató:
 						Egy log kijelölése után a továbbjutáshoz a kék "Kész" gombra kell nyomni.
 
 	Szimuláció:
-		A szimulációt kettő féle képpen lehet elindítani:
+		A szimulációt kettő féleképpen lehet elindítani:
 			- argumentumokkal
 				A program futtatásakor egy argumentumot adhat a felhasználó, ami megadja a szimulációnak, hogy hány óráig tartson. Ennek a számnak 24 és 32767 között kell lennie mindkettő végpontot beleértve.
 				Ha a program argumentummal van indítva, akkor a Főmenü után egyből elindul a szimuláció, és nem fogja a felhasználó látni, a "szimulációs idő megadása" ablakot.
