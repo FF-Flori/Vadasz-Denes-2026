@@ -1,4 +1,6 @@
-# Pathfinder structure
+# Pathfinder
+
+## Planning
 
 ### A) Get data - constructor
 - time limit
@@ -22,15 +24,14 @@
 
 ### D) Genetic algorithm
 - generate start paths
-- powerful fitness function
+- make a fitness function to have a close estimate of a genome's fitness
   - implement multi-threading
 - mutations
 - provide some information about generations and their success rate
 
 ### E) Provide calculated data
-- generation data
-  - best few paths per generation
+- genetic generations' data
+  - best few fitness values per generation
   - mutations used
-- calculated best path
+- instructions for best path
 - time and resources used
-- free used memory space
