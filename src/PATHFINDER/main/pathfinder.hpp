@@ -19,13 +19,13 @@ class Pathfinder {
 	public:
 		// constants
 		// global settings
-		static constexpr uint8_t MAP_WIDTH = 50;
-		static constexpr uint8_t GROUP_LIMIT = 9;
+		static constexpr uint8_t MAP_WIDTH = 50; // width (and height) of the map
+		static constexpr uint8_t GROUP_LIMIT = 3; // ore group size limit
 		static constexpr uint8_t START_TIME = 0; // how many half hours after 0:00
 		static constexpr uint8_t START_BATTERY = 100; // battery percentage at start
 
 		// genetic algorithm settings
-		static constexpr uint16_t GENETIC_ITERS   = 1600; // number of generations
+		static constexpr uint16_t GENETIC_ITERS   = 2000; // number of generations
 		static constexpr uint16_t GENERATION_SIZE = 900; // number of genomes in a generation
 
 		static constexpr uint16_t ELITISM         = GENERATION_SIZE *  5 / 100; // number of elements to be passed along by elitism

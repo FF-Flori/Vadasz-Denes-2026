@@ -1,0 +1,85 @@
+name: Build and Release Pathfinder
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ] # vX.Y.Z
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }} with Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Kód letöltése
+        uses: actions/checkout@v4
+
+      - name: Python ${{ matrix.python-version }} beállítása
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: CMake fordítás
+        shell: bash
+        run: |
+          cd src/PATHFINDER
+          
+          cmake -S . -B temp_cmake_build -DCMAKE_BUILD_TYPE=Release
+          cmake --build temp_cmake_build --config Release
+          
+          rm -rf temp_cmake_build
+          
+          if [ -d "build/Release" ]; then
+              mv build/Release/* build/
+              rm -rf build/Release
+          fi
+
+      - name: Zip project
+        shell: bash
+        run: |
+          ZIP_NAME="${{ matrix.os }}-python${{ matrix.python-version }}.zip"
+          echo "TO=$ZIP_NAME" >> $GITHUB_ENV
+          
+          zip -r $ZIP_NAME . -x "*.git*"
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-zip-${{ matrix.os }}-${{ matrix.python-version }}
+          path: ${{ env.ZIP_NAME }}
+          retention-days: 1
+
+  release:
+    name: Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get zips
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
+
+      - name: Group artifacts
+        run: |
+          mkdir release_assets
+          find all-artifacts -name "*.zip" -exec mv {} release_assets/ \;
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release_assets/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

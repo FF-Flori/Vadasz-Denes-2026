@@ -36,13 +36,7 @@ if(ipo_supported)
 endif()
 
 if(MINGW)
-    target_link_options(pathfinder PRIVATE "-ltbb" "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive")
-endif()
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-	find_package(TBB REQUIRED)
-	target_link_libraries(pathfinder PRIVATE TBB::tbb)
-	#target_link_options(pathfinder PRIVATE "-ltbb" "-static-libgcc" "-static-libstdc++")
+    target_link_options(pathfinder PRIVATE "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive")
 endif()
 
 set_target_properties(pathfinder PROPERTIES
