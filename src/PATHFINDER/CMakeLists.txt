@@ -35,10 +35,6 @@ if(ipo_supported)
     set_property(TARGET pathfinder PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-if(MINGW)
-    target_link_options(pathfinder PRIVATE "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive")
-endif()
-
 set_target_properties(pathfinder PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"
