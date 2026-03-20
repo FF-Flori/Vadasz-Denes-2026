@@ -220,6 +220,9 @@ class GameLogic:
 
     def traversePath(self)->None:
         # Checking instructions
+        if self.posinRoute == len(self.route):
+            self.writeToLog()
+            self.posinRoute+=1
         self.mined = ''
         isday = (self.simulationTime//30)%48<32
         moved:bool = False
@@ -313,7 +316,7 @@ class GameLogic:
         if not self.paused:
             self.rover.update(deltaTime)
             if self.setTime - self.simulationTime > 0 and not self.impossible:
-                if self.rover.target[0] == -1 and self.rover.target[1] == -1 and self.posinRoute < len(self.route):
+                if self.rover.target[0] == -1 and self.rover.target[1] == -1 and self.posinRoute <= len(self.route):
                     self.traversePath()
 
         #Drawing stuff
