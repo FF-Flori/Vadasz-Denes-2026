@@ -24,15 +24,19 @@ set(SOURCES
 pybind11_add_module(pathfinder ${SOURCES})
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(pathfinder PRIVATE -O3 -march=native -Wall -Wextra)
+    target_compile_options(pathfinder PRIVATE -O3 -march=native -Wall -Wextra -DNDEBUG)
 elseif(MSVC)
-    target_compile_options(pathfinder PRIVATE /O2 /arch:AVX2 /W4)
+    target_compile_options(pathfinder PRIVATE /O2 /arch:AVX2 /W4 /DNDEBUG)
 endif()
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported)
     set_property(TARGET pathfinder PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
+if(MINGW)
+    target_link_options(pathfinder PRIVATE "-static-libgcc" "-static-libstdc++" "-Wl,-Bstatic,--whole-archive" "-lwinpthread" "-Wl,--no-whole-archive")
 endif()
 
 set_target_properties(pathfinder PROPERTIES

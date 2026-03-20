@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
@@ -48,7 +48,7 @@ jobs:
       - name: Zip project
         shell: bash
         run: |
-          zip -r "${{ matrix.os }}-python${{ matrix.python-version }}.zip" . -x "*.git*"
+          7z a -tzip "windows-latest-python3.13.zip" . -xr!".git*"
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
