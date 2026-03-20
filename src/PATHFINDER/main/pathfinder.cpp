@@ -13,7 +13,6 @@
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file
-	std::cout<<"Opening...\n";
 	std::ifstream file(mapPath);
 	if (!file.is_open()) {
 		throw std::runtime_error("Couldn't open file: " + mapPath);
@@ -24,7 +23,6 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 
 	// read lines
 	while (std::getline(file, line) && y < MAP_WIDTH) {
-		std::cout<<"\n"<<static_cast<int>(y)<<": ";
 		// read chars
 		for (uint8_t x = 0; x < MAP_WIDTH && x < line.length(); x++) {
 			const char c = line[x*2];
@@ -44,31 +42,25 @@ Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : t
 					type = tile_t::wall;
 					break;
 			}
-			std::cout<<c;
 
 			// append value to map
 			map[getIndex(x, y)] = type;
 		}
 		y++;
 	}
-	std::cout<<"\nRead file\n";
 
 	file.close();
 }
 
 Pathfinder::route_t Pathfinder::calculate() {
-	std::cout<<"Starting calc\n";
 	groupOres();
-	std::cout<<"Grouped\n";
 
 	// if no ore groups found
 	if (oreGroups.size() < 2) {
-		std::cout << "No ores on map, aborting pathfind.\n";
 		return route_t{}; // empty route
 	}
 
 	// get paths
-	std::cout<<"Calculating paths..\n";
 	paths.reserve(oreGroups.size() * (oreGroups.size() - 1) / 2);
 	for(size_t a = 0; a < oreGroups.size(); a++){
 		for(size_t b = a + 1; b < oreGroups.size(); b++) {
@@ -84,13 +76,11 @@ Pathfinder::route_t Pathfinder::calculate() {
 	paths.shrink_to_fit();
 
 	// Genetic
-	std::cout<<"Starting genetic algorithm...\n";
 	const Genome winner = GeneticAlgorithm();
 
 	// Calculate route from genetic winner
 	route_t route;
 	calculateInstructions(&winner, route);
-	std::cout << "Done" << std::endl;
 
 	// W finally
 	return route;
@@ -212,7 +202,6 @@ void Pathfinder::Path::aStar() {
 }
 
 void Pathfinder::groupOres() {
-	std::cout<<"Called groupOres\n";
 	oreGroups.reserve(65);
 	for(uint8_t y = 0; y < MAP_WIDTH; y++){
 		for(uint8_t x = 0; x < MAP_WIDTH; x++){
@@ -224,27 +213,6 @@ void Pathfinder::groupOres() {
 	}
 	createGroup(startPos.x, startPos.y);
 	oreGroups.shrink_to_fit();
-	for(const OreGroup& group : oreGroups){
-		switch (group.ore) {
-			case tile_t::yellow:
-				std::cout<<"YELLOW:\n";
-				break;
-			case tile_t::green:
-				std::cout<<"GREEN:\n";
-				break;
-			case tile_t::blue:
-				std::cout<<"BLUE:\n";
-				break;
-			default:
-				std::cout<<"ERROR / START POS\n";
-				continue;
-		}
-		for(coord_t tile : group.tiles){
-			std::cout<<"{"<<static_cast<int>(tile.x)<<","<<static_cast<int>(tile.y)<<"},";
-		}
-		std::cout<<"\n";
-	}
-	std::cout<<"There are "<<oreGroups.size()<<"groups\n";
 }
 
 void Pathfinder::checkCoord(const int16_t x, const int16_t y, const tile_t oreType, OreGroup& group){
@@ -297,7 +265,6 @@ Pathfinder::Genome Pathfinder::GeneticAlgorithm() const {
 
 	Genome::initDistribution(dnaSize);
 
-	std::cout<<"Generating random genomes...\n";
 	std::vector<Genome> generation;
 	std::vector<Genome> oldGeneration;
 	generation.reserve(GENERATION_SIZE);
@@ -309,7 +276,6 @@ Pathfinder::Genome Pathfinder::GeneticAlgorithm() const {
 		generation.back().dna = dnaOrder;
 		std::shuffle(generation.back().dna.begin(), generation.back().dna.end(), gen);
 	}
-	std::cout << "Genomes generated\n";
 
 	// multithreading
 	std::for_each(std::execution::par, generation.begin(), generation.end(), [](Genome& g) {
@@ -319,7 +285,6 @@ Pathfinder::Genome Pathfinder::GeneticAlgorithm() const {
 	// sort the elements for the next generation
 	std::partial_sort(generation.begin(), generation.begin() + ELITISM, generation.end(), std::greater<>());
 
-	std::cout << "Starting generations" << std::endl;
 	try {
 		for (uint16_t generationIndex = 0; generationIndex < GENETIC_ITERS; generationIndex++) {
 			oldGeneration = generation;
@@ -387,11 +352,6 @@ Pathfinder::Genome Pathfinder::GeneticAlgorithm() const {
 		}
 	} catch (std::exception& e) {
 		std::cout << "Exception: " << e.what() << std::endl;
-	}
-
-	std::cout << "Genetic algorythm finished!" << std::endl << "Best genome's groups are:" << std::endl;
-	for (const uint16_t gr : generation[0].dna) {
-		std::cout << gr << " (" << static_cast<int>(oreGroups[gr].tiles[0].x) << "; " << static_cast<int>(oreGroups[gr].tiles[0].y) << ")" << std::endl;
 	}
 
 	return generation[0];
@@ -886,9 +846,6 @@ void Pathfinder::calculateInstructions(const Genome* genome, route_t& toRoute) c
 			}
 		}
 	}
-
-	std::cout << std::endl << "Returned ores:" << std::endl;
-	std::cout << static_cast<int>(returnedOres) << std::endl;
 
 	// trace back the best state
 	if (returnedOres == 0) {
