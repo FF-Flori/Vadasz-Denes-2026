@@ -34,6 +34,9 @@ Használt külső csomagok:
         - pybind11
 
 Rövid használati útmutató:
+
+	Az útvonaltervező algoritmust bemutató videó linkje: https://youtu.be/v8WepI7LESs
+
 	Dashboard:
 		Dashboardot lehet külön is indítani, nem kell kötelezően a programból indítani.
 
