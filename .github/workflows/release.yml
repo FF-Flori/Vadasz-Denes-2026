@@ -46,9 +46,9 @@ jobs:
           fi
 
       - name: Zip project
-          shell: bash
-          run: |
-            zip -r "${{ matrix.os }}-python${{ matrix.python-version }}.zip" . -x "*.git*"
+        shell: bash
+        run: |
+          zip -r "${{ matrix.os }}-python${{ matrix.python-version }}.zip" . -x "*.git*"
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
