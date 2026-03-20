@@ -18,7 +18,9 @@ if len(sys.argv) > 1:
     numin = intform
 
 
-window:game.MainWindow = game.MainWindow(700,900,"GAME")
+width:int = 700
+height:int = 900
+window:game.MainWindow = game.MainWindow(width,height,"GAME")
 window.game.gameHandler.inputtime = numin
 
 window.mainloop()
