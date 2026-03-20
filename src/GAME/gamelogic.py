@@ -274,7 +274,7 @@ class GameLogic:
         if self.framesToTimeInc < 1:
             if self.rover.gear > 0:
                 if self.mined != '':
-                    self.rover.battery += 2*self.rover.gear*self.rover.gear
+                    self.rover.battery -= 2*self.rover.gear*self.rover.gear
                 else:
                     self.rover.battery -= 2
             else:
@@ -283,13 +283,14 @@ class GameLogic:
                 self.rover.battery += 10
             self.framesToTimeInc = self.rover.gear
             self.simulationTime += 30
-            self.writeToLog()
 
-        if self.rover.battery > 100:
-            self.rover.battery = 100
-        elif self.rover.battery < 0:
-            print("Why the fuck")
-            self.rover.battery = 0
+            if self.rover.battery > 100:
+                self.rover.battery = 100
+            elif self.rover.battery < 0:
+                print("Why the fuck")
+                self.rover.battery = 0
+
+            self.writeToLog()
 
         self.isday = (self.simulationTime//30)%48<32
     # deltaTime is in miliseconds
