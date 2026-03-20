@@ -22,15 +22,15 @@ jobs:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
-      - name: Kód letöltése
+      - name: Pull
         uses: actions/checkout@v4
 
-      - name: Python ${{ matrix.python-version }} beállítása
+      - name: Set python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: CMake fordítás
+      - name: CMake
         shell: bash
         run: |
           cd src/PATHFINDER
@@ -51,7 +51,7 @@ jobs:
           ZIP_NAME="${{ matrix.os }}-python${{ matrix.python-version }}.zip"
           echo "TO=$ZIP_NAME" >> $GITHUB_ENV
           
-          zip -r $ZIP_NAME . -x "*.git*"
+          zip -r "$ZIP_NAME" *
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
