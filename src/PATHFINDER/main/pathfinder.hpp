@@ -394,7 +394,7 @@ class Pathfinder {
 				[[nodiscard]] static constexpr uint8_t getChebyshev(const coord_t coordA, const coord_t coordB) {
 					return coordA - coordB;
 				}
-				[[nodiscard]] static constexpr uint16_t getSquaredDiagonal(const coord_t coordA, const coord_t coordB) {
+				[[nodiscard]] static uint16_t getSquaredDiagonal(const coord_t coordA, const coord_t coordB) {
 					const uint8_t x = std::abs(coordA.x - coordB.x);
 					const uint8_t y = std::abs(coordA.y - coordB.y);
 					return x * x + y * y;
