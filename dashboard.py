@@ -1,6 +1,19 @@
-import customtkinter as Ctk
-from customtkinter import *
 import sys
+import os
+try:
+    import customtkinter as Ctk
+    from customtkinter import *
+
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    libdeps_path = os.path.join(current_dir, 'src', 'libdeps')
+
+    if libdeps_path not in sys.path:
+        sys.path.insert(0, libdeps_path)
+
+    import customtkinter as Ctk
+    from customtkinter import *
+
 from src.DASHBOARD.logexplorer import *
 from src.DASHBOARD.mainui import *
 

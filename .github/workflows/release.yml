@@ -56,13 +56,13 @@ jobs:
       - name: Zip project
         shell: bash
         run: |
-          7z a -tzip "${{ matrix.os }}-python${{ matrix.python-version }}.zip" . -xr!".git*"
+          7z a -tzip "mars-rover_vd2026_${{ matrix.os }}_python-${{ matrix.python-version }}.zip" . -xr!".git*"
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:
           name: release-zip-${{ matrix.os }}-${{ matrix.python-version }}
-          path: ${{ matrix.os }}-python${{ matrix.python-version }}.zip
+          path: mars-rover_vd2026_${{ matrix.os }}_python-${{ matrix.python-version }}.zip
           retention-days: 1
 
   release:
