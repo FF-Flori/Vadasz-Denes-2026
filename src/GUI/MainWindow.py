@@ -19,11 +19,11 @@ class MainWindow:
         self.height = height
         pygame.init()
         pygame.font.init()
-        self.screen = pygame.display.set_mode((width,height),pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode((width,height),pygame.RESIZABLE,pygame.FULLSCREEN)
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
         self.running = True
-        self.game:GameWindow = GameWindow(width,height)
+        self.game:GameWindow = GameWindow()
         self.lastTime = pygame.time.get_ticks()
         self.deltaTime = 0.16666
     def mainloop(self)->None:

@@ -232,10 +232,6 @@ class GameLogic:
             value = self.route[self.posinRoute]
             if intvalue >= 0 and intvalue < 8:
                 self.rover.moveTo(*self.getDisplacement(value))
-                if self.rover.gear > 0:
-                    self.rover.battery -= 2*self.rover.gear
-                else:
-                    self.rover.battery -=1
                 moved = True
             elif intvalue < 12:
                 if value == Instruction.SET_SPEED_1:
@@ -268,7 +264,6 @@ class GameLogic:
                 self.rover.startIdling()
                 self.framesToTimeInc = 1
                 moved = True
-                self.rover.battery-=2
             else:
                 moved = False
             self.posinRoute += 1
@@ -277,11 +272,19 @@ class GameLogic:
 
         self.framesToTimeInc -= 1
         if self.framesToTimeInc < 1:
+            if self.rover.gear > 0:
+                if self.mined != '':
+                    self.rover.battery += 2*self.rover.gear*self.rover.gear
+                else:
+                    self.rover.battery -= 2
+            else:
+                self.rover.battery -= 1
             if isday:
                 self.rover.battery += 10
             self.framesToTimeInc = self.rover.gear
             self.simulationTime += 30
             self.writeToLog()
+
         if self.rover.battery > 100:
             self.rover.battery = 100
         elif self.rover.battery < 0:

@@ -14,13 +14,13 @@ except ImportError:
 from src.GAME.game import *
 
 class GameWindow:
-    def __init__(self,width:int,height:int) -> None:
-        self.texture:pygame.Surface = pygame.Surface((width,height))
+    def __init__(self) -> None:
+        self.width:int = 700
+        self.height:int = 900
+        self.texture:pygame.Surface = pygame.Surface((self.width,self.height))
         self.cached:pygame.Surface = self.texture
-        self.width:int = width
-        self.height:int = height
-        self.aspectRatio:float = width/height
-        self.gameHandler:Game = Game((width,height))
+        self.aspectRatio:float = self.width/self.height
+        self.gameHandler:Game = Game((self.width,self.height))
     def showScreen(self,screen:pygame.Surface,deltaTime:float)->None:
         screenwidth:int = screen.get_width()
         screenheight:int = screen.get_height()
