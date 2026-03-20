@@ -1,9 +1,23 @@
-import customtkinter as Ctk
-from customtkinter import *
-from CTkListbox import *
-import os
 import sys
-from pathlib import Path
+import os
+try:
+    import customtkinter as Ctk
+    from customtkinter import *
+    from CTkListbox import *
+    from pathlib import Path
+
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    libdeps_path = os.path.join(current_dir, '..', 'libdeps')
+
+    if libdeps_path not in sys.path:
+        sys.path.insert(0, libdeps_path)
+
+    import customtkinter as Ctk
+    from customtkinter import *
+    from CTkListbox import *
+    from pathlib import Path
+import csv
 from tkinter import PhotoImage
 
 class Logexplorer:

@@ -1,11 +1,28 @@
-from customtkinter import *
-from CTkListbox import *
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.colors import ListedColormap
+import sys
+import os
+try:
+    from customtkinter import *
+    from CTkListbox import *
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    from matplotlib.colors import ListedColormap
+    from tkinter import PhotoImage
+
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    libdeps_path = os.path.join(current_dir, '..', 'libdeps')
+
+    if libdeps_path not in sys.path:
+        sys.path.insert(0, libdeps_path)
+
+    from customtkinter import *
+    from CTkListbox import *
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    from matplotlib.colors import ListedColormap
+    from tkinter import PhotoImage
 import csv
 import sys
-from tkinter import PhotoImage
 
 class FullGraphWindow:
     def __init__(self, main, title, xdata, ydata, ylabel, xlabel, mode="line", ticks=None, ticklabels=None, alldata=None):

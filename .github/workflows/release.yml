@@ -45,10 +45,18 @@ jobs:
               rm -rf build/Release
           fi
 
+      - name: Install Tkinter Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Get python deps
+        run: |
+          python -m pip install --target=src/libdeps pygame customtkinter CTkListbox matplotlib
+
       - name: Zip project
         shell: bash
         run: |
-          7z a -tzip "windows-latest-python3.13.zip" . -xr!".git*"
+          7z a -tzip "${{ matrix.os }}-python${{ matrix.python-version }}.zip" . -xr!".git*"
 
       - name: Upload zip
         uses: actions/upload-artifact@v4

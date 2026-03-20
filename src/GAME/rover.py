@@ -1,4 +1,16 @@
-import pygame
+import sys
+import os
+try:
+    import pygame
+
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    libdeps_path = os.path.join(current_dir, '..', 'libdeps')
+
+    if libdeps_path not in sys.path:
+        sys.path.insert(0, libdeps_path)
+
+    import pygame
 class Rover:
     def __init__(self,mapin:list[list[str]])->None:
         self.spritewidth:int = 64

@@ -1,18 +1,35 @@
+import sys
+import os
+try:
+    import customtkinter as Ctk
+    from customtkinter import *
+    from CTkListbox import *
+    from pathlib import Path
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    from matplotlib.colors import ListedColormap
+
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    libdeps_path = os.path.join(current_dir, '..', 'libdeps')
+
+    if libdeps_path not in sys.path:
+        sys.path.insert(0, libdeps_path)
+
+    import customtkinter as Ctk
+    from customtkinter import *
+    from CTkListbox import *
+    from pathlib import Path
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    from matplotlib.colors import ListedColormap
+from tkinter import PhotoImage
 import tkinter as tk
-import customtkinter as Ctk
-from customtkinter import *
-from CTkListbox import *
 from src.DASHBOARD.clearw import *
 from src.DASHBOARD.logexplorer import *
 from src.DASHBOARD.fullgraphwindow import *
 from src.DASHBOARD.logread import *
 import math
-from pathlib import Path
-import sys
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.colors import ListedColormap
-from tkinter import PhotoImage
 
 logline:int = 1
 logsize:int = 0
