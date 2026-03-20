@@ -6,11 +6,10 @@
 #include <numeric>
 #include <queue>
 #include <random>
-#include <string>
+#include <cstring>
 #include <stdexcept>
 #include <unordered_map>
 #include <execution>
-#include <strings.h>
 
 Pathfinder::Pathfinder(const uint16_t timeLimit, const std::string& mapPath) : timeLimit(timeLimit) {
 	// try to open file
